@@ -6,7 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
-	"log"
+	"os"
 )
 
 // applyCmd represents the apply command
@@ -33,8 +33,8 @@ var applyCmd = &cobra.Command{
 		conf, err := core.GetConfig()
 
 		if err != nil {
-			log.Fatalf("%s", err)
-			return
+			fmt.Printf("%s\n", err)
+			os.Exit(1)
 		}
 
 		for _, application := range conf.Applications {
@@ -58,7 +58,8 @@ var applyCmd = &cobra.Command{
 				})
 
 				if err != nil {
-					log.Fatal(err)
+					fmt.Println(err)
+					os.Exit(1)
 				}
 
 				fmt.Println("  - Deleting the old container [" + application.Name + "].")

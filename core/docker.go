@@ -1,15 +1,17 @@
 package core
 
 import (
+	"fmt"
 	"github.com/docker/docker/client"
-	"log"
+	"os"
 )
 
 func GetDockerClient() *client.Client {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	return cli

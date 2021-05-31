@@ -2,9 +2,9 @@ package core
 
 import (
 	"crypto/sha256"
+	"fmt"
 	"gopkg.in/yaml.v2"
 	"io"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -71,7 +71,8 @@ func getChecksumForFile(file string) string {
 	contents, err := os.ReadFile(file)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	return getChecksumForString(string(contents))
@@ -82,7 +83,8 @@ func getChecksumForString(contents string) string {
 	input := strings.NewReader(contents)
 
 	if _, err := io.Copy(hash, input); err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	return string(hash.Sum(nil))

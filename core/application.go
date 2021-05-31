@@ -3,8 +3,9 @@ package core
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"github.com/docker/docker/api/types"
-	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -44,11 +45,13 @@ func (application Application) Start() (*Application, error) {
 	err = cmd.Run()
 
 	if stdErr.Len() > 0 {
-		log.Fatal(stdErr.String())
+		fmt.Println(stdErr.String())
+		os.Exit(1)
 	}
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	return &application, nil
@@ -66,7 +69,8 @@ func (application Application) GetContainer() types.Container {
 	containers, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{})
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	for _, container := range containers {
@@ -92,7 +96,8 @@ func (application Application) StopContainer() *Application {
 	err := GetDockerClient().ContainerStop(context.Background(), application.GetContainer().ID, nil)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	return &application
