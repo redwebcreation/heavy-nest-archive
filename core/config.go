@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"gopkg.in/yaml.v2"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -26,7 +25,7 @@ type Config struct {
 func GetConfig() (config Config, err error) {
 	config = Config{}
 
-	bytes, err := ioutil.ReadFile(ConfigFile())
+	bytes, err := os.ReadFile(ConfigFile())
 	data := string(bytes)
 
 	if err != nil {
@@ -69,7 +68,7 @@ func GetConfigChecksum() string {
 }
 
 func getChecksumForFile(file string) string {
-	contents, err := ioutil.ReadFile(file)
+	contents, err := os.ReadFile(file)
 
 	if err != nil {
 		log.Fatal(err)

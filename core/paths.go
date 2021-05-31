@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"os"
 )
 
@@ -8,16 +9,23 @@ func Home() string {
 	home, err := os.UserHomeDir()
 
 	if err != nil {
-		home, err = os.Getwd()
-
-		return home
+		panic(err)
 	}
 
 	return home
 }
 
 func ConfigFile() string {
-	return Home() + "/.hez.yml"
+	configFile := Home() + "/.hez.yml"
+
+	_, err := os.Stat(configFile)
+
+	if os.IsNotExist(err) {
+		fmt.Println("The config file " + configFile + " does not exist.")
+		os.Exit(1)
+	}
+
+	return configFile
 }
 
 func configDirectory() string {
