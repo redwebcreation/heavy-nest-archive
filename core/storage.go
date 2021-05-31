@@ -1,8 +1,8 @@
 package core
 
 import (
+	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 )
 
@@ -24,7 +24,8 @@ func GetKey(key string) string {
 	data := string(bytes)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	return data
@@ -36,7 +37,8 @@ func SetKey(key string, value string) {
 	_, err := os.Stat(filePath)
 
 	if !os.IsNotExist(err) {
-		log.Fatal("Calling SetKey on an already set value is prohibited. Use SetKeyOverride.")
+		fmt.Println("Calling SetKey on an already set value is prohibited. Use SetKeyOverride.")
+		os.Exit(1)
 	}
 
 	SetKeyOverride(key, value)
@@ -48,19 +50,22 @@ func SetKeyOverride(key string, value string) {
 	file, err := os.Create(filePath)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	_, err = file.WriteString(value)
 
 	if err != nil {
 		file.Close()
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
 	err = file.Close()
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
