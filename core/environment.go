@@ -26,7 +26,6 @@ func (environment Environment) Contents() string {
 func FindEnvironment(name string) (Environment, error) {
 	config, err := GetConfig()
 
-
 	if err != nil {
 		return Environment{}, err
 	}
