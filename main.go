@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/redwebcreation/hez/cli/apply"
 	"github.com/redwebcreation/hez/cli/proxy"
-	"github.com/redwebcreation/hez/cli/ssl"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -17,7 +16,7 @@ func main() {
 
 	hezCli.AddCommand(apply.NewCommand())
 	hezCli.AddCommand(proxy.NewCommand())
-	hezCli.AddCommand(ssl.NewCommand())
+	//hezCli.AddCommand(ssl.NewCommand())
 
 	if err := hezCli.Execute(); err != nil {
 		os.Exit(1)

@@ -4,7 +4,8 @@ import "github.com/spf13/cobra"
 
 func NewCommand() *cobra.Command {
 	proxyCommand := &cobra.Command{
-		Use: "proxy",
+		Use:   "proxy",
+		Short: "Manage the integrated lightning fast reverse proxy",
 	}
 
 	proxyCommand.AddCommand(initEnableCommand())

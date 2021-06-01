@@ -9,9 +9,11 @@ func runEnableCommand(cmd *cobra.Command, _ []string) {
 }
 
 func initEnableCommand() *cobra.Command {
-	return &cobra.Command{
+	enableCommand := &cobra.Command{
 		Use:   "enable",
 		Short: "Enables the reverse proxy.",
 		Run:   runEnableCommand,
 	}
+
+	return enableCommand
 }

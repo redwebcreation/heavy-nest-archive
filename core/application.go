@@ -6,6 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"io/ioutil"
 	"os"
 	"strings"
 )
@@ -23,22 +24,16 @@ type Application struct {
 }
 
 func (application Application) Start() error {
-	env, err := FindEnvironment(application.Environment)
+	env, err := application.GetEnvironment()
 
 	if err != nil {
 		return err
 	}
 
-	lines := strings.Split(strings.TrimSpace(env.Contents()), "\n")
-
 	var envVariables []string
 
-	for _, line := range lines {
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		envVariables = append(envVariables, "-e", line)
+	for _, envVariable := range env {
+		envVariables = append(envVariables, "-e", envVariable)
 	}
 
 	for _, binding := range application.Bindings {
@@ -74,8 +69,26 @@ func (application Application) Start() error {
 	return nil
 }
 
-func (application Application) GetEnvironment() (Environment, error) {
-	return FindEnvironment(application.Environment)
+func (application Application) GetEnvironment() ([]string, error) {
+	bytes, err := ioutil.ReadFile(
+		ConfigDirectory() + "/environments/" + application.Environment,
+	)
+
+	data := string(bytes)
+
+	if err != nil {
+		return []string{}, err
+	}
+
+	data = strings.TrimSpace(data)
+	lines := strings.Split(data, "\n")
+	var nonEmptyLines []string
+
+	for _, line := range lines {
+		nonEmptyLines = append(nonEmptyLines, line)
+	}
+
+	return nonEmptyLines, nil
 }
 
 func (application Application) HasRunningContainers() bool {

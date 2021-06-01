@@ -12,7 +12,6 @@ import (
 
 type Config struct {
 	Applications []Application
-	Environments []Environment
 	Logs         struct {
 		MaxSize string `yaml:"max_size"`
 		Beacon  struct {
@@ -42,7 +41,6 @@ func GetConfig() (config Config, err error) {
 }
 
 func GetConfigChecksum() string {
-	//var checksums []string
 	files := []string{ConfigFile()}
 	checksum := ""
 
@@ -51,7 +49,7 @@ func GetConfigChecksum() string {
 			return err
 		}
 
-		if strings.Contains(path, "compiled") || info.IsDir() {
+		if strings.Contains(path, "compiled") || strings.Contains(path, "ssl") || info.IsDir() {
 			return nil
 		}
 
