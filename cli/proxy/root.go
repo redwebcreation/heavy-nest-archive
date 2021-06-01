@@ -10,6 +10,7 @@ func NewCommand() *cobra.Command {
 	proxyCommand.AddCommand(initEnableCommand())
 	proxyCommand.AddCommand(initDisableCommand())
 	proxyCommand.AddCommand(initStatusCommand())
+	proxyCommand.AddCommand(initRunCommand())
 
 	return proxyCommand
 }

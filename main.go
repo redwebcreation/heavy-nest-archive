@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/redwebcreation/hez/cli/apply"
 	"github.com/redwebcreation/hez/cli/proxy"
 	"github.com/redwebcreation/hez/cli/ssl"
@@ -10,16 +9,6 @@ import (
 )
 
 func main() {
-	fmt.Print(`$$\                           
-$$ |                          
-$$$$$$$\   $$$$$$\  $$$$$$$$\ 
-$$  __$$\ $$  __$$\ \____$$  |
-$$ |  $$ |$$$$$$$$ |  $$$$ _/ 
-$$ |  $$ |$$   ____| $$  _/   
-$$ |  $$ |\$$$$$$$\ $$$$$$$$\
-\__|  \__| \_______|\________|
-
-`)
 	hezCli := &cobra.Command{
 		Use:   "hez",
 		Short: "Hez makes orchestrating containers easy.",
