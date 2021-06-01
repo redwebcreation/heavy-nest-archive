@@ -1,12 +1,10 @@
 package proxy
 
 import (
-	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 )
 
 func runStatusCommand(cmd *cobra.Command, _ []string) {
-	core.GetProxiableContainers()
 }
 
 func initStatusCommand() *cobra.Command {

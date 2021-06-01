@@ -1,9 +1,7 @@
 package apply
 
 import (
-	"context"
 	"fmt"
-	"github.com/docker/docker/api/types"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os"
@@ -40,38 +38,21 @@ func run(cmd *cobra.Command, _ []string) {
 	for _, application := range conf.Applications {
 		fmt.Println("\n[" + application.Name + "]")
 
-		wasRunning := application.HasRunningContainer()
+		err := application.CleanUp()
 
-		if wasRunning {
-			fmt.Println("  - Found a running container.")
-
-			stoppedContainer := application.GetContainer()
-
-			application.StopContainer()
-
-			fmt.Println("  - Stopped the running container.")
-
-			err := core.GetDockerClient().ContainerRemove(context.Background(), stoppedContainer.ID, types.ContainerRemoveOptions{
-				RemoveVolumes: false,
-				RemoveLinks:   false,
-				Force:         false,
-			})
-
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			fmt.Println("  - Deleting the old container [" + application.Name + "].")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
 
-		if wasRunning {
-			fmt.Println("  - Restarting the container.")
-		} else {
-			fmt.Println("  - Starting the container.")
+		fmt.Println("  - Starting the containers.")
+		err = application.Start()
+
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
 		}
-		application.Start()
-		fmt.Println("  - Container restarted.")
+		fmt.Println("  - Container started.")
 	}
 
 	core.SetKeyOverride("previous_checksum", currentChecksum)
