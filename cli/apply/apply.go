@@ -22,6 +22,8 @@ func run(cmd *cobra.Command, _ []string) {
 			fmt.Println("No changes. Aborting.")
 			return
 		}
+	} else {
+		fmt.Println("Found changes.")
 	}
 
 	conf, err := core.GetConfig()
@@ -38,6 +40,9 @@ func run(cmd *cobra.Command, _ []string) {
 	for _, application := range conf.Applications {
 		fmt.Println("\n[" + application.Name + "]")
 
+		fmt.Println("  - Cleaning up old state.")
+		// Here tell the reverse proxy to use a cloned version of the container
+		// for 0 downtime deployment
 		err := application.CleanUp()
 
 		if err != nil {
@@ -45,6 +50,7 @@ func run(cmd *cobra.Command, _ []string) {
 			os.Exit(1)
 		}
 
+		fmt.Println("  - Old state cleaned up.")
 		fmt.Println("  - Starting the containers.")
 		err = application.Start()
 
@@ -52,7 +58,7 @@ func run(cmd *cobra.Command, _ []string) {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		fmt.Println("  - Container started.")
+		fmt.Println("  - Containers started.")
 	}
 
 	core.SetKeyOverride("previous_checksum", currentChecksum)

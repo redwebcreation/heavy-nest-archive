@@ -1,14 +1,12 @@
 package core
 
 import (
-	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"os"
-	"os/exec"
 	"strings"
 )
 
@@ -25,42 +23,48 @@ type Application struct {
 }
 
 func (application Application) Start() error {
-	environment, err := FindEnvironment(application.Environment)
+	env, err := FindEnvironment(application.Environment)
 
 	if err != nil {
 		return err
 	}
 
-	lines := strings.Split(strings.TrimSpace(environment.Contents()), "\n")
+	lines := strings.Split(strings.TrimSpace(env.Contents()), "\n")
 
-	var environmentVariables []string
+	var envVariables []string
 
 	for _, line := range lines {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
 
-		environmentVariables = append(environmentVariables, "-e", line)
+		envVariables = append(envVariables, "-e", line)
 	}
 
 	for _, binding := range application.Bindings {
-		dockerCommand := []string{"run", "-d", "--restart", "unless-stopped", "--name", getApplicationNameForBinding(application.Name, binding)}
+		envVariablesForBinding := envVariables
 
-		dockerCommand = append(dockerCommand, environmentVariables...)
-		dockerCommand = append(dockerCommand,
+		envVariablesForBinding = append(envVariablesForBinding,
 			"-e", "VIRTUAL_HOST="+binding.Host,
 			"-e", "VIRTUAL_PORT="+binding.Port,
-			application.Image,
 		)
 
-		var stdErr bytes.Buffer
-		cmd := exec.Command("docker", dockerCommand...)
-		cmd.Stderr = &stdErr
-		err = cmd.Run()
+		resp, err := GetDockerClient().ContainerCreate(context.Background(), &container.Config{
+			Env:             envVariablesForBinding,
+			Image:           application.Image,
+		}, &container.HostConfig{}, nil, nil, getApplicationNameForBinding(application.Name, binding))
 
-		if stdErr.Len() > 0 {
-			return errors.New(stdErr.String())
+		if err != nil {
+			return err
 		}
+
+		err = GetDockerClient().ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{})
+
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("  - Starting container [" + application.Image + "]" + " for " + binding.Host)
 
 		if err != nil {
 			return err
