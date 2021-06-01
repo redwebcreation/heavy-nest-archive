@@ -7,13 +7,9 @@ import (
 )
 
 func StorageDirectory() string {
-	path := configDirectory() + "/compiled"
+	path := ConfigDirectory() + "/compiled"
 
-	_, err := os.Stat(path)
-
-	if os.IsNotExist(err) {
-		os.Mkdir(path, 777)
-	}
+	EnsureDirectoryExists(path)
 
 	return path
 }
@@ -67,5 +63,13 @@ func SetKeyOverride(key string, value string) {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+}
+
+func EnsureDirectoryExists(path string) {
+	_, err := os.Stat(path)
+
+	if !os.IsNotExist(err) {
+		os.Mkdir(path, os.FileMode(0744))
 	}
 }

@@ -12,7 +12,7 @@ type Environment struct {
 
 func (environment Environment) Contents() string {
 	bytes, err := ioutil.ReadFile(
-		configDirectory() + "/envs/" + environment.Filename,
+		ConfigDirectory() + "/envs/" + environment.Filename,
 	)
 	data := string(bytes)
 

@@ -46,7 +46,7 @@ func GetConfigChecksum() string {
 	files := []string{ConfigFile()}
 	checksum := ""
 
-	filepath.Walk(configDirectory(), func(path string, info os.FileInfo, err error) error {
+	filepath.Walk(ConfigDirectory(), func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}

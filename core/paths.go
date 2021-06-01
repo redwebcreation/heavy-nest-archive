@@ -28,6 +28,10 @@ func ConfigFile() string {
 	return configFile
 }
 
-func configDirectory() string {
-	return Home() + "/.hez"
+func ConfigDirectory() string {
+	configDirectory := Home() + "/.hez"
+
+	EnsureDirectoryExists(configDirectory)
+
+	return configDirectory
 }
