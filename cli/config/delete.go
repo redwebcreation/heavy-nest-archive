@@ -10,6 +10,11 @@ import (
 func runDeleteCommand(_ *cobra.Command, _ []string) {
 	config, _ := core.GetConfig()
 
+	if !core.IsRunningAsRoot() {
+		fmt.Println("This command requires elevated privileges.")
+		os.Exit(1)
+	}
+
 	fmt.Println("[proxy]")
 	if core.IsProxyEnabled() {
 		fmt.Println("  - The proxy is running.")
