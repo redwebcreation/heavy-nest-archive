@@ -4,6 +4,7 @@ import (
 	"github.com/redwebcreation/hez/cli/apply"
 	"github.com/redwebcreation/hez/cli/config"
 	"github.com/redwebcreation/hez/cli/proxy"
+	"github.com/redwebcreation/hez/cli/stop"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 )
@@ -23,6 +24,6 @@ func Execute() {
 	rootCli.AddCommand(proxy.NewCommand())
 	rootCli.AddCommand(config.NewCommand())
 	rootCli.AddCommand(apply.NewCommand())
-
+	rootCli.AddCommand(stop.NewCommand())
 	cobra.CheckErr(rootCli.Execute())
 }
