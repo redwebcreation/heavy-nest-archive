@@ -17,7 +17,7 @@ func runDeleteCommand(_ *cobra.Command, _ []string) {
 		fmt.Println("  - Please stop the reverse proxy first.")
 		os.Exit(1)
 	} else {
-		fmt.Println("  - The proxy is disabled.")
+		fmt.Println("  - The proxy was already disabled.")
 	}
 
 	fmt.Println("[container]")
@@ -34,10 +34,9 @@ func runDeleteCommand(_ *cobra.Command, _ []string) {
 		}
 	}
 
-
 	fmt.Println("[config]")
 	_ = os.RemoveAll(core.ConfigDirectory())
-	fmt.Println("  - Deleting ["  + core.ConfigDirectory() + "]")
+	fmt.Println("  - Deleting [" + core.ConfigDirectory() + "]")
 	fmt.Println("The configuration has been successfully deleted.")
 }
 

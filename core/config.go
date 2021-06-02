@@ -32,10 +32,9 @@ type Config struct {
 func IsConfigValid() []error {
 	shouldExist := []string{
 		ConfigDirectory(),
-		ConfigFile(),
-		ConfigDirectory() + "/compiled",
 		ConfigDirectory() + "/environments",
 		ConfigDirectory() + "/ssl",
+		ConfigFile(),
 	}
 
 	var errors []error

@@ -5,14 +5,6 @@ import (
 	"os"
 )
 
-func StorageDirectory() string {
-	path := ConfigDirectory() + "/compiled"
-
-	EnsureDirectoryExists(path)
-
-	return path
-}
-
 func GetKey(key string, nullIfEmpty bool) string {
 	filePath := StorageDirectory() + "/" + key
 	bytes, err := os.ReadFile(filePath)
@@ -31,48 +23,14 @@ func GetKey(key string, nullIfEmpty bool) string {
 }
 
 func SetKey(key string, value string) {
+	_ = os.MkdirAll(StorageDirectory(), os.FileMode(0700))
+
 	filePath := StorageDirectory() + "/" + key
 
-	_, err := os.Stat(filePath)
-
-	if !os.IsNotExist(err) {
-		fmt.Println("Calling SetKey on an already set value is prohibited. Use SetKeyOverride.")
-		os.Exit(1)
-	}
-
-	SetKeyOverride(key, value)
-}
-
-func SetKeyOverride(key string, value string) {
-	filePath := StorageDirectory() + "/" + key
-
-	file, err := os.Create(filePath)
+	err := os.WriteFile(filePath, []byte(value), os.FileMode(0777))
 
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
-	}
-
-	_, err = file.WriteString(value)
-
-	if err != nil {
-		file.Close()
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	err = file.Close()
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
-func EnsureDirectoryExists(path string) {
-	_, err := os.Stat(path)
-
-	if !os.IsNotExist(err) {
-		os.Mkdir(path, os.FileMode(0744))
 	}
 }

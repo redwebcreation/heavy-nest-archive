@@ -45,18 +45,19 @@ func runNewCommand(_ *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	toCreate := [4]string{
+	toCreate := [3]string{
 		core.ConfigDirectory(),
 		core.ConfigDirectory() + "/environments",
-		core.ConfigDirectory() + "/compiled",
 		core.ConfigDirectory() + "/ssl",
 	}
+
 
 	for _, directoryPath := range toCreate {
 		err := os.Mkdir(directoryPath, os.FileMode(0777))
 
+
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("For [" + directoryPath + "] :" + err.Error())
 			Rollback()
 			os.Exit(1)
 		}

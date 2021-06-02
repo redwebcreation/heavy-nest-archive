@@ -56,7 +56,7 @@ func run(cmd *cobra.Command, _ []string) {
 		fmt.Println("  - Containers started.")
 	}
 
-	core.SetKeyOverride("previous_checksum", currentChecksum)
+	core.SetKey("previous_checksum", currentChecksum)
 }
 
 func NewCommand() *cobra.Command {
