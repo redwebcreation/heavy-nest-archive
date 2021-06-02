@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 )
 
@@ -14,10 +13,14 @@ func StorageDirectory() string {
 	return path
 }
 
-func GetKey(key string) string {
+func GetKey(key string, nullIfEmpty bool) string {
 	filePath := StorageDirectory() + "/" + key
-	bytes, err := ioutil.ReadFile(filePath)
+	bytes, err := os.ReadFile(filePath)
 	data := string(bytes)
+
+	if os.IsNotExist(err) && nullIfEmpty {
+		return ""
+	}
 
 	if err != nil {
 		fmt.Println(err)

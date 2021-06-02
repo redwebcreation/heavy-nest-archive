@@ -96,8 +96,7 @@ func initRunCommand() *cobra.Command {
 }
 
 func handleSSLForTesting() (string, string) {
-	home, _ := os.UserHomeDir()
-	sslPath := home + "/.hez/ssl"
+	sslPath := core.ConfigDirectory() + "/ssl"
 
 	_, err := os.Stat(sslPath)
 

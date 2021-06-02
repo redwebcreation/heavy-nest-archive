@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/redwebcreation/hez/cli/apply"
 	"github.com/redwebcreation/hez/cli/proxy"
+	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -12,6 +13,9 @@ func main() {
 		Use:   "hez",
 		Short: "Hez makes orchestrating containers easy.",
 		Long:  `Hez is a tool to orchestrate containers and manage the environment around it.`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			core.EnsureConfigIsValid()
+		},
 	}
 
 	hezCli.AddCommand(apply.NewCommand())

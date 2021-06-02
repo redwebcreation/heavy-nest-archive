@@ -10,7 +10,14 @@ import (
 	"strings"
 )
 
+type Proxy struct {
+	Port       string `yaml:"port"`
+	Ssl        string `yaml:"ssl"`
+	SelfSigned bool   `yaml:"self_signed"`
+}
+
 type Config struct {
+	Proxy        Proxy
 	Applications []Application
 	Logs         struct {
 		MaxSize string `yaml:"max_size"`
@@ -19,6 +26,64 @@ type Config struct {
 			Every string `yaml:"every"`
 		}
 	}
+}
+
+func EnsureConfigIsValid() {
+	fmt.Println("Validating the configuration.")
+
+	shouldExist := []string{
+		ConfigDirectory(),
+		ConfigFile(),
+		ConfigDirectory() + "/compiled",
+		ConfigDirectory() + "/environments",
+		ConfigDirectory() + "/ssl",
+	}
+
+	var errors []error
+
+	for _, requiredFile := range shouldExist {
+		err := ensureFileExists(requiredFile)
+
+		if err != nil {
+			errors = append(errors, err)
+		}
+
+	}
+
+	config, err := GetConfig()
+
+	if err != nil {
+		errors = append(errors, err)
+	} else {
+		for _, application := range config.Applications {
+			_, err := os.Stat(ConfigDirectory() + "/environments/" + application.Environment)
+
+			if err != nil {
+				errors = append(errors, err)
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		for _, configError := range errors {
+			fmt.Println(configError)
+		}
+
+		fmt.Println("Configuration invalid.")
+		os.Exit(1)
+	}
+
+	fmt.Println("Configuration validated")
+}
+
+func ensureFileExists(path string) error {
+	_, err := os.Stat(path)
+
+	if os.IsNotExist(err) {
+		return err
+	}
+
+	return nil
 }
 
 func GetConfig() (config Config, err error) {

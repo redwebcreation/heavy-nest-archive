@@ -9,7 +9,7 @@ import (
 
 func run(cmd *cobra.Command, _ []string) {
 	currentChecksum := core.GetConfigChecksum()
-	previousChecksum := core.GetKey("previous_checksum")
+	previousChecksum := core.GetKey("previous_checksum", true)
 	fmt.Printf("Previous config checksum : %x\n", previousChecksum)
 	fmt.Printf("Current config checksum : %x\n", currentChecksum)
 
@@ -26,12 +26,7 @@ func run(cmd *cobra.Command, _ []string) {
 		fmt.Println("Found changes.")
 	}
 
-	conf, err := core.GetConfig()
-
-	if err != nil {
-		fmt.Printf("%s\n", err)
-		os.Exit(1)
-	}
+	conf, _ := core.GetConfig()
 
 	if len(conf.Applications) == 0 {
 		fmt.Println("No applications found.")

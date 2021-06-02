@@ -85,6 +85,10 @@ func (application Application) GetEnvironment() ([]string, error) {
 	var nonEmptyLines []string
 
 	for _, line := range lines {
+		if line == "" {
+			continue
+		}
+
 		nonEmptyLines = append(nonEmptyLines, line)
 	}
 
