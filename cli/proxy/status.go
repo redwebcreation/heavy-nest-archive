@@ -10,15 +10,8 @@ import (
 )
 
 func runStatusCommand(_ *cobra.Command, _ []string) {
-	isProxyEnabled, err := core.IsProxyEnabled()
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	if !isProxyEnabled {
-		fmt.Println("Proxy has been disabled.")
+	if !core.IsProxyEnabled() {
+		fmt.Println("Proxy is disabled.")
 		os.Exit(1)
 	}
 
@@ -26,7 +19,7 @@ func runStatusCommand(_ *cobra.Command, _ []string) {
 	cmd := exec.Command("systemctl", "status", "hezproxy")
 	cmd.Stdout = &stdOut
 
-	err = cmd.Run()
+	err := cmd.Run()
 
 	if err != nil {
 		fmt.Println(err)

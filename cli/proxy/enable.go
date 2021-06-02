@@ -15,19 +15,16 @@ func runEnableCommand(_ *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	isProxyEnabled, err := core.IsProxyEnabled()
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	if isProxyEnabled {
+	if core.IsProxyEnabled() {
 		fmt.Println("Proxy is already enabled.")
 		os.Exit(1)
 	}
 
-	err = core.EnableProxy(config.Proxy)
+	if !config.Proxy.SelfSigned {
+		config.Proxy.SelfSigned = selfSigned
+	}
+
+	err := core.EnableProxy(config.Proxy)
 
 	if err != nil {
 		fmt.Println(err)
@@ -43,6 +40,8 @@ func initEnableCommand() *cobra.Command {
 		Short: "Enables the reverse proxy.",
 		Run:   runEnableCommand,
 	}
+
+	enableCommand.Flags().BoolVar(&selfSigned, "self-signed", false, "Force the use of self signed certificates.")
 
 	return enableCommand
 }

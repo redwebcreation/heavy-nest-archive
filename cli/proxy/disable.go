@@ -15,19 +15,12 @@ func runDisableCommand(cmd *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	isProxyEnabled, err := core.IsProxyEnabled()
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-
-	if !isProxyEnabled {
+	if !core.IsProxyEnabled() {
 		fmt.Println("Proxy is already disabled.")
 		os.Exit(1)
 	}
 
-	err = core.DisableProxy(config.Proxy)
+	err := core.DisableProxy(config.Proxy)
 
 	if err != nil {
 		fmt.Println(err)

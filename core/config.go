@@ -29,7 +29,7 @@ type Config struct {
 	}
 }
 
-func EnsureConfigIsValid() {
+func IsConfigValid() []error {
 	shouldExist := []string{
 		ConfigDirectory(),
 		ConfigFile(),
@@ -62,6 +62,12 @@ func EnsureConfigIsValid() {
 			}
 		}
 	}
+
+	return errors
+}
+
+func EnsureConfigIsValid() {
+	errors := IsConfigValid()
 
 	if len(errors) > 0 {
 		for _, configError := range errors {

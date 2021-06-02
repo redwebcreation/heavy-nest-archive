@@ -121,18 +121,6 @@ func (application Application) GetContainers() []types.Container {
 	return containers
 }
 
-func (application Application) StopContainers() error {
-	for _, applicationContainer := range application.GetContainers() {
-		err := GetDockerClient().ContainerStop(context.Background(), applicationContainer.ID, nil)
-
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func getApplicationNameForBinding(name string, binding Binding) string {
 	return strings.ReplaceAll(binding.Host, ".", "_") + "_" + binding.Port + "_" + name
 }

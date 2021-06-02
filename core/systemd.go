@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-func IsProxyEnabled() (bool, error) {
+func IsProxyEnabled() bool {
 	var stdOut bytes.Buffer
 	cmd := exec.Command("systemctl", "list-unit-files", "--type=service")
 	cmd.Stdout = &stdOut
@@ -18,16 +18,16 @@ func IsProxyEnabled() (bool, error) {
 	lines := strings.Split(strings.TrimSpace(stdOut.String()), "\n")
 
 	if err != nil {
-		return false, err
+		return false
 	}
 
 	for _, line := range lines {
 		if strings.Contains(line, "hezproxy.service") && strings.Contains(line, "enabled") {
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }
 
 func EnableProxy(proxy Proxy) error {
