@@ -2,7 +2,7 @@ package core
 
 import (
 	"bytes"
-	"errors"
+	"fmt"
 	"os"
 	"os/exec"
 	systemUser "os/user"
@@ -65,8 +65,10 @@ func EnableProxy(proxy Proxy) error {
 
 	for _, command := range commands {
 		err := runCommand(command)
+		fmt.Println("Running [" + command + "]")
 
 		if err != nil {
+			fmt.Println("ERROR HERE")
 			return err
 		}
 	}
@@ -75,19 +77,14 @@ func EnableProxy(proxy Proxy) error {
 }
 
 func runCommand(command string) error {
-	var stdErr bytes.Buffer
 	commandParts := strings.Split(command, " ")
 	name := commandParts[0]
 	args := commandParts[1:]
 
 	cmd := exec.Command(name, args...)
-	cmd.Stderr = &stdErr
 
 	err := cmd.Run()
 
-	if stdErr.Len() > 0 {
-		return errors.New(stdErr.String())
-	}
 
 	return err
 }
@@ -103,8 +100,10 @@ func DisableProxy(proxy Proxy) error {
 
 	for _, command := range commands {
 		err := runCommand(command)
+		fmt.Println("Running [" + command + "]")
 
 		if err != nil {
+			fmt.Println("ERROR HERE")
 			return err
 		}
 	}

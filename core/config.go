@@ -29,8 +29,6 @@ type Config struct {
 }
 
 func EnsureConfigIsValid() {
-	fmt.Println("Validating the configuration.")
-
 	shouldExist := []string{
 		ConfigDirectory(),
 		ConfigFile(),
@@ -72,8 +70,6 @@ func EnsureConfigIsValid() {
 		fmt.Println("Configuration invalid.")
 		os.Exit(1)
 	}
-
-	fmt.Println("Configuration validated")
 }
 
 func ensureFileExists(path string) error {
