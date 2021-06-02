@@ -5,6 +5,7 @@ import (
 	"github.com/redwebcreation/hez/cli/proxy"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 	"os"
 )
 
@@ -24,4 +25,10 @@ func main() {
 	if err := hezCli.Execute(); err != nil {
 		os.Exit(1)
 	}
+}
+
+func init() {
+	logger, _ := zap.NewProduction()
+
+	defer logger.Sync()
 }
