@@ -2,7 +2,7 @@
 
 # TODO
 
-* logs (proxy logs, a way to print out errors, and information properly)
+* replace fmt.Println + os.Exit with log.Fatal
 * diagnose command
 * ansi output
 * documentation
