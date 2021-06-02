@@ -8,7 +8,6 @@ import (
 	"os"
 )
 
-
 func main() {
 	hezCli := &cobra.Command{
 		Use:   "hez",

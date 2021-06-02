@@ -20,6 +20,7 @@ var Ssl string
 
 func runRunCommand(_ *cobra.Command, _ []string) {
 	proxiableContainers := core.GetProxiableContainers()
+	logger := core.Logger()
 
 	if len(proxiableContainers) == 0 {
 		fmt.Println("Found 0 proxiable containers. Aborting.")
@@ -32,7 +33,7 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 
 		for _, proxiableContainer := range proxiableContainers {
 			if request.Host == proxiableContainer.VirtualHost {
-				core.Logger.Info(
+				logger.Info(
 					"request.handled",
 					zap.String("method", request.Method),
 					zap.String("ip", ip),
@@ -45,7 +46,7 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 			}
 		}
 
-		core.Logger.Info(
+		logger.Info(
 			"request.invalid",
 			zap.String("method", request.Method),
 			zap.String("ip", ip),

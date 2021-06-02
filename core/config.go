@@ -20,10 +20,11 @@ type Config struct {
 	Proxy        Proxy
 	Applications []Application
 	Logs         struct {
-		MaxSize string `yaml:"max_size"`
-		Beacon  struct {
-			Url   string `yaml:"url"`
-			Every string `yaml:"every"`
+		Level        int8 `yaml:"level"`
+		Redirections []struct {
+			For   string `yaml:"for"`
+			Kind  string `yaml:"kind"`
+			Value string `yaml:"value"`
 		}
 	}
 }

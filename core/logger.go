@@ -1,11 +1,39 @@
 package core
 
-import "go.uber.org/zap"
+import (
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+)
 
-var Logger *zap.Logger
+func Logger() *zap.Logger {
+	config, _ := GetConfig()
 
-func init() {
-	Logger, _ = zap.NewProduction()
+	var outputPaths []string
+	var errorOutputPaths []string
 
-	defer Logger.Sync()
+	for _, redirection := range config.Logs.Redirections {
+		if redirection.For == "out" {
+			outputPaths = append(outputPaths, redirection.Value)
+		} else {
+			errorOutputPaths = append(errorOutputPaths, redirection.Value)
+		}
+	}
+
+	var loggerConfig zap.Config
+
+	loggerConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Logs.Level))
+	loggerConfig.OutputPaths = outputPaths
+	loggerConfig.ErrorOutputPaths = errorOutputPaths
+	loggerConfig.Encoding = "json"
+	loggerConfig.EncoderConfig = zapcore.EncoderConfig{
+		MessageKey:  "message",
+		LevelKey:    "level",
+		EncodeLevel: zapcore.LowercaseLevelEncoder,
+	}
+
+	logger, _ := loggerConfig.Build()
+
+	defer logger.Sync()
+
+	return logger
 }

@@ -85,7 +85,6 @@ func runCommand(command string) error {
 
 	err := cmd.Run()
 
-
 	return err
 }
 
