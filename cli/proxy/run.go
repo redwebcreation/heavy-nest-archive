@@ -5,13 +5,13 @@ import (
 	"fmt"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/acme/autocert"
 	"log"
 	"net"
 	"net/http"
 	"os"
 	"os/exec"
-	"time"
 )
 
 var selfSigned bool
@@ -32,14 +32,26 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 
 		for _, proxiableContainer := range proxiableContainers {
 			if request.Host == proxiableContainer.VirtualHost {
-				fmt.Println("[" + time.Now().Format("01-02-2006 15:04:05") + "] " + ip + " " + request.Method + " " + proxiableContainer.VirtualHost + request.RequestURI)
+				core.Logger.Info(
+					"request.handled",
+					zap.String("method", request.Method),
+					zap.String("ip", ip),
+					zap.String("vhost", proxiableContainer.VirtualHost),
+					zap.String("request_uri", request.RequestURI),
+				)
 
 				core.ForwardRequest(proxiableContainer, writer, request)
 				return
 			}
 		}
 
-		fmt.Println("[" + time.Now().Format("01-02-2006 15:04:05") + "] " + ip + " " + request.Method + " " + request.Host + request.RequestURI)
+		core.Logger.Info(
+			"request.invalid",
+			zap.String("method", request.Method),
+			zap.String("ip", ip),
+			zap.String("vhost", request.Host),
+			zap.String("request_uri", request.RequestURI),
+		)
 		writer.WriteHeader(404)
 		writer.Write([]byte("404. That’s an error. \nThe requested URL " + request.RequestURI + " was not found on this server. That’s all we know."))
 	}
