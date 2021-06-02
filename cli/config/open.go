@@ -9,7 +9,12 @@ import (
 )
 
 func runOpenCommand(_ *cobra.Command, _ []string) {
-	cmd := exec.Command("sudo", os.Getenv("EDITOR"), core.ConfigFile())
+	if !core.IsRunningAsRoot() {
+		fmt.Println("This command requires elevated privileges.")
+		os.Exit(1)
+	}
+
+	cmd := exec.Command(os.Getenv("EDITOR"), core.ConfigFile())
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
