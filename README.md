@@ -1,26 +1,79 @@
 # Hez
 
-**This documentation is awful, it's just me putting together some sentences from the future documentation.**
-
-**Even worse, I'm pretty sure it's not English down there, don't read it. It's just bad.**
-
 ## Installation
 
-// Installation instructions here
+```bash
+apt install hez
+```
+
+## Getting started
+
+Hez stores all its configuration in `/etc/hez`. It needs quite a few files and directories to work, so you can generate
+them automatically using the command below:
 
 ```bash
 hez config new
 ```
 
-Generates all needed files in `/etc/hez` with the right permissions (this can be tricky to do yourself)
+This command creates the following files :
 
-You can also remove all  the generated config files with 
+* `/etc/hez/environments/` contains your applications' environment.
+* `/etc/hez/ssl` contains self-generated certificates (if you use them.)
+* `/etc/hez/hez.yml` contains the main configuration
 
-```bash
-hez config delete
-```
+You can delete it using `hez config delete`.
 
-**RIGHT NOW THE STORAGE DIRECTORY IN $HOME/.config/hez/storage will not be deleted. It's a bug.**
+> This will also stop any running containers and/or the reverse proxy.
+
+The default config file looks like this :
+
+````yaml
+logs:
+  level: 0
+  redirections:
+    - for: out
+      value: stdout
+    - for: err
+      value: stderr
+proxy:
+  port: 80
+  ssl: 443
+  self_signed: false
+applications: [ ]
+                `
+````
+
+Let's break it down.
+
+## Logs
+
+The log level defines the minimal level for a log to get logged. It goes from `-1` (debug) to `5` (fatal).
+
+So if the level is `4`, logs with a level strictly lower than `4` wont be logged.
+
+Here's a table with the number and their corresponding label :
+
+* `-1`: Debug
+* `0`: Info
+* `1`: Warn
+* `2`: Error
+* `3`: DPanic
+* `4` Panic
+* `5` Fatal
+
+Now, for the logs that have the minimum required level, you can redirect them to various outputs.
+
+There's two type of logs, logs coming from the standard output, and those coming for the standard error output.
+
+You may specify which one you want with the `for` key which accepts either `out` or `err`
+
+Now, to redirect the type of log you chosen, you can specify a `value` which can be to the following :
+
+* `stdout` redirects the log to the standard output
+* `stderr` redirects the log to the standard error output
+* `an absolute path to a file` appends the log to a file, creates the file if it does not exist.
+
+If you leave `redirections` empty, no log will be saved.
 
 ## Applications
 
@@ -122,37 +175,6 @@ hez proxy disable
 You can also get the proxy's status with `hez proxy status`.
 
 The proxy is registered as `hezproxy.service` in systemd.
-
-## Logs
-
-You can configure logs in your config file
-
-The level goes from -1 (debug) to 8 (or 7 need to check) Fatal.
-
-// List of all levels and their associated label like (-1: debug, 0: info...)
-
-You can redirect the output and the error output to a file or you can redirect it to stdout, stderr
-
-```yaml
-redirections:
-  - for: out
-    value: stdout
-```
-
-Redirects stdout to stdout, by default if `redirections` is empty, nothing is redirected / saved. Nothing happens.
-
-```yaml
-redirections:
-  - for: out
-    value: /tmp/my-log-file.log
-```
-
-Saves all the logs in a file. Useful for things like Kibana...
-
-You can also use `for: err` which redirects everything coming in stderr.
-
-That's it and its already pretty cool.
-
 
 # TODO
 
