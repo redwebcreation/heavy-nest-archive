@@ -40,8 +40,14 @@ func run(cmd *cobra.Command, _ []string) {
 		fmt.Println("  - Cleaning up old state.")
 		//Here tell the reverse proxy to use a cloned version of the container
 		//for 0 downtime deployment
-		application.Start(true)
-		err := application.CleanUp(func(container types.Container) bool {
+		err := application.Start(true)
+
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		err = application.CleanUp(func(container types.Container) bool {
 			if strings.HasSuffix(container.Names[0], "_temporary") {
 				return false
 			}
@@ -50,7 +56,6 @@ func run(cmd *cobra.Command, _ []string) {
 		})
 
 		if err != nil {
-			// TODO: Rollback
 			fmt.Println(err)
 			os.Exit(1)
 		}
