@@ -60,9 +60,13 @@ Here's a table with the number and their corresponding label :
 
 Now, for the logs that have the minimum required level, you can redirect them to various outputs.
 
+<!-- TODO: UNCLEAR -->
+<!-- check the zap documentation for more details -->
 There's two type of logs, logs coming from the standard output, and those coming for the standard error output.
 
 You may specify which one you want with the `for` key which accepts either `out` or `err`
+<!-- TODO: END UNCLEAR -->
+
 
 Now, to redirect the type of log you chosen, you can specify a `value` which can be to the following :
 
