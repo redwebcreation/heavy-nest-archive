@@ -76,6 +76,9 @@ Now, to redirect the type of log you chosen, you can specify a `value` which can
 
 If you leave `redirections` empty, no log will be saved.
 
+---
+**It's just notes from now on. It's outdated and contains a lot of tpyos.**
+
 ## Applications
 
 You can create a new application by adding an entry to the `applications:` section of your config.
