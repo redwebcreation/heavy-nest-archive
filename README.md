@@ -1,7 +1,5 @@
 # Hez
 
-## Installation
-
 ```bash
 apt install hez
 ```
@@ -21,13 +19,18 @@ This command creates the following files :
 * `/etc/hez/ssl` contains self-generated certificates (if you use them.)
 * `/etc/hez/hez.yml` contains the main configuration
 
-You can delete it using `hez config delete`.
+You can delete your whole configuration using `hez config delete`.
 
 > This will also stop any running containers and/or the reverse proxy.
 
-The default config file looks like this :
+The default config file (in `/etc/hez/hez.yml`) looks like this :
 
 ````yaml
+applications: [ ]
+proxy:
+  port: 80
+  ssl: 443
+  self_signed: false
 logs:
   level: 0
   redirections:
@@ -35,21 +38,15 @@ logs:
       value: stdout
     - for: err
       value: stderr
-proxy:
-  port: 80
-  ssl: 443
-  self_signed: false
-applications: [ ]
-                `
 ````
 
 Let's break it down.
 
 ## Logs
 
-The log level defines the minimal level for a log to get logged. It goes from `-1` (debug) to `5` (fatal).
+The log `level` defines the minimal level for a log to get logged. It goes from `-1` to `5`.
 
-So if the level is `4`, logs with a level strictly lower than `4` wont be logged.
+So if the level is `4`, logs with a level strictly lower than `4` won't be logged.
 
 Here's a table with the number and their corresponding label :
 
