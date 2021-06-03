@@ -6,22 +6,19 @@ apt install hez
 
 ## Getting started
 
-Hez stores all its configuration in `/etc/hez`. It needs quite a few files and directories to work, so you can generate
-them automatically using the command below:
+Hez stores its configuration in `/etc/hez/hez.yml`, you can generate it automatically using the command below:
 
 ```bash
 hez config new
 ```
 
-This command creates the following files :
+This command creates the `/etc/hez/hez.yml` contains the main configuration.
 
-* `/etc/hez/hez.yml` contains the main configuration
-
-You can delete your whole configuration using `hez config delete`.
+You may delete your configuration file using `hez config delete`.
 
 > This will also stop any running containers and/or the reverse proxy.
 
-The default config file (in `/etc/hez/hez.yml`) looks like this :
+The config file looks like this :
 
 ````yaml
 applications: [ ]
@@ -42,7 +39,9 @@ An application in the configuration looks like that :
 ```yaml
 applications:
   - image: example-app
-    environment: example
+    env:
+      - APP_ENV=local
+      - ...
     bindings:
       - host: example.com
         container_port: 80
@@ -56,10 +55,19 @@ The `image` is the docker image of your application, you can also specify a vers
 example-app:4.2.0
 ```
 
-TODO: I'm still not satisfied by how we handle the environment. I'll take a look at how k8s does it.
+The `env` key lets you provide environment variables to the image, you can provide one per line using the syntax you are
+used to.
 
-Each binding in `bindings` will be a container that the proxy will send request to when the specified `hosŧ` is
-requested. The `container_port` just tells the proxy to redirect the incoming request to a specific port.
+```yaml
+applications:
+  - env:
+      - MY_VARIABLE=yes
+      - ANOTHER_ONE=true
+      - YES="not at all"
+```
+
+Each binding in `bindings` will be a container that the proxy will send request to when a the specified `hosŧ` is
+requested. The `container_port` tells the proxy to which port it should redirect the incoming request .
 
 ## Logs
 
