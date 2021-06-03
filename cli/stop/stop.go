@@ -8,14 +8,14 @@ import (
 )
 
 func run(_ *cobra.Command, _ []string) {
-	conf, _ := core.GetConfig()
+	config := core.GetConfig()
 
-	if len(conf.Applications) == 0 {
+	if len(config.Applications) == 0 {
 		fmt.Println("No containers running.")
 		return
 	}
 
-	for _, application := range conf.Applications {
+	for _, application := range config.Applications {
 		fmt.Println("[" + application.Name + "]")
 		err := application.CleanUp()
 

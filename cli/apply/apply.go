@@ -26,13 +26,13 @@ func run(cmd *cobra.Command, _ []string) {
 		fmt.Println("Found changes.")
 	}
 
-	conf, _ := core.GetConfig()
+	config := core.GetConfig()
 
-	if len(conf.Applications) == 0 {
+	if len(config.Applications) == 0 {
 		fmt.Println("No applications found.")
 	}
 
-	for _, application := range conf.Applications {
+	for _, application := range config.Applications {
 		fmt.Println("\n[" + application.Name + "]")
 
 		fmt.Println("  - Cleaning up old state.")

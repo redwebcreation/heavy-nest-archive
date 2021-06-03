@@ -6,21 +6,20 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"io/ioutil"
 	"os"
 	"strings"
 )
 
 type Binding struct {
 	Host string `yaml:"host"`
-	Port string `yaml:"port"`
+	Port string `yaml:"container_port"`
 }
 
 type Application struct {
-	Name        string `yaml:"name"`
-	Image       string `yaml:"image"`
-	Bindings    []Binding
-	Environment string `yaml:"environment"`
+	Name     string `yaml:"name"`
+	Image    string `yaml:"image"`
+	Bindings []Binding
+	Env      string `yaml:"environment"`
 }
 
 func (application Application) Start() error {
@@ -69,30 +68,22 @@ func (application Application) Start() error {
 	return nil
 }
 
+func (application Application) GetStagingEnvironment() []byte {
+	file, _ := os.ReadFile(EnvironmentPath(application.Env + "/staging/.env"))
+
+	return file
+}
+
+func (application Application) GetCurrentEnvironment() []byte {
+	file, _ := os.ReadFile(EnvironmentPath(application.Env + "/current/.env"))
+
+	return file
+}
+
 func (application Application) GetEnvironment() ([]string, error) {
-	bytes, err := ioutil.ReadFile(
-		ConfigDirectory() + "/environments/" + application.Environment,
-	)
-
-	data := string(bytes)
-
-	if err != nil {
-		return []string{}, err
-	}
-
-	data = strings.TrimSpace(data)
-	lines := strings.Split(data, "\n")
-	var nonEmptyLines []string
-
-	for _, line := range lines {
-		if line == "" {
-			continue
-		}
-
-		nonEmptyLines = append(nonEmptyLines, line)
-	}
-
-	return nonEmptyLines, nil
+	fmt.Println("Called deprecated Application.GetEnvironment().")
+	os.Exit(1)
+	return nil, nil
 }
 
 func (application Application) HasRunningContainers() bool {

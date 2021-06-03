@@ -6,7 +6,7 @@ import (
 )
 
 func Logger() *zap.Logger {
-	config, _ := GetConfig()
+	config := GetConfig()
 
 	var outputPaths []string
 	var errorOutputPaths []string

@@ -8,7 +8,7 @@ import (
 )
 
 func runDisableCommand(cmd *cobra.Command, _ []string) {
-	config, _ := core.GetConfig()
+	config := core.GetConfig()
 
 	if !core.IsRunningAsRoot() {
 		fmt.Println("This command requires elevated privileges.")

@@ -48,19 +48,15 @@ func IsConfigValid() []error {
 
 	}
 
-	config, err := GetConfig()
+	//config := GetConfig()
 
-	if err != nil {
-		errors = append(errors, err)
-	} else {
-		for _, application := range config.Applications {
-			_, err := os.Stat(ConfigDirectory() + "/environments/" + application.Environment)
-
-			if err != nil {
-				errors = append(errors, err)
-			}
-		}
-	}
+	//for _, application := range config.Applications {
+	//	_, err := os.Stat(ConfigDirectory() + "/environments/" + application.Env)
+	//
+	//	if err != nil {
+	//		errors = append(errors, err)
+	//	}
+	//}
 
 	return errors
 }
@@ -88,23 +84,20 @@ func ensureFileExists(path string) error {
 	return nil
 }
 
-func GetConfig() (config Config, err error) {
-	config = Config{}
+func GetConfig() Config {
+	config := Config{}
 
-	bytes, err := os.ReadFile(ConfigFile())
+	bytes, _ := os.ReadFile(ConfigFile())
 	data := string(bytes)
 
-	if err != nil {
-		return config, err
-	}
-
-	err = yaml.Unmarshal([]byte(data), &config)
+	err := yaml.Unmarshal([]byte(data), &config)
 
 	if err != nil {
-		return config, err
+		fmt.Println(err)
+		os.Exit(1)
 	}
 
-	return config, nil
+	return config
 }
 
 func GetConfigChecksum() string {
@@ -126,13 +119,13 @@ func GetConfigChecksum() string {
 	})
 
 	for _, file := range files {
-		checksum += getChecksumForFile(file)
+		checksum += GetChecksumForFile(file)
 	}
 
-	return getChecksumForString(checksum)
+	return GetChecksumForString(checksum)
 }
 
-func getChecksumForFile(file string) string {
+func GetChecksumForFile(file string) string {
 	contents, err := os.ReadFile(file)
 
 	if err != nil {
@@ -140,10 +133,10 @@ func getChecksumForFile(file string) string {
 		os.Exit(1)
 	}
 
-	return getChecksumForString(string(contents))
+	return GetChecksumForString(string(contents))
 }
 
-func getChecksumForString(contents string) string {
+func GetChecksumForString(contents string) string {
 	hash := sha256.New()
 	input := strings.NewReader(contents)
 
@@ -153,4 +146,8 @@ func getChecksumForString(contents string) string {
 	}
 
 	return string(hash.Sum(nil))
+}
+
+func GetChecksumForBytes(contents []byte) string {
+	return GetChecksumForString(string(contents))
 }
