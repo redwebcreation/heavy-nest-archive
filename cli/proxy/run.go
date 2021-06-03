@@ -19,15 +19,15 @@ var Port string
 var Ssl string
 
 func runRunCommand(_ *cobra.Command, _ []string) {
-	proxiableContainers := core.GetProxiableContainers()
-	logger := core.Logger()
-
-	if len(proxiableContainers) == 0 {
-		fmt.Println("Found 0 proxiable containers. Aborting.")
-		os.Exit(1)
-	}
-
 	handler := func(writer http.ResponseWriter, request *http.Request) {
+		proxiableContainers := core.GetProxiableContainers()
+		logger := core.Logger()
+
+		if len(proxiableContainers) == 0 {
+			fmt.Println("Found 0 proxiable containers. Aborting.")
+			os.Exit(1)
+		}
+
 		ip, _, _ := net.SplitHostPort(request.RemoteAddr)
 		request.Header.Set("X-Forwarded-For", ip)
 

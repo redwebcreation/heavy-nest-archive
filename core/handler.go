@@ -1,6 +1,7 @@
 package core
 
 import (
+	"go.uber.org/zap"
 	"io"
 	"net/http"
 	"net/url"
@@ -12,6 +13,10 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 	containerUrl, err := url.Parse("http://" + container.Ipv4 + ":" + container.VirtualPort)
 
 	if err != nil {
+		Logger().Error(
+			"url.invalid",
+			zap.String("error", err.Error()),
+		)
 		internalServerError(writer)
 		return
 	}
@@ -24,6 +29,11 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 	response, err := http.DefaultClient.Do(request)
 
 	if err != nil {
+		Logger().Error(
+			"forward.failed",
+			zap.String("container_url", containerUrl.String()),
+			zap.String("error", err.Error()),
+		)
 		internalServerError(writer)
 		return
 	}

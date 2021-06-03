@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"os"
 	"strings"
@@ -24,7 +23,6 @@ func GetDockerClient() *client.Client {
 type ProxiableContainer struct {
 	Name        string
 	Ipv4        string
-	Ipv6        string
 	VirtualHost string
 	VirtualPort string
 	Container   *types.ContainerJSON
@@ -66,11 +64,6 @@ func GetProxiableContainers() []ProxiableContainer {
 
 	for _, bridgeContainer := range bridgeDetails.Containers {
 		containerList, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{
-			Limit: 1,
-			Filters: filters.NewArgs(filters.KeyValuePair{
-				Key:   "name",
-				Value: bridgeContainer.Name,
-			}),
 		})
 
 		if err != nil {
@@ -111,7 +104,6 @@ func GetProxiableContainers() []ProxiableContainer {
 		proxiableContainers = append(proxiableContainers, ProxiableContainer{
 			Name:        bridgeContainer.Name,
 			Ipv4:        bridgeContainer.IPv4Address,
-			Ipv6:        bridgeContainer.IPv6Address,
 			VirtualHost: virtualHost,
 			VirtualPort: virtualPort,
 			Container:   &inspectedContainer,

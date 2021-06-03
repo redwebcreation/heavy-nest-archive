@@ -17,7 +17,7 @@ func run(_ *cobra.Command, _ []string) {
 
 	for _, application := range config.Applications {
 		fmt.Println("[" + application.Env + "]")
-		err := application.CleanUp()
+		err := application.CleanUpAllContainers()
 
 		if err != nil {
 			fmt.Println(err)

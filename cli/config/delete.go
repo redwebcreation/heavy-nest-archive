@@ -30,7 +30,7 @@ func runDeleteCommand(_ *cobra.Command, _ []string) {
 		fmt.Println("  - No applications found.")
 	} else {
 		for _, application := range config.Applications {
-			err := application.CleanUp()
+			err := application.CleanUpAllContainers()
 
 			if err != nil {
 				fmt.Println(err)

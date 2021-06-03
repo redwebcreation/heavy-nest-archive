@@ -2,9 +2,11 @@ package apply
 
 import (
 	"fmt"
+	"github.com/docker/docker/api/types"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os"
+	"strings"
 )
 
 func run(cmd *cobra.Command, _ []string) {
@@ -36,23 +38,45 @@ func run(cmd *cobra.Command, _ []string) {
 		fmt.Println("\n[" + application.Env + "]")
 
 		fmt.Println("  - Cleaning up old state.")
-		// Here tell the reverse proxy to use a cloned version of the container
-		// for 0 downtime deployment
-		err := application.CleanUp()
+		//Here tell the reverse proxy to use a cloned version of the container
+		//for 0 downtime deployment
+		application.Start(true)
+		err := application.CleanUp(func(container types.Container) bool {
+			if strings.HasSuffix(container.Names[0], "_temporary") {
+				return false
+			}
+
+			return true
+		})
 
 		if err != nil {
+			// TODO: Rollback
 			fmt.Println(err)
 			os.Exit(1)
 		}
 
 		fmt.Println("  - Old state cleaned up.")
 		fmt.Println("  - Starting the containers.")
-		err = application.Start()
+		err = application.Start(false)
 
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
+
+		err = application.CleanUp(func(container types.Container) bool {
+			if strings.HasSuffix(container.Names[0], "_temporary") {
+				return true
+			}
+
+			return false
+		})
+
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
 		fmt.Println("  - Containers started.")
 	}
 

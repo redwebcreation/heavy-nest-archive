@@ -22,10 +22,9 @@ type Application struct {
 	Env      string `yaml:"environment"`
 }
 
-func (application Application) Start() error {
+func (application Application) Start(isTemporary bool) error {
 	for _, binding := range application.Bindings {
 		bindings := []string{"VIRTUAL_HOST=" + binding.Host, "VIRTUAL_PORT=" + binding.Port}
-
 		resp, err := GetDockerClient().ContainerCreate(context.Background(), &container.Config{
 			Env:   bindings,
 			Image: application.Image,
@@ -40,7 +39,7 @@ func (application Application) Start() error {
 			RestartPolicy: container.RestartPolicy{
 				Name: "unless-stopped",
 			},
-		}, nil, nil, getApplicationNameForBinding(binding))
+		}, nil, nil, getApplicationNameForBinding(isTemporary, binding))
 
 		if err != nil {
 			return err
@@ -96,25 +95,43 @@ func (application Application) GetContainers() []types.Container {
 	return containers
 }
 
-func getApplicationNameForBinding(binding Binding) string {
-	return strings.ReplaceAll(binding.Host, ".", "_") + "_" + binding.Port
+func getApplicationNameForBinding(isTemporary bool, binding Binding) string {
+	name := strings.ReplaceAll(binding.Host, ".", "_") + "_" + binding.Port
+
+	if isTemporary {
+		name += "_temporary"
+	}
+
+	return name
 }
 
-func (application Application) CleanUp() error {
+type ShouldCleanup func(container types.Container) bool
+
+func (application Application) CleanUpAllContainers() error {
+	return application.CleanUp(func(container types.Container) bool {
+		return true
+	})
+}
+
+func (application Application) CleanUp(shouldCleanup ShouldCleanup) error {
 	if !application.HasRunningContainers() {
 		return nil
 	}
 
 	for _, applicationContainer := range application.GetContainers() {
+		if !shouldCleanup(applicationContainer) {
+			continue
+		}
+
 		err := GetDockerClient().ContainerStop(context.Background(), applicationContainer.ID, nil)
 
 		if err != nil {
 			return err
 		}
 
-		fmt.Println("  - Stopping container [" + applicationContainer.ID + "]")
+		fmt.Println("  - Stopping container [" + applicationContainer.Names[0] + "]")
 
-		err = GetDockerClient().ContainerRemove(context.Background(), applicationContainer.ID, types.ContainerRemoveOptions{
+		err = GetDockerClient().ContainerRemove(context.Background(), applicationContainer.Names[0], types.ContainerRemoveOptions{
 			RemoveVolumes: false,
 			RemoveLinks:   false,
 			Force:         false,
@@ -124,7 +141,7 @@ func (application Application) CleanUp() error {
 			return err
 		}
 
-		fmt.Println("  - Removed container [" + applicationContainer.ID + "]")
+		fmt.Println("  - Removed container [" + applicationContainer.Names[0] + "]")
 	}
 
 	return nil
