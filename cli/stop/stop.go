@@ -16,7 +16,7 @@ func run(_ *cobra.Command, _ []string) {
 	}
 
 	for _, application := range config.Applications {
-		fmt.Println("[" + application.Name + "]")
+		fmt.Println("[" + application.Env + "]")
 		err := application.CleanUp()
 
 		if err != nil {

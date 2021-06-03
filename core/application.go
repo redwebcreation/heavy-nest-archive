@@ -6,6 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"os"
 	"strings"
 )
@@ -16,41 +17,30 @@ type Binding struct {
 }
 
 type Application struct {
-	Name     string `yaml:"name"`
 	Image    string `yaml:"image"`
 	Bindings []Binding
 	Env      string `yaml:"environment"`
 }
 
 func (application Application) Start() error {
-	env, err := application.GetEnvironment()
-
-	if err != nil {
-		return err
-	}
-
-	var envVariables []string
-
-	for _, envVariable := range env {
-		envVariables = append(envVariables, "-e", envVariable)
-	}
-
 	for _, binding := range application.Bindings {
-		envVariablesForBinding := envVariables
-
-		envVariablesForBinding = append(envVariablesForBinding,
-			"-e", "VIRTUAL_HOST="+binding.Host,
-			"-e", "VIRTUAL_PORT="+binding.Port,
-		)
+		bindings := []string{"VIRTUAL_HOST=" + binding.Host, "VIRTUAL_PORT=" + binding.Port}
 
 		resp, err := GetDockerClient().ContainerCreate(context.Background(), &container.Config{
-			Env:   envVariablesForBinding,
+			Env:   bindings,
 			Image: application.Image,
 		}, &container.HostConfig{
+			Mounts: []mount.Mount{
+				{
+					Type:   mount.TypeBind,
+					Source: EnvironmentPath(application.Env + "/current/.env"),
+					Target: "/var/www/html/.env",
+				},
+			},
 			RestartPolicy: container.RestartPolicy{
 				Name: "unless-stopped",
 			},
-		}, nil, nil, getApplicationNameForBinding(application.Name, binding))
+		}, nil, nil, getApplicationNameForBinding(binding))
 
 		if err != nil {
 			return err
@@ -80,12 +70,6 @@ func (application Application) GetCurrentEnvironment() []byte {
 	return file
 }
 
-func (application Application) GetEnvironment() ([]string, error) {
-	fmt.Println("Called deprecated Application.GetEnvironment().")
-	os.Exit(1)
-	return nil, nil
-}
-
 func (application Application) HasRunningContainers() bool {
 	for _, applicationContainer := range application.GetContainers() {
 		if applicationContainer.ID != "" {
@@ -112,8 +96,8 @@ func (application Application) GetContainers() []types.Container {
 	return containers
 }
 
-func getApplicationNameForBinding(name string, binding Binding) string {
-	return strings.ReplaceAll(binding.Host, ".", "_") + "_" + binding.Port + "_" + name
+func getApplicationNameForBinding(binding Binding) string {
+	return strings.ReplaceAll(binding.Host, ".", "_") + "_" + binding.Port
 }
 
 func (application Application) CleanUp() error {

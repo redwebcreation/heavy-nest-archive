@@ -16,7 +16,6 @@ func EnvironmentPath(path string) string {
 func EnvironmentExists(environment string) bool {
 	path := EnvironmentPath(environment)
 	_, err := os.Stat(path)
-
 	if os.IsNotExist(err) {
 		return false
 	}

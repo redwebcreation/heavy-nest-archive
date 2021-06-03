@@ -33,7 +33,7 @@ func run(cmd *cobra.Command, _ []string) {
 	}
 
 	for _, application := range config.Applications {
-		fmt.Println("\n[" + application.Name + "]")
+		fmt.Println("\n[" + application.Env + "]")
 
 		fmt.Println("  - Cleaning up old state.")
 		// Here tell the reverse proxy to use a cloned version of the container
