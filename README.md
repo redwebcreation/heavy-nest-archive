@@ -34,13 +34,34 @@ proxy:
 logs:
   level: 0
   redirections:
-    - for: out
-      value: stdout
-    - for: err
-      value: stderr
+    - stdout
 ````
 
-Let's break it down.
+## Applications
+
+An application in the configuration looks like that :
+
+```yaml
+applications:
+  - image: example-app
+    environment: example
+    bindings:
+      - host: example.com
+        container_port: 80
+```
+
+Let's break it down, line by line.
+
+The `image` is the docker image of your application, you can also specify a version :
+
+```yaml
+example-app:4.2.0
+```
+
+TODO: I'm still not satisfied by how we handle the environment. I'll take a look at how k8s does it.
+
+Each binding in `bindings` will be a container that the proxy will send request to when the specified `hosŧ` is
+requested. The `container_port` just tells the proxy to redirect the incoming request to a specific port.
 
 ## Logs
 
@@ -50,31 +71,21 @@ So if the level is `4`, logs with a level strictly lower than `4` won't be logge
 
 Here's a table with the number and their corresponding label :
 
-* `-1`: Debug
-* `0`: Info
-* `1`: Warn
-* `2`: Error
-* `3`: DPanic
-* `4` Panic
-* `5` Fatal
+* `-1` Debug
+* `0`  Info
+* `1`  Warn
+* `2`  Error
+* `3`  DPanic
+* `4`  Panic
+* `5`  Fatal
 
-Now, for the logs that have the minimum required level, you can redirect them to various outputs.
-
-<!-- TODO: UNCLEAR -->
-<!-- check the zap documentation for more details -->
-There's two type of logs, logs coming from the standard output, and those coming for the standard error output.
-
-You may specify which one you want with the `for` key which accepts either `out` or `err`
-<!-- TODO: END UNCLEAR -->
-
-
-Now, to redirect the type of log you chosen, you can specify a `value` which can be to the following :
+For the logs that have the minimum required level, you can redirect them to various outputs.
 
 * `stdout` redirects the log to the standard output
 * `stderr` redirects the log to the standard error output
 * `an absolute path to a file` appends the log to a file, creates the file if it does not exist.
 
-If you leave `redirections` empty, no log will be saved.
+If you leave `redirections` empty, logs won't be saved.
 
 ---
 **It's just notes from now on. It's outdated and contains a lot of tpyos.**
@@ -180,6 +191,9 @@ You can also get the proxy's status with `hez proxy status`.
 
 The proxy is registered as `hezproxy.service` in systemd.
 
+TODO:
+
+* healthcheck (and healthcheck right after `hez run apply`)
 * diagnose command
 * ansi output
 * documentation

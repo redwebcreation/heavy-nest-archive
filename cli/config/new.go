@@ -51,10 +51,8 @@ func runNewCommand(_ *cobra.Command, _ []string) {
 		core.ConfigDirectory() + "/ssl",
 	}
 
-
 	for _, directoryPath := range toCreate {
 		err := os.Mkdir(directoryPath, os.FileMode(0777))
-
 
 		if err != nil {
 			fmt.Println("For [" + directoryPath + "] :" + err.Error())
@@ -82,10 +80,7 @@ func getDefaultConfigContents() string {
 logs:
   level: 0
   redirections:
-    - for: out
-      value: stdout
-    - for: err
-      value: stderr
+    - stdout
 proxy:
   port: 80
   ssl: 443

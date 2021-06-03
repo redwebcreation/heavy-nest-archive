@@ -8,22 +8,10 @@ import (
 func Logger() *zap.Logger {
 	config := GetConfig()
 
-	var outputPaths []string
-	var errorOutputPaths []string
-
-	for _, redirection := range config.Logs.Redirections {
-		if redirection.For == "out" {
-			outputPaths = append(outputPaths, redirection.Value)
-		} else {
-			errorOutputPaths = append(errorOutputPaths, redirection.Value)
-		}
-	}
-
 	var loggerConfig zap.Config
 
 	loggerConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Logs.Level))
-	loggerConfig.OutputPaths = outputPaths
-	loggerConfig.ErrorOutputPaths = errorOutputPaths
+	loggerConfig.OutputPaths = config.Logs.Redirections
 	loggerConfig.Encoding = "json"
 	loggerConfig.EncoderConfig = zapcore.EncoderConfig{
 		MessageKey:  "message",

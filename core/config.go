@@ -21,11 +21,7 @@ type Config struct {
 	Applications []Application
 	Logs         struct {
 		Level        int8 `yaml:"level"`
-		Redirections []struct {
-			For   string `yaml:"for"`
-			Kind  string `yaml:"kind"`
-			Value string `yaml:"value"`
-		}
+		Redirections []string
 	}
 }
 
