@@ -111,20 +111,12 @@ func initRunCommand() *cobra.Command {
 }
 
 func handleSSLForTesting() (string, string) {
-	sslPath := core.ConfigDirectory() + "/ssl"
-
-	_, err := os.Stat(sslPath)
-
-	if os.IsNotExist(err) {
-		os.Mkdir(sslPath, os.FileMode(0755))
-	}
-
-	keyPath := sslPath + "/key.pem"
-	certPath := sslPath + "/cert.pem"
+	keyPath := core.StorageDirectory() + "/key.pem"
+	certPath := core.StorageDirectory() + "/cert.pem"
 
 	cmd := exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath, "-out", certPath, "-days", "365", "-nodes", "-subj", "/CN=localhost")
 
-	err = cmd.Run()
+	_ = cmd.Run()
 
 	return keyPath, certPath
 }

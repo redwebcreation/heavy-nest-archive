@@ -16,12 +16,15 @@ func run(_ *cobra.Command, _ []string) {
 	}
 
 	for _, application := range config.Applications {
-		fmt.Println("[" + application.Env + "]")
-		err := application.CleanUpAllContainers()
+		for _, binding := range application.Bindings {
+			fmt.Println("[" + binding.Name(false) + "]")
 
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			err := application.CleanUpAllContainers()
+
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 		}
 	}
 

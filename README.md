@@ -15,8 +15,6 @@ hez config new
 
 This command creates the following files :
 
-* `/etc/hez/environments/` contains your applications' environment.
-* `/etc/hez/ssl` contains self-generated certificates (if you use them.)
 * `/etc/hez/hez.yml` contains the main configuration
 
 You can delete your whole configuration using `hez config delete`.

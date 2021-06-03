@@ -3,7 +3,6 @@ package cli
 import (
 	"github.com/redwebcreation/hez/cli/apply"
 	"github.com/redwebcreation/hez/cli/config"
-	"github.com/redwebcreation/hez/cli/env"
 	"github.com/redwebcreation/hez/cli/proxy"
 	"github.com/redwebcreation/hez/cli/stop"
 	"github.com/redwebcreation/hez/core"
@@ -22,7 +21,6 @@ var rootCli = &cobra.Command{
 }
 
 func Execute() {
-	rootCli.AddCommand(env.NewCommand())
 	rootCli.AddCommand(proxy.NewCommand())
 	rootCli.AddCommand(config.NewCommand())
 	rootCli.AddCommand(apply.NewCommand())

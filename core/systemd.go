@@ -88,7 +88,7 @@ func runCommand(command string) error {
 	return err
 }
 
-func DisableProxy(proxy Proxy) error {
+func DisableProxy() error {
 	configName := "/etc/systemd/system/hezproxy.service"
 
 	var commands = []string{

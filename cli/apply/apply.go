@@ -35,54 +35,48 @@ func run(cmd *cobra.Command, _ []string) {
 	}
 
 	for _, application := range config.Applications {
-		fmt.Println("\n[" + application.Env + "]")
+		for _, binding := range application.Bindings {
+			fmt.Println("\n[" + binding.Host + "]")
 
-		fmt.Println("  - Cleaning up old state.")
-		//Here tell the reverse proxy to use a cloned version of the container
-		//for 0 downtime deployment
-		err := application.Start(true)
+			fmt.Println("  - Cleaning up old state.")
+			//Here tell the reverse proxy to use a cloned version of the container
+			//for 0 downtime deployment
+			err := application.Start(binding, true)
 
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		err = application.CleanUp(func(container types.Container) bool {
-			if strings.HasSuffix(container.Names[0], "_temporary") {
-				return false
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
 			}
 
-			return true
-		})
+			err = application.CleanUp(func(container types.Container) bool {
+				return !strings.HasSuffix(container.Names[0], "_temporary")
+			})
 
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		fmt.Println("  - Old state cleaned up.")
-		fmt.Println("  - Starting the containers.")
-		err = application.Start(false)
-
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
-
-		err = application.CleanUp(func(container types.Container) bool {
-			if strings.HasSuffix(container.Names[0], "_temporary") {
-				return true
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
 			}
 
-			return false
-		})
+			fmt.Println("  - Old state cleaned up.")
+			fmt.Println("  - Starting the containers.")
+			err = application.Start(binding, false)
 
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			err = application.CleanUp(func(container types.Container) bool {
+				return strings.HasSuffix(container.Names[0], "_temporary")
+			})
+
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			fmt.Println("  - Containers started.")
 		}
-
-		fmt.Println("  - Containers started.")
 	}
 
 	core.SetKey("previous_checksum", currentChecksum)

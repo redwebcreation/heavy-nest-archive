@@ -7,9 +7,7 @@ import (
 	"os"
 )
 
-func runDisableCommand(cmd *cobra.Command, _ []string) {
-	config := core.GetConfig()
-
+func runDisableCommand(_ *cobra.Command, _ []string) {
 	if !core.IsRunningAsRoot() {
 		fmt.Println("This command requires elevated privileges.")
 		os.Exit(1)
@@ -20,7 +18,7 @@ func runDisableCommand(cmd *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	err := core.DisableProxy(config.Proxy)
+	err := core.DisableProxy()
 
 	if err != nil {
 		fmt.Println(err)

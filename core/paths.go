@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"os"
 )
 
@@ -14,12 +13,7 @@ func ConfigDirectory() string {
 }
 
 func StorageDirectory() string {
-	home, err := os.UserHomeDir()
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	home, _ := os.UserHomeDir()
 
 	return home + "/.config/hez/storage"
 }
