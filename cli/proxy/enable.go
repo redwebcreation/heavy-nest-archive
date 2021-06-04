@@ -8,7 +8,7 @@ import (
 )
 
 func runEnableCommand(_ *cobra.Command, _ []string) {
-	config := core.GetConfig()
+	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
 
 	if !core.IsRunningAsRoot() {
 		fmt.Println("This command requires elevated privileges.")

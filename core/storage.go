@@ -1,28 +1,26 @@
 package core
 
 import (
-	"fmt"
 	"os"
 )
 
-func GetKey(key string, nullIfEmpty bool) string {
+func GetKey(key string) (string, error) {
 	filePath := StorageDirectory() + "/" + key
 	bytes, err := os.ReadFile(filePath)
 	data := string(bytes)
 
-	if os.IsNotExist(err) && nullIfEmpty {
-		return ""
+	if os.IsNotExist(err) {
+		return "", nil
 	}
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return "", err
 	}
 
-	return data
+	return data, nil
 }
 
-func SetKey(key string, value string) {
+func SetKey(key string, value string) error {
 	_ = os.MkdirAll(StorageDirectory(), os.FileMode(0700))
 
 	filePath := StorageDirectory() + "/" + key
@@ -30,7 +28,8 @@ func SetKey(key string, value string) {
 	err := os.WriteFile(filePath, []byte(value), os.FileMode(0777))
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
+
+	return nil
 }

@@ -9,9 +9,9 @@ import (
 )
 
 func runNewCommand(_ *cobra.Command, _ []string) {
-	err := core.IsConfigValid()
+	err := core.FindConfig(core.ConfigFile()).IsValid()
 
-	if err != nil {
+	if err == nil {
 		fmt.Println("The configuration already exists and seems to be valid.")
 		os.Exit(1)
 	}

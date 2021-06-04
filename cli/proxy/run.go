@@ -101,7 +101,7 @@ func initRunCommand() *cobra.Command {
 		Run:   runRunCommand,
 	}
 
-	config := core.GetConfig()
+	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
 
 	runCommand.Flags().BoolVar(&selfSigned, "self-signed", config.Proxy.SelfSigned, "Generate self signed SSL certificates.")
 	runCommand.Flags().StringVar(&Port, "port", config.Proxy.Port, "Runs the HTTP proxy on a specific port.")

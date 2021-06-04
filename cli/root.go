@@ -15,7 +15,7 @@ var rootCli = &cobra.Command{
 	Long:  `Hez is a tool to orchestrate containers and manage the environment around it.`,
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if cmd.Name() != "new" {
-			core.EnsureConfigIsValid()
+			core.FindConfig(core.ConfigFile()).ExitIfInvalid()
 		}
 	},
 }

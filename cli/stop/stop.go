@@ -8,7 +8,7 @@ import (
 )
 
 func run(_ *cobra.Command, _ []string) {
-	config := core.GetConfig()
+	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
 
 	if len(config.Applications) == 0 {
 		fmt.Println("No containers running.")

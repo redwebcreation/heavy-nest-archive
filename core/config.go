@@ -15,7 +15,7 @@ type Proxy struct {
 	SelfSigned bool   `yaml:"self_signed"`
 }
 
-type Config struct {
+type ConfigData struct {
 	Proxy        Proxy
 	Applications []Application
 	Logs         struct {
@@ -24,8 +24,14 @@ type Config struct {
 	}
 }
 
-func IsConfigValid() error {
-	_, err := os.Stat(ConfigFile())
+type Config string
+
+func FindConfig(file string) Config {
+	return Config(file)
+}
+
+func (config Config) IsValid() error {
+	_, err := os.Stat(string(config))
 
 	if os.IsNotExist(err) {
 		return err
@@ -34,8 +40,8 @@ func IsConfigValid() error {
 	return nil
 }
 
-func EnsureConfigIsValid() {
-	err := IsConfigValid()
+func (config Config) ExitIfInvalid() {
+	err := config.IsValid()
 
 	if err != nil {
 		fmt.Println(err)
@@ -44,26 +50,24 @@ func EnsureConfigIsValid() {
 	}
 }
 
-func GetConfig() Config {
-	config := Config{}
-
+func (config Config) Resolve() (ConfigData, error) {
+	data := ConfigData{}
 	bytes, _ := os.ReadFile(ConfigFile())
 
 	err := yaml.Unmarshal(bytes, &config)
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return data, err
 	}
 
-	return config
+	return data, nil
 }
 
-func GetConfigChecksum() string {
-	return GetChecksumForFile(ConfigFile())
+func (config Config) Checksum() (string, error) {
+	return getChecksumForFile(string(config))
 }
 
-func GetChecksumForFile(file string) string {
+func getChecksumForFile(file string) (string, error) {
 	contents, err := os.ReadFile(file)
 
 	if err != nil {
@@ -71,17 +75,12 @@ func GetChecksumForFile(file string) string {
 		os.Exit(1)
 	}
 
-	return GetChecksumForString(string(contents))
-}
-
-func GetChecksumForString(contents string) string {
 	hash := sha256.New()
-	input := strings.NewReader(contents)
+	input := strings.NewReader(string(contents))
 
 	if _, err := io.Copy(hash, input); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return "", err
 	}
 
-	return string(hash.Sum(nil))
+	return string(hash.Sum(nil)), nil
 }

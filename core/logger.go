@@ -6,7 +6,7 @@ import (
 )
 
 func Logger() *zap.Logger {
-	config := GetConfig()
+	config, _ := FindConfig(ConfigFile()).Resolve()
 
 	var loggerConfig zap.Config
 
