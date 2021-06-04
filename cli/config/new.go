@@ -9,9 +9,9 @@ import (
 )
 
 func runNewCommand(_ *cobra.Command, _ []string) {
-	err := core.FindConfig(core.ConfigFile()).IsValid()
+	isConfigValid := core.FindConfig(core.ConfigFile()).IsValid()
 
-	if err == nil {
+	if isConfigValid {
 		fmt.Println("The configuration already exists and seems to be valid.")
 		os.Exit(1)
 	}
@@ -21,7 +21,8 @@ func runNewCommand(_ *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	err = os.WriteFile(core.ConfigFile(), []byte(getDefaultConfigContents()), os.FileMode(0777))
+	_ = os.MkdirAll(core.ConfigDirectory(), os.FileMode(0777))
+	err := os.WriteFile(core.ConfigFile(), []byte(getDefaultConfigContents()), os.FileMode(0777))
 
 	if err != nil {
 		fmt.Println(err)

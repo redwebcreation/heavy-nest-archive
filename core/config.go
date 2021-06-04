@@ -2,7 +2,7 @@ package core
 
 import (
 	"crypto/sha256"
-	"fmt"
+	"encoding/hex"
 	"gopkg.in/yaml.v2"
 	"io"
 	"os"
@@ -10,16 +10,16 @@ import (
 )
 
 type Proxy struct {
-	Port       string `yaml:"port"`
-	Ssl        string `yaml:"ssl"`
-	SelfSigned bool   `yaml:"self_signed"`
+	Port       string `yaml:"port",omitempty`
+	Ssl        string `yaml:"ssl",omitempty`
+	SelfSigned *bool  `yaml:"self_signed",omitempty`
 }
 
 type ConfigData struct {
 	Proxy        Proxy
 	Applications []Application
 	Logs         struct {
-		Level        int8 `yaml:"level"`
+		Level        int8 `yaml:"level",omitempty`
 		Redirections []string
 	}
 }
@@ -30,49 +30,52 @@ func FindConfig(file string) Config {
 	return Config(file)
 }
 
-func (config Config) IsValid() error {
+func (config Config) IsValid() bool {
 	_, err := os.Stat(string(config))
 
 	if os.IsNotExist(err) {
-		return err
+		return false
 	}
 
-	return nil
+	return true
 }
-
-func (config Config) ExitIfInvalid() {
-	err := config.IsValid()
-
-	if err != nil {
-		fmt.Println(err)
-		fmt.Println("Configuration invalid.")
-		os.Exit(1)
-	}
-}
-
 func (config Config) Resolve() (ConfigData, error) {
 	data := ConfigData{}
-	bytes, _ := os.ReadFile(ConfigFile())
+	bytes, _ := os.ReadFile(string(config))
 
-	err := yaml.Unmarshal(bytes, &config)
+	err := yaml.Unmarshal(bytes, &data)
 
 	if err != nil {
 		return data, err
 	}
 
+	useDefaults(&data)
+
 	return data, nil
 }
 
-func (config Config) Checksum() (string, error) {
-	return getChecksumForFile(string(config))
+func useDefaults(data *ConfigData) *ConfigData {
+	if data.Proxy.Port == "" {
+		data.Proxy.Port = "80"
+	}
+
+	if data.Proxy.Ssl == "" {
+		data.Proxy.Ssl = "443"
+	}
+
+	if data.Proxy.SelfSigned == nil {
+		selfSigned := false
+		data.Proxy.SelfSigned = &selfSigned
+	}
+
+	return data
 }
 
-func getChecksumForFile(file string) (string, error) {
-	contents, err := os.ReadFile(file)
+func (config Config) Checksum() (string, error) {
+	contents, err := os.ReadFile(string(config))
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return "", err
 	}
 
 	hash := sha256.New()
@@ -82,5 +85,5 @@ func getChecksumForFile(file string) (string, error) {
 		return "", err
 	}
 
-	return string(hash.Sum(nil)), nil
+	return hex.EncodeToString(hash.Sum(nil)), nil
 }

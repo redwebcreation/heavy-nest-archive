@@ -199,6 +199,9 @@ The proxy is registered as `hezproxy.service` in systemd.
 
 TODO:
 
+* config.proxy.port config.proxy.ssl should be of type int rather than string
+* simplify checksums
+* get rid of all the os.Exit(1) in the core/ as it is a pretty bad design and not testable.
 * healthcheck (and healthcheck right after `hez run apply`)
 * diagnose command
 * ansi output

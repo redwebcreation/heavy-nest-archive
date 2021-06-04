@@ -145,7 +145,7 @@ WantedBy=multi-user.target`
 	stub = strings.Replace(stub, "[port]", proxy.Port, 1)
 	stub = strings.Replace(stub, "[ssl]", proxy.Ssl, 1)
 
-	if proxy.SelfSigned {
+	if *proxy.SelfSigned {
 		stub = strings.Replace(stub, "[selfSigned]", "--self-signed", 1)
 	} else {
 		stub = strings.Replace(stub, "[selfSigned]", "", 1)

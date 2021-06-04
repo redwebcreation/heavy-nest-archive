@@ -14,8 +14,8 @@ func run(cmd *cobra.Command, _ []string) {
 
 	currentChecksum, _ := configFile.Checksum()
 	previousChecksum, _ := core.GetKey("previous_checksum")
-	fmt.Printf("Previous config checksum : %x\n", previousChecksum)
-	fmt.Printf("Current config checksum : %x\n", currentChecksum)
+	fmt.Println("Previous config checksum : " + previousChecksum)
+	fmt.Println("Current config checksum : " + currentChecksum)
 
 	force, _ := cmd.Flags().GetBool("force")
 
