@@ -2,20 +2,14 @@ package core
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"os"
 	"strings"
 )
 
 func GetDockerClient() *client.Client {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	cli, _ := client.NewClientWithOpts(client.FromEnv)
 
 	return cli
 }
@@ -31,20 +25,21 @@ type ProxiableContainer struct {
 func GetWhitelistedDomains() []string {
 	var domains []string
 
-	for _, proxiableContainer := range GetProxiableContainers() {
+	proxiableContainers, _ := GetProxiableContainers()
+
+	for _, proxiableContainer := range proxiableContainers {
 		domains = append(domains, proxiableContainer.VirtualHost)
 	}
 
 	return domains
 }
 
-func GetProxiableContainers() []ProxiableContainer {
+func GetProxiableContainers() ([]ProxiableContainer, error) {
 	networks, err := GetDockerClient().NetworkList(context.Background(), types.NetworkListOptions{})
 	var proxiableContainers []ProxiableContainer
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	var networkBridge types.NetworkResource
@@ -58,8 +53,7 @@ func GetProxiableContainers() []ProxiableContainer {
 	bridgeDetails, err := GetDockerClient().NetworkInspect(context.Background(), networkBridge.ID, types.NetworkInspectOptions{})
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return nil, err
 	}
 
 	for _, bridgeContainer := range bridgeDetails.Containers {
@@ -67,21 +61,18 @@ func GetProxiableContainers() []ProxiableContainer {
 		})
 
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return nil, err
 		}
 
 		if len(containerList) != 1 {
-			fmt.Println("This should not happen. Zero or more than one container found.")
-			os.Exit(1)
+			return nil, errors.New("zero or more than one container found")
 		}
 
 		container := containerList[0]
 		inspectedContainer, err := GetDockerClient().ContainerInspect(context.Background(), container.ID)
 
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return nil, err
 		}
 
 		var virtualHost string
@@ -110,5 +101,5 @@ func GetProxiableContainers() []ProxiableContainer {
 		})
 	}
 
-	return proxiableContainers
+	return proxiableContainers, nil
 }

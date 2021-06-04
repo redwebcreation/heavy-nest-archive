@@ -6,7 +6,6 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"os"
 	"strings"
 )
 
@@ -62,17 +61,12 @@ func (application Application) HasRunningContainers() bool {
 }
 
 func (application Application) GetContainers() []types.Container {
-	containers, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{
+	containers, _ := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "ancestor",
 			Value: application.Image,
 		}),
 	})
-
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
 
 	return containers
 }

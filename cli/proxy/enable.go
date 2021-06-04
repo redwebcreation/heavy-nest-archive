@@ -20,8 +20,8 @@ func runEnableCommand(_ *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	if !config.Proxy.SelfSigned {
-		config.Proxy.SelfSigned = selfSigned
+	if !*config.Proxy.SelfSigned {
+		config.Proxy.SelfSigned = &selfSigned
 	}
 
 	err := core.EnableProxy(config.Proxy)

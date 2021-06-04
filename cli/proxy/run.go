@@ -20,7 +20,7 @@ var Ssl string
 
 func runRunCommand(_ *cobra.Command, _ []string) {
 	handler := func(writer http.ResponseWriter, request *http.Request) {
-		proxiableContainers := core.GetProxiableContainers()
+		proxiableContainers, _ := core.GetProxiableContainers()
 		logger := core.Logger()
 
 		if len(proxiableContainers) == 0 {
@@ -103,7 +103,7 @@ func initRunCommand() *cobra.Command {
 
 	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
 
-	runCommand.Flags().BoolVar(&selfSigned, "self-signed", config.Proxy.SelfSigned, "Generate self signed SSL certificates.")
+	runCommand.Flags().BoolVar(&selfSigned, "self-signed", *config.Proxy.SelfSigned, "Generate self signed SSL certificates.")
 	runCommand.Flags().StringVar(&Port, "port", config.Proxy.Port, "Runs the HTTP proxy on a specific port.")
 	runCommand.Flags().StringVar(&Ssl, "ssl", config.Proxy.Ssl, "Runs the HTTPS proxy on a specific port. ")
 
