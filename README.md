@@ -199,7 +199,6 @@ The proxy is registered as `hezproxy.service` in systemd.
 
 TODO:
 
-* config.proxy.port config.proxy.ssl should be of type int rather than string
 * healthcheck (and healthcheck right after `hez run apply`)
 * diagnose command
 * ansi output

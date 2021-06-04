@@ -128,12 +128,12 @@ applications:
 		t.Errorf("logs.redirections[1] should be stderr, got %s", resolved.Logs.Redirections[1])
 	}
 
-	if resolved.Proxy.Port != "8080" {
-		t.Errorf("proxy.port should be 8080, got %s", resolved.Proxy.Port)
+	if resolved.Proxy.Port != 8080 {
+		t.Errorf("proxy.port should be 8080, got %d", resolved.Proxy.Port)
 	}
 
-	if resolved.Proxy.Ssl != "8443" {
-		t.Errorf("proxy.ssl should be 8443, got %s", resolved.Proxy.Ssl)
+	if resolved.Proxy.Ssl != 8443 {
+		t.Errorf("proxy.ssl should be 8443, got %d", resolved.Proxy.Ssl)
 	}
 
 	if !*resolved.Proxy.SelfSigned {

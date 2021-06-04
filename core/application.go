@@ -20,7 +20,7 @@ type Application struct {
 	Env      []string
 }
 
-func (application Application) Start(binding Binding, isTemporary bool) error {
+func (application Application) Start(binding Binding, isEphemeral bool) error {
 	var env []string
 
 	env = append(env, "VIRTUAL_HOST="+binding.Host, "VIRTUAL_PORT="+binding.ContainerPort)
@@ -33,7 +33,7 @@ func (application Application) Start(binding Binding, isTemporary bool) error {
 		RestartPolicy: container.RestartPolicy{
 			Name: "unless-stopped",
 		},
-	}, nil, nil, binding.Name(isTemporary))
+	}, nil, nil, binding.Name(isEphemeral))
 
 	if err != nil {
 		return err
@@ -45,7 +45,7 @@ func (application Application) Start(binding Binding, isTemporary bool) error {
 		return err
 	}
 
-	fmt.Println("  - Starting container [" + application.Image + "]" + " for " + binding.Host)
+	fmt.Println("  - Starting container [/" + binding.Name(isEphemeral) + "]" + " for " + binding.Host)
 
 	return nil
 }
@@ -113,11 +113,11 @@ func (application Application) CleanUp(shouldCleanup ShouldCleanup) error {
 	return nil
 }
 
-func (binding Binding) Name(isTemporary bool) string {
+func (binding Binding) Name(isEphemeral bool) string {
 	name := strings.ReplaceAll(binding.Host, ".", "_") + "_" + binding.ContainerPort
 
-	if isTemporary {
-		name += "_temporary"
+	if isEphemeral {
+		name += "_ephemeral"
 	}
 
 	return name

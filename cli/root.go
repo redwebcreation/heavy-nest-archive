@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/redwebcreation/hez/cli/apply"
 	"github.com/redwebcreation/hez/cli/config"
+	"github.com/redwebcreation/hez/cli/health"
 	"github.com/redwebcreation/hez/cli/proxy"
 	"github.com/redwebcreation/hez/cli/stop"
 	"github.com/redwebcreation/hez/core"
@@ -32,5 +33,6 @@ func Execute() {
 	rootCli.AddCommand(config.NewCommand())
 	rootCli.AddCommand(apply.NewCommand())
 	rootCli.AddCommand(stop.NewCommand())
+	rootCli.AddCommand(health.NewCommand())
 	cobra.CheckErr(rootCli.Execute())
 }

@@ -30,6 +30,9 @@ func run(cmd *cobra.Command, _ []string) {
 		fmt.Println("Found changes.")
 	}
 
+	// Some space
+	fmt.Println()
+
 	config, _ := configFile.Resolve()
 
 	if len(config.Applications) == 0 {
@@ -37,12 +40,15 @@ func run(cmd *cobra.Command, _ []string) {
 	}
 
 	for _, application := range config.Applications {
+		if len(application.Bindings) == 0 {
+			fmt.Println("Skipping [" + application.Image + "] (reason: no bindings)")
+			continue
+		}
+
 		for _, binding := range application.Bindings {
-			fmt.Println("\n[" + binding.Host + "]")
+			fmt.Println("[" + binding.Host + "]")
 
 			fmt.Println("  - Cleaning up old state.")
-			//Here tell the reverse proxy to use a cloned version of the container
-			//for 0 downtime deployment
 			err := application.Start(binding, true)
 
 			if err != nil {
@@ -51,7 +57,7 @@ func run(cmd *cobra.Command, _ []string) {
 			}
 
 			err = application.CleanUp(func(container types.Container) bool {
-				return !strings.HasSuffix(container.Names[0], "_temporary")
+				return !strings.HasSuffix(container.Names[0], "_ephemeral")
 			})
 
 			if err != nil {
@@ -63,13 +69,15 @@ func run(cmd *cobra.Command, _ []string) {
 			fmt.Println("  - Starting the containers.")
 			err = application.Start(binding, false)
 
+			fmt.Println("  - Containers started.")
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
 
+			fmt.Println("  - Cleaning up ephemeral containers.")
 			err = application.CleanUp(func(container types.Container) bool {
-				return strings.HasSuffix(container.Names[0], "_temporary")
+				return strings.HasSuffix(container.Names[0], "_ephemeral")
 			})
 
 			if err != nil {
