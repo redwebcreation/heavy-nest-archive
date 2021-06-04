@@ -31,10 +31,10 @@ proxy:
   port: 80
   ssl: 443
   self_signed: false
-logs:
-  level: 0
-  redirections:
-    - stdout
+  logs:
+    level: 0
+    redirections:
+      - stdout
 ````
 
 ## Applications
@@ -100,13 +100,14 @@ hez proxy run --self-signed
 > You can not use Let's Encrypt to secure localhost.
 
 
-By default the port used, and the SSL strategy is defined in your configuration file :
+By default the ports used, and the SSL strategy is defined in your configuration file :
 
 ```yaml
 proxy:
   port: 80
   ssl: 443
   self_signed: true
+  logs: ...
 ```
 
 You can also register the proxy to run automatically and restart on reboot using systemd:
@@ -129,7 +130,7 @@ hez proxy status
 
 ### Logs
 
-The proxy logs requests and requests that failed. You can configure what it logs and how via your configuration
+The proxy logs received requests. You can configure what it logs and how via your configuration
 
 ```yaml
 proxy:
