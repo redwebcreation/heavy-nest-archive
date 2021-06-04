@@ -4,6 +4,11 @@
 apt install hez
 ```
 
+#### Disclaimer
+
+Some commands might seem familiar with what [Kubernetes](https://kubernetes.io) does. It's a pure coincidence so don't
+expect things to work the same as Kubernetes.
+
 ## Getting started
 
 Hez stores its configuration in `/etc/hez/hez.yml`, you can generate it automatically using the command below:
@@ -69,7 +74,72 @@ applications:
 Each binding in `bindings` will be a container that the proxy will send request to when a the specified `hosŧ` is
 requested. The `container_port` tells the proxy to which port it should redirect the incoming request .
 
-## Logs
+## Proxy
+
+Hez has an integrated reverse proxy that forwards any request to the right container.
+
+You can start it like that :
+
+```bash
+hez proxy run
+```
+
+You can also specify the ports that the proxy should listen to.
+
+```bash
+hez proxy run --port 8080 --ssl 8443
+```
+
+By default, the proxy will use Let's Encrypt to generate (and re-generate) SSL certificates, but you may want to use
+self-signed certificates for testing :
+
+````bash
+hez proxy run --self-signed
+````
+
+> You can not use Let's Encrypt to secure localhost.
+
+
+By default the port used, and the SSL strategy is defined in your configuration file :
+
+```yaml
+proxy:
+  port: 80
+  ssl: 443
+  self_signed: true
+```
+
+You can also register the proxy to run automatically and restart on reboot using systemd:
+
+```bash
+hez proxy enable
+```
+
+You may disable the systemd integration like so :
+
+```bash
+hez proxy disable
+```
+
+You may check the status of the proxy by running the following :
+
+```bash
+hez proxy status
+```
+
+### Logs
+
+The proxy logs requests and requests that failed. You can configure what it logs and how via your configuration
+
+```yaml
+proxy:
+  ...
+  logs:
+    level: 0
+    redirections:
+      - /tmp/the-proxy.log
+      - stdout
+```
 
 The log `level` defines the minimal level for a log to get logged. It goes from `-1` to `5`.
 

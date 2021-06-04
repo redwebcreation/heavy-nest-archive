@@ -13,15 +13,15 @@ type Proxy struct {
 	Port       int   `yaml:"port",omitempty`
 	Ssl        int   `yaml:"ssl",omitempty`
 	SelfSigned *bool `yaml:"self_signed",omitempty`
+	Logs       struct {
+		Level        int8 `yaml:"level",omitempty`
+		Redirections []string
+	}
 }
 
 type ConfigData struct {
 	Proxy        Proxy
 	Applications []Application
-	Logs         struct {
-		Level        int8 `yaml:"level",omitempty`
-		Redirections []string
-	}
 }
 
 type Config string

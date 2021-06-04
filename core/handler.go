@@ -2,6 +2,7 @@ package core
 
 import (
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"io"
 	"net/http"
 	"net/url"
@@ -81,4 +82,25 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 func internalServerError(writer http.ResponseWriter) {
 	writer.WriteHeader(http.StatusInternalServerError)
 	writer.Write([]byte("Internal Server Error"))
+}
+
+func Logger() *zap.Logger {
+	config, _ := FindConfig(ConfigFile()).Resolve()
+
+	var loggerConfig zap.Config
+
+	loggerConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Proxy.Logs.Level))
+	loggerConfig.OutputPaths = config.Proxy.Logs.Redirections
+	loggerConfig.Encoding = "json"
+	loggerConfig.EncoderConfig = zapcore.EncoderConfig{
+		MessageKey:  "message",
+		LevelKey:    "level",
+		EncodeLevel: zapcore.LowercaseLevelEncoder,
+	}
+
+	logger, _ := loggerConfig.Build()
+
+	defer logger.Sync()
+
+	return logger
 }

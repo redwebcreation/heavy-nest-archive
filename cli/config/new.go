@@ -37,14 +37,14 @@ func runNewCommand(_ *cobra.Command, _ []string) {
 
 func getDefaultConfigContents() string {
 	return strings.TrimSpace(`
-logs:
-  level: 0
-  redirections:
-    - stdout
 proxy:
   port: 80
   ssl: 443
   self_signed: false
+  logs:
+  level: 0
+  redirections:
+    - stdout
 applications: []
 `)
 }

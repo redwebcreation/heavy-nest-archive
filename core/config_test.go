@@ -16,14 +16,14 @@ func createFakeConfig(config string) string {
 
 	if len(config) == 0 {
 		config = `
-logs:
-	level: 0
-	redirections:
-		- stdout
 proxy:
 	port: 80
 	ssl: 443
 	self_signed: false
+    logs:
+	  level: 0
+	  redirections:
+		- stdout
 applications: []
 `
 	}
@@ -68,22 +68,22 @@ func TestConfig_Checksum(t *testing.T) {
 
 	checksum, _ := configFile.Checksum()
 
-	if checksum != "c66f8054c9ffadf3166e694784ddbf22f92c586a4aeb0b8f27a8a666c35a6657" {
-		t.Errorf("The checksum should be c66f8054c9ffadf3166e694784ddbf22f92c586a4aeb0b8f27a8a666c35a6657, given: %x", checksum)
+	if checksum != "0aba345a632ee0b998958edd6479a69007bcba99d86ff2633ee4b847793ab6c4" {
+		t.Errorf("The checksum should be c66f8054c9ffadf3166e694784ddbf22f92c586a4aeb0b8f27a8a666c35a6657, given: %s", checksum)
 	}
 }
 
 func TestConfig_Resolve(t *testing.T) {
 	path := createFakeConfig(`
-logs:
-  level: 4
-  redirections:
-    - /tmp/app.log
-    - stderr
 proxy:
   port: 8080
   ssl: 8443
   self_signed: true
+  logs:
+    level: 4
+    redirections:
+      - /tmp/app.log
+      - stderr
 applications:
   - image: example
     env:
@@ -117,15 +117,15 @@ applications:
 		t.Errorf("applications[0].env[0] should be APP_ENV=local, got %s", resolved.Applications[0].Env[0])
 	}
 
-	if resolved.Logs.Level != 4 {
-		t.Errorf("logs.level should be 4, got %d", resolved.Logs.Level)
+	if resolved.Proxy.Logs.Level != 4 {
+		t.Errorf("proxy.logs.level should be 4, got %d", resolved.Proxy.Logs.Level)
 	}
 
-	if resolved.Logs.Redirections[0] != "/tmp/app.log" {
-		t.Errorf("logs.redirections[0] should be /tmp/app.log, got %s", resolved.Logs.Redirections[0])
+	if resolved.Proxy.Logs.Redirections[0] != "/tmp/app.log" {
+		t.Errorf("proxy.logs.redirections[0] should be /tmp/app.log, got %s", resolved.Proxy.Logs.Redirections[0])
 	}
-	if resolved.Logs.Level != 4 {
-		t.Errorf("logs.redirections[1] should be stderr, got %s", resolved.Logs.Redirections[1])
+	if resolved.Proxy.Logs.Level != 4 {
+		t.Errorf("proxy.logs.redirections[1] should be stderr, got %s", resolved.Proxy.Logs.Redirections[1])
 	}
 
 	if resolved.Proxy.Port != 8080 {
