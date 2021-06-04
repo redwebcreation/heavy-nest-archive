@@ -12,11 +12,12 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 )
 
 var selfSigned bool
-var Port string
-var Ssl string
+var Port int
+var Ssl int
 
 func runRunCommand(_ *cobra.Command, _ []string) {
 	handler := func(writer http.ResponseWriter, request *http.Request) {
@@ -60,12 +61,12 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 
 	if selfSigned {
 		go func() {
-			log.Fatal(http.ListenAndServe(":"+Port, nil))
+			log.Fatal(http.ListenAndServe(":"+strconv.Itoa(Port), nil))
 		}()
 
 		keyPath, certPath := handleSSLForTesting()
 
-		err := http.ListenAndServeTLS(":"+Ssl, certPath, keyPath, nil)
+		err := http.ListenAndServeTLS(":"+strconv.Itoa(Ssl), certPath, keyPath, nil)
 
 		if err != nil {
 			fmt.Println(err)
@@ -78,7 +79,7 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 		}
 
 		server := &http.Server{
-			Addr: ":" + Ssl,
+			Addr: ":" + strconv.Itoa(Ssl),
 			TLSConfig: &tls.Config{
 				GetCertificate: certManager.GetCertificate,
 			},
@@ -87,7 +88,7 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 		go func() {
 			// HTTP server that redirects to the HTTPS one.
 			h := certManager.HTTPHandler(nil)
-			log.Fatal(http.ListenAndServe(":"+Port, h))
+			log.Fatal(http.ListenAndServe(":"+strconv.Itoa(Port), h))
 		}()
 
 		log.Fatal(server.ListenAndServeTLS("", ""))
@@ -104,8 +105,8 @@ func initRunCommand() *cobra.Command {
 	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
 
 	runCommand.Flags().BoolVar(&selfSigned, "self-signed", *config.Proxy.SelfSigned, "Generate self signed SSL certificates.")
-	runCommand.Flags().StringVar(&Port, "port", config.Proxy.Port, "Runs the HTTP proxy on a specific port.")
-	runCommand.Flags().StringVar(&Ssl, "ssl", config.Proxy.Ssl, "Runs the HTTPS proxy on a specific port. ")
+	runCommand.Flags().IntVar(&Port, "port", config.Proxy.Port, "Runs the HTTP proxy on a specific port.")
+	runCommand.Flags().IntVar(&Ssl, "ssl", config.Proxy.Ssl, "Runs the HTTPS proxy on a specific port. ")
 
 	return runCommand
 }

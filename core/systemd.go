@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	systemUser "os/user"
+	"strconv"
 	"strings"
 )
 
@@ -142,8 +143,8 @@ WantedBy=multi-user.target`
 
 	stub = strings.Replace(stub, "[user]", user.Username, 1)
 	stub = strings.Replace(stub, "[executable]", executable, 1)
-	stub = strings.Replace(stub, "[port]", proxy.Port, 1)
-	stub = strings.Replace(stub, "[ssl]", proxy.Ssl, 1)
+	stub = strings.Replace(stub, "[port]", strconv.Itoa(proxy.Port), 1)
+	stub = strings.Replace(stub, "[ssl]", strconv.Itoa(proxy.Ssl), 1)
 
 	if *proxy.SelfSigned {
 		stub = strings.Replace(stub, "[selfSigned]", "--self-signed", 1)

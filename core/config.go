@@ -10,9 +10,9 @@ import (
 )
 
 type Proxy struct {
-	Port       string `yaml:"port",omitempty`
-	Ssl        string `yaml:"ssl",omitempty`
-	SelfSigned *bool  `yaml:"self_signed",omitempty`
+	Port       int   `yaml:"port",omitempty`
+	Ssl        int   `yaml:"ssl",omitempty`
+	SelfSigned *bool `yaml:"self_signed",omitempty`
 }
 
 type ConfigData struct {
@@ -55,12 +55,12 @@ func (config Config) Resolve() (ConfigData, error) {
 }
 
 func useDefaults(data *ConfigData) *ConfigData {
-	if data.Proxy.Port == "" {
-		data.Proxy.Port = "80"
+	if data.Proxy.Port == 0 {
+		data.Proxy.Port = 80
 	}
 
-	if data.Proxy.Ssl == "" {
-		data.Proxy.Ssl = "443"
+	if data.Proxy.Ssl == 0 {
+		data.Proxy.Ssl = 443
 	}
 
 	if data.Proxy.SelfSigned == nil {
