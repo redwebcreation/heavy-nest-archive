@@ -20,7 +20,7 @@ type Application struct {
 	Env      []string
 }
 
-func (application Application) Start(binding Binding, isEphemeral bool) error {
+func (application Application) Start(binding Binding, isEphemeral bool) (string, error) {
 	var env []string
 
 	env = append(env, "VIRTUAL_HOST="+binding.Host, "VIRTUAL_PORT="+binding.ContainerPort)
@@ -36,18 +36,18 @@ func (application Application) Start(binding Binding, isEphemeral bool) error {
 	}, nil, nil, binding.Name(isEphemeral))
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	err = GetDockerClient().ContainerStart(context.Background(), resp.ID, types.ContainerStartOptions{})
 
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	fmt.Println("  - Starting container [/" + binding.Name(isEphemeral) + "]" + " for " + binding.Host)
 
-	return nil
+	return resp.ID, nil
 }
 
 func (application Application) HasRunningContainers() bool {

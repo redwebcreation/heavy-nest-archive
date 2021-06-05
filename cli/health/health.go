@@ -8,13 +8,17 @@ import (
 )
 
 func run(_ *cobra.Command, _ []string) {
-	proxiables, err := core.GetProxiableContainers()
+	proxiablesContainers, err := core.GetProxiableContainers()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	for _, proxiable := range proxiables {
+	if len(proxiablesContainers) == 0 {
+		fmt.Println("No running containers.")
+	}
+
+	for _, proxiable := range proxiablesContainers {
 		healthStatus := proxiable.Container.State.Health.Status
 
 		if healthStatus != "healthy" {
@@ -34,7 +38,7 @@ func run(_ *cobra.Command, _ []string) {
 func NewCommand() *cobra.Command {
 	healthCmd := &cobra.Command{
 		Use:   "health",
-		Short: "Returns the system's health",
+		Short: "Returns the containers' health",
 		Run:   run,
 	}
 

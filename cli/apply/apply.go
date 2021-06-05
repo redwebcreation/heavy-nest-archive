@@ -49,7 +49,7 @@ func run(cmd *cobra.Command, _ []string) {
 			fmt.Println("[" + binding.Host + "]")
 
 			fmt.Println("  - Cleaning up old state.")
-			err := application.Start(binding, true)
+			_, err := application.Start(binding, true)
 
 			if err != nil {
 				fmt.Println(err)
@@ -67,13 +67,14 @@ func run(cmd *cobra.Command, _ []string) {
 
 			fmt.Println("  - Old state cleaned up.")
 			fmt.Println("  - Starting the containers.")
-			err = application.Start(binding, false)
+			container, err := application.Start(binding, false)
 
-			fmt.Println("  - Containers started.")
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
 			}
+
+			fmt.Println("  - Containers started.")
 
 			fmt.Println("  - Cleaning up ephemeral containers.")
 			err = application.CleanUp(func(container types.Container) bool {
