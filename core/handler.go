@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, request *http.Request) {
+func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, request *http.Request) bool {
 	containerUrl, err := url.Parse("http://" + container.Ipv4 + ":" + container.VirtualPort)
 
 	if err != nil {
@@ -18,7 +18,7 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 			zap.String("error", err.Error()),
 		)
 		internalServerError(writer)
-		return
+		return false
 	}
 
 	request.Host = containerUrl.Host + ":" + container.VirtualPort
@@ -35,9 +35,8 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 			zap.String("error", err.Error()),
 		)
 		internalServerError(writer)
-		return
+		return false
 	}
-
 	for key, values := range response.Header {
 		for _, value := range values {
 			writer.Header().Set(key, value)
@@ -76,10 +75,10 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 	}
 
 	close(done)
+	return true
 }
 
 func internalServerError(writer http.ResponseWriter) {
 	writer.WriteHeader(http.StatusInternalServerError)
 	writer.Write([]byte("Internal Server Error"))
 }
-

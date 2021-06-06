@@ -33,7 +33,15 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 
 		for _, proxiableContainer := range proxiableContainers {
 			if request.Host == proxiableContainer.VirtualHost {
-				core.ForwardRequest(proxiableContainer, writer, request)
+				success := core.ForwardRequest(proxiableContainer, writer, request)
+				if success {
+					zap.L().Info(
+						"request.success",
+						zap.String("method", request.Method),
+						zap.String("ip", ip),
+						zap.String("vhost", request.Host),
+					)
+				}
 				return
 			}
 		}
@@ -43,7 +51,6 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 			zap.String("method", request.Method),
 			zap.String("ip", ip),
 			zap.String("vhost", request.Host),
-			zap.String("request_uri", request.RequestURI),
 		)
 		writer.WriteHeader(404)
 		writer.Write([]byte("404. That’s an error. \nThe requested URL " + request.RequestURI + " was not found on this server. That’s all we know."))

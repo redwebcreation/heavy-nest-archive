@@ -9,12 +9,10 @@ import (
 	"os"
 )
 
-var loggerConfig zap.Config
-
 func main() {
 	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
 
-	loggerConfig = zap.Config{
+	loggerConfig := zap.Config{
 		Level:    zap.NewAtomicLevelAt(zapcore.Level(config.Proxy.Logs.Level)),
 		Encoding: "json",
 		EncoderConfig: zapcore.EncoderConfig{
