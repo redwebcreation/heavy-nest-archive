@@ -119,6 +119,7 @@ func run(cmd *cobra.Command, _ []string) {
 
 func GetEstimatedUpdateTime(config core.ConfigData) string {
 	estimate := 0
+	biggestInterval := 0
 
 	for _, application := range config.Applications {
 		inspection, _, err := core.GetDockerClient().ImageInspectWithRaw(context.Background(), application.Image)
@@ -131,9 +132,15 @@ func GetEstimatedUpdateTime(config core.ConfigData) string {
 		if inspection.ContainerConfig.Healthcheck == nil {
 			estimate += 500
 		} else {
-			estimate += int(inspection.ContainerConfig.Healthcheck.Interval.Milliseconds())
+			interval := int(inspection.ContainerConfig.Healthcheck.Interval.Milliseconds())
+
+			if interval > biggestInterval {
+				biggestInterval = interval
+			}
 		}
 	}
+
+	estimate += biggestInterval
 
 	duration, _ := time.ParseDuration(strconv.Itoa(estimate) + "ms")
 

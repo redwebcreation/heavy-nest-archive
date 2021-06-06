@@ -72,6 +72,26 @@ applications:
 
 The `host` tells the proxy to forward any request for this host to the application on the `container_port`
 
+You can now apply your configuration :
+
+```bash
+hez apply
+```
+
+This command will create all the containers as defined in your configuration. Every time you change your configuration,
+you should run `hez apply`to apply it.
+
+If you didn't change your config and still want to re-apply it, you'll need to force it:
+
+```bash
+hez apply -f
+```
+
+You can also stop all the running containers.
+
+```bash
+hez stop
+```
 
 ## Proxy
 
@@ -164,114 +184,11 @@ For the logs that have the minimum required level, you can redirect them to vari
 If you leave `redirections` empty, logs won't be saved.
 
 ---
-**It's just notes from now on. It's outdated and contains a lot of tpyos.**
-
-## Applications
-
-You can create a new application by adding an entry to the `applications:` section of your config.
-
-```yaml
-applications:
-  - name: yourAppName
-    image: nginx
-    environment: nginx.env
-    bindings:
-      - host: example.com
-        port: 8000
-```
-
-Let's break this down, line by line:
-
-The `applications` key just contains the list of your applications, pretty straight-forward.
-
-Now, the name, it will be removed soon, but right now it's used to show the app's name. It can be whatever, it's not
-actually used.
-
-The image represents the docker image of your application, you can specify a version like this:
-
-```yaml
-applications:
-  - ...
-    image: nginx:latest
-```
-
-Just as you would do with Docker.
-
-The environment will get completely reworked tomorrow (probably), so no docs for now.
-
-The bindings are probably the most complicated part of this configuration :
-
-You bind `http://example.com` and `https://example.com` to your container's port 8000. You're not
-binding `http://example.com:8000` to your container on a port.
-
-You can apply your configuration :
-
-```bash
-hez apply
-```
-
-If you didn't change your config and try to apply, it won't work.
-
-```bash
-hez apply -f
-```
-
-You need to force it.
-
-You can also stop running containers
-
-```bash
-hez stop
-```
-
-**TODO: Prevent stopping if proxy is running or option --with-proxy**
-
-You probably want to stop your proxy before.
-
-## Proxy
-
-There's an integrated reverse proxy with sub-millisecond response time integrated. (It takes a ~1ms with 100 containers
-and the worst case scenario)
-
-You can start it like that
-
-```bash
-hez proxy run
-```
-
-In development, you probably want to do smtg like
-
-```bash
-hez proxy run --port 8080 --ssl 8443 --self-signed
-```
-
-It generates SSL certificates automatically (and re-generates) using Let's Encrypt.
-
-It does that one the first request, and then everytime the certificates expires it regenerates it during a request.
-
-// TODO: A registrable cron command or smtg
-
-If you pass no options `hex proxy run`, it uses the options in your configuration `proxy:`.
-
-You can register / disable the reverse proxy in systemctl. It can run / restart automatically.
-
-```bash
-hez proxy enable
-```
-
-```bash
-hez proxy disable
-```
-
-You can also get the proxy's status with `hez proxy status`.
-
-The proxy is registered as `hezproxy.service` in systemd.
 
 TODO:
 
+* container logs?
 * check if dns points to the server automatically
 * diagnose command
-* ansi output
-* documentation
 * self-update command / system
 * build on release commmand
