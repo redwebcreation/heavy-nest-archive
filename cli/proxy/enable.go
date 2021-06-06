@@ -8,8 +8,6 @@ import (
 )
 
 func runEnableCommand(_ *cobra.Command, _ []string) {
-	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
-
 	if !core.IsRunningAsRoot() {
 		fmt.Println("This command requires elevated privileges.")
 		os.Exit(1)
@@ -20,11 +18,7 @@ func runEnableCommand(_ *cobra.Command, _ []string) {
 		os.Exit(1)
 	}
 
-	if !*config.Proxy.SelfSigned {
-		config.Proxy.SelfSigned = &selfSigned
-	}
-
-	err := core.EnableProxy(config.Proxy)
+	err := core.EnableProxy()
 
 	if err != nil {
 		fmt.Println(err)

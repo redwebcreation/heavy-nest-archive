@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/exec"
 	systemUser "os/user"
-	"strconv"
 	"strings"
 )
 
@@ -31,8 +30,8 @@ func IsProxyEnabled() bool {
 	return false
 }
 
-func EnableProxy(proxy Proxy) error {
-	supervisorConfig, err := GetSupervisordConfig(proxy)
+func EnableProxy() error {
+	supervisorConfig, err := GetSupervisordConfig()
 
 	if err != nil {
 		return err
@@ -69,7 +68,6 @@ func EnableProxy(proxy Proxy) error {
 		fmt.Println("Running [" + command + "]")
 
 		if err != nil {
-			fmt.Println("ERROR HERE")
 			return err
 		}
 	}
@@ -103,7 +101,6 @@ func DisableProxy() error {
 		fmt.Println("Running [" + command + "]")
 
 		if err != nil {
-			fmt.Println("ERROR HERE")
 			return err
 		}
 	}
@@ -113,7 +110,7 @@ func DisableProxy() error {
 	return err
 }
 
-func GetSupervisordConfig(proxy Proxy) (string, error) {
+func GetSupervisordConfig() (string, error) {
 	stub := `[Unit]
 Description=Hez Proxy Server
 After=network.target
@@ -124,7 +121,7 @@ Type=simple
 Restart=always
 RestartSec=1
 User=[user]
-ExecStart=[executable] proxy run --port [port] --ssl [ssl] [selfSigned]
+ExecStart=[executable] proxy run
 
 [Install]
 WantedBy=multi-user.target`
@@ -143,14 +140,6 @@ WantedBy=multi-user.target`
 
 	stub = strings.Replace(stub, "[user]", user.Username, 1)
 	stub = strings.Replace(stub, "[executable]", executable, 1)
-	stub = strings.Replace(stub, "[port]", strconv.Itoa(proxy.Port), 1)
-	stub = strings.Replace(stub, "[ssl]", strconv.Itoa(proxy.Ssl), 1)
-
-	if *proxy.SelfSigned {
-		stub = strings.Replace(stub, "[selfSigned]", "--self-signed", 1)
-	} else {
-		stub = strings.Replace(stub, "[selfSigned]", "", 1)
-	}
 
 	return stub, nil
 }
