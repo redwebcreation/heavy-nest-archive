@@ -270,7 +270,7 @@ The proxy is registered as `hezproxy.service` in systemd.
 
 TODO:
 
-* healthcheck (and healthcheck right after `hez run apply`)
+* check if dns points to the server automatically
 * diagnose command
 * ansi output
 * documentation

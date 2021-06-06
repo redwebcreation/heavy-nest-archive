@@ -37,6 +37,23 @@ func (config Config) IsValid() bool {
 		return false
 	}
 
+	resolved, err := config.Resolve()
+
+	if err != nil {
+		return false
+	}
+
+	var usedHosts = make([]string, len(resolved.Applications))
+	for _, application := range resolved.Applications {
+		for _, host := range usedHosts {
+			if host == application.Host {
+				return false
+			}
+		}
+
+		usedHosts = append(usedHosts, application.Host)
+	}
+
 	return true
 }
 func (config Config) Resolve() (ConfigData, error) {

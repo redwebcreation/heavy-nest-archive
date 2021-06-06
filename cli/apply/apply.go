@@ -43,9 +43,20 @@ func run(cmd *cobra.Command, _ []string) {
 		go func(application core.Application) {
 			if !application.HasApplicationContainer() {
 				container := application.CreateContainer(false)
+				PrintFor(application, "Created container from ["+application.Image+"].")
 
 				for ContainerIsStarting(container) {
 					time.Sleep(1 * time.Second)
+				}
+
+				if IsUnhealthy(container) {
+					PrintFor(application, "Container is is an unhealthy state.")
+					application.RemoveEphemeralContainer()
+					PrintFor(application, "Not rolling back as there's no healthy running container for this application.")
+					wg.Done()
+					return
+				} else {
+					PrintFor(application, "Container is in an healthy state.")
 				}
 
 				wg.Done()
@@ -54,27 +65,62 @@ func run(cmd *cobra.Command, _ []string) {
 
 			container := application.CreateContainer(true)
 
+			PrintFor(application, "Created an ephemeral container from ["+application.Image+"]")
+
 			for ContainerIsStarting(container) {
 				time.Sleep(1 * time.Second)
+			}
+
+			if IsUnhealthy(container) {
+				PrintFor(application, "Container is is an unhealthy state.")
+				application.RemoveEphemeralContainer()
+				PrintFor(application, "Rolling back to the last healthy state.")
+				wg.Done()
+				return
+			} else {
+				PrintFor(application, "Container is in an healthy state.")
 			}
 
 			application.RemoveApplicationContainer()
 
+			PrintFor(application, "Stopped old container.")
+
 			application.CreateContainer(false)
+
+			PrintFor(application, "Created new container from ["+application.Image+"]")
 
 			for ContainerIsStarting(container) {
 				time.Sleep(1 * time.Second)
 			}
 
+			PrintFor(application, "Container is in an healthy state.")
+
 			application.RemoveEphemeralContainer()
+
+			PrintFor(application, "Removed ephemeral container.")
 
 			wg.Done()
 		}(config.Applications[i])
 	}
 
 	wg.Wait()
-	
+
 	_ = core.SetKey("previous_checksum", currentChecksum)
+}
+
+func IsUnhealthy(container string) bool {
+	inspection, err := core.GetDockerClient().ContainerInspect(context.Background(), container)
+
+	if err != nil {
+		fmt.Println(err)
+		return true
+	}
+
+	if inspection.State.Health == nil {
+		return false
+	}
+
+	return inspection.State.Health.Status == "unhealthy"
 }
 
 func NewCommand() *cobra.Command {
@@ -101,5 +147,9 @@ func ContainerIsStarting(containerId string) bool {
 		return false
 	}
 
-	return inspection.State.Health.Status == "starting"
+	return inspection.State.Health.Status != "healthy"
+}
+
+func PrintFor(application core.Application, message string) {
+	fmt.Println(application.Host + ": " + message)
 }
