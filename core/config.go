@@ -85,6 +85,12 @@ func useDefaults(data *ConfigData) *ConfigData {
 		data.Proxy.SelfSigned = &selfSigned
 	}
 
+	for i := range data.Applications {
+		if data.Applications[i].ContainerPort == 0 {
+			data.Applications[i].ContainerPort = 80
+		}
+	}
+
 	return data
 }
 

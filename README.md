@@ -44,12 +44,11 @@ An application in the configuration looks like that :
 ```yaml
 applications:
   - image: example-app
+    host: example.com
+    container_port: 80
     env:
       - APP_ENV=local
       - ...
-    bindings:
-      - host: example.com
-        container_port: 80
 ```
 
 Let's break it down, line by line.
@@ -71,8 +70,8 @@ applications:
       - YES="not at all"
 ```
 
-Each binding in `bindings` will be a container that the proxy will send request to when a the specified `hosŧ` is
-requested. The `container_port` tells the proxy to which port it should redirect the incoming request .
+The `host` tells the proxy to forward any request for this host to the application on the `container_port`
+
 
 ## Proxy
 
