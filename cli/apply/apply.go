@@ -1,12 +1,13 @@
 package apply
 
 import (
+	"context"
 	"fmt"
-	"github.com/docker/docker/api/types"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os"
-	"strings"
+	"sync"
+	"time"
 )
 
 func run(cmd *cobra.Command, _ []string) {
@@ -35,62 +36,45 @@ func run(cmd *cobra.Command, _ []string) {
 
 	config, _ := configFile.Resolve()
 
-	if len(config.Applications) == 0 {
-		fmt.Println("No applications found.")
+	var wg sync.WaitGroup
+	wg.Add(len(config.Applications))
+
+	for i := 0; i < len(config.Applications); i++ {
+		go func(application core.Application) {
+			if !application.HasApplicationContainer() {
+				container := application.CreateContainer(false)
+
+				for ContainerIsStarting(container) {
+					time.Sleep(1 * time.Second)
+				}
+
+				wg.Done()
+				return
+			}
+
+			container := application.CreateContainer(true)
+
+			for ContainerIsStarting(container) {
+				time.Sleep(1 * time.Second)
+			}
+
+			application.RemoveApplicationContainer()
+
+			application.CreateContainer(false)
+
+			for ContainerIsStarting(container) {
+				time.Sleep(1 * time.Second)
+			}
+
+			application.RemoveEphemeralContainer()
+
+			wg.Done()
+		}(config.Applications[i])
 	}
 
-	for _, application := range config.Applications {
-		if len(application.Bindings) == 0 {
-			fmt.Println("Skipping [" + application.Image + "] (reason: no bindings)")
-			continue
-		}
-
-		for _, binding := range application.Bindings {
-			fmt.Println("[" + binding.Host + "]")
-
-			fmt.Println("  - Cleaning up old state.")
-			_, err := application.Start(binding, true)
-
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			err = application.CleanUp(func(container types.Container) bool {
-				return !strings.HasSuffix(container.Names[0], "_ephemeral")
-			})
-
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			fmt.Println("  - Old state cleaned up.")
-			fmt.Println("  - Starting the containers.")
-			container, err := application.Start(binding, false)
-
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			fmt.Println("  - Containers started.")
-
-			fmt.Println("  - Cleaning up ephemeral containers.")
-			err = application.CleanUp(func(container types.Container) bool {
-				return strings.HasSuffix(container.Names[0], "_ephemeral")
-			})
-
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-
-			fmt.Println("  - Containers started.")
-		}
-	}
-
-	core.SetKey("previous_checksum", currentChecksum)
+	wg.Wait()
+	
+	_ = core.SetKey("previous_checksum", currentChecksum)
 }
 
 func NewCommand() *cobra.Command {
@@ -103,4 +87,19 @@ func NewCommand() *cobra.Command {
 	applyCmd.Flags().BoolP("force", "f", false, "Force the apply command to run")
 
 	return applyCmd
+}
+
+func ContainerIsStarting(containerId string) bool {
+	inspection, err := core.GetDockerClient().ContainerInspect(context.Background(), containerId)
+
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	if inspection.State.Health == nil {
+		return false
+	}
+
+	return inspection.State.Health.Status == "starting"
 }
