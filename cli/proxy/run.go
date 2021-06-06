@@ -28,27 +28,17 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 	}
 
 	handler := func(writer http.ResponseWriter, request *http.Request) {
-		logger := core.Logger()
-
 		ip, _, _ := net.SplitHostPort(request.RemoteAddr)
 		request.Header.Set("X-Forwarded-For", ip)
 
 		for _, proxiableContainer := range proxiableContainers {
 			if request.Host == proxiableContainer.VirtualHost {
-				logger.Info(
-					"request.handled",
-					zap.String("method", request.Method),
-					zap.String("ip", ip),
-					zap.String("vhost", proxiableContainer.VirtualHost),
-					zap.String("request_uri", request.RequestURI),
-				)
-
 				core.ForwardRequest(proxiableContainer, writer, request)
 				return
 			}
 		}
 
-		logger.Info(
+		zap.L().Info(
 			"request.invalid",
 			zap.String("method", request.Method),
 			zap.String("ip", ip),

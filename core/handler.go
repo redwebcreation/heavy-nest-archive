@@ -2,7 +2,6 @@ package core
 
 import (
 	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"io"
 	"net/http"
 	"net/url"
@@ -14,7 +13,7 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 	containerUrl, err := url.Parse("http://" + container.Ipv4 + ":" + container.VirtualPort)
 
 	if err != nil {
-		Logger().Error(
+		zap.L().Error(
 			"url.invalid",
 			zap.String("error", err.Error()),
 		)
@@ -30,7 +29,7 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 	response, err := http.DefaultClient.Do(request)
 
 	if err != nil {
-		Logger().Error(
+		zap.L().Error(
 			"forward.failed",
 			zap.String("container_url", containerUrl.String()),
 			zap.String("error", err.Error()),
@@ -84,23 +83,3 @@ func internalServerError(writer http.ResponseWriter) {
 	writer.Write([]byte("Internal Server Error"))
 }
 
-func Logger() *zap.Logger {
-	config, _ := FindConfig(ConfigFile()).Resolve()
-
-	var loggerConfig zap.Config
-
-	loggerConfig.Level = zap.NewAtomicLevelAt(zapcore.Level(config.Proxy.Logs.Level))
-	loggerConfig.OutputPaths = config.Proxy.Logs.Redirections
-	loggerConfig.Encoding = "json"
-	loggerConfig.EncoderConfig = zapcore.EncoderConfig{
-		MessageKey:  "message",
-		LevelKey:    "level",
-		EncodeLevel: zapcore.LowercaseLevelEncoder,
-	}
-
-	logger, _ := loggerConfig.Build()
-
-	defer logger.Sync()
-
-	return logger
-}
