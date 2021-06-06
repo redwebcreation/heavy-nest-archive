@@ -19,15 +19,15 @@ func run(_ *cobra.Command, _ []string) {
 	}
 
 	for _, proxiable := range proxiablesContainers {
-		healthStatus := proxiable.Container.State.Health
+		var healthStatus string
 
-		if healthStatus ==nil {
+		if proxiable.Container.State.Health == nil {
 			healthStatus = "healthy"
 		} else {
-			healthStatus = proxiable.Container.State.Health
+			healthStatus = proxiable.Container.State.Health.Status
 		}
 
-		if healthStatus != "healthy" {
+		if healthStatus == "healthy" {
 			fmt.Println(proxiable.Name + ": " + healthStatus)
 		} else {
 			fmt.Println("[" + proxiable.Name + "]")
