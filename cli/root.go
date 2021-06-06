@@ -3,6 +3,10 @@ package cli
 import (
 	"fmt"
 	"github.com/redwebcreation/hez/cli/apply"
+	"github.com/redwebcreation/hez/cli/config"
+	"github.com/redwebcreation/hez/cli/health"
+	"github.com/redwebcreation/hez/cli/proxy"
+	"github.com/redwebcreation/hez/cli/stop"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os"
@@ -25,10 +29,10 @@ var rootCli = &cobra.Command{
 }
 
 func Execute() {
-	//rootCli.AddCommand(proxy.NewCommand())
-	//rootCli.AddCommand(config.NewCommand())
+	rootCli.AddCommand(proxy.NewCommand())
+	rootCli.AddCommand(config.NewCommand())
 	rootCli.AddCommand(apply.NewCommand())
-	//rootCli.AddCommand(stop.NewCommand())
-	//rootCli.AddCommand(health.NewCommand())
+	rootCli.AddCommand(stop.NewCommand())
+	rootCli.AddCommand(health.NewCommand())
 	cobra.CheckErr(rootCli.Execute())
 }

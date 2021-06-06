@@ -74,10 +74,10 @@ func (application Application) Name(isEphemeral bool) string {
 	return name
 }
 
-func (application Application) RemoveApplicationContainer() string {
+func (application Application) RemoveApplicationContainer() (string, error) {
 	return RemoveContainer(application.Name(false))
 }
 
-func (application Application) RemoveEphemeralContainer() string {
+func (application Application) RemoveEphemeralContainer() (string, error) {
 	return RemoveContainer(application.Name(true))
 }

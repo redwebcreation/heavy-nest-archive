@@ -3,10 +3,8 @@ package core
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/client"
-	"os"
 	"strings"
 )
 
@@ -106,7 +104,7 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 	return proxiableContainers, nil
 }
 
-func RemoveContainer(name string) string {
+func RemoveContainer(name string) (string, error) {
 	containers, _ := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{})
 
 	var currentContainer types.Container
@@ -117,19 +115,21 @@ func RemoveContainer(name string) string {
 		}
 	}
 
+	if currentContainer.ID == "" {
+		return "", nil
+	}
+
 	err := GetDockerClient().ContainerStop(context.Background(), currentContainer.ID, nil)
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return "", err
 	}
 
 	err = GetDockerClient().ContainerRemove(context.Background(), currentContainer.Names[0], types.ContainerRemoveOptions{})
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return "", err
 	}
 
-	return containers[0].ID
+	return containers[0].ID, nil
 }

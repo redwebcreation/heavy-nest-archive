@@ -6,6 +6,7 @@ import (
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 )
@@ -31,10 +32,15 @@ func run(cmd *cobra.Command, _ []string) {
 		fmt.Println("Found changes.")
 	}
 
+	config, _ := configFile.Resolve()
+
 	// Some space
 	fmt.Println()
 
-	config, _ := configFile.Resolve()
+	fmt.Println("Estimated update time : " + GetEstimatedUpdateTime(config) + "s")
+
+	// Some space
+	fmt.Println()
 
 	var wg sync.WaitGroup
 	wg.Add(len(config.Applications))
@@ -50,15 +56,16 @@ func run(cmd *cobra.Command, _ []string) {
 				}
 
 				if IsUnhealthy(container) {
-					PrintFor(application, "Container is is an unhealthy state.")
+					ErrorFor(application, "Container is is an unhealthy state.")
 					application.RemoveEphemeralContainer()
-					PrintFor(application, "Not rolling back as there's no healthy running container for this application.")
+					ErrorFor(application, "Not rolling back as there's no healthy running container for this application.")
 					wg.Done()
 					return
 				} else {
 					PrintFor(application, "Container is in an healthy state.")
 				}
 
+				SuccessFor(application, "Application is live!")
 				wg.Done()
 				return
 			}
@@ -72,7 +79,7 @@ func run(cmd *cobra.Command, _ []string) {
 			}
 
 			if IsUnhealthy(container) {
-				PrintFor(application, "Container is is an unhealthy state.")
+				ErrorFor(application, "Container is is an unhealthy state.")
 				application.RemoveEphemeralContainer()
 				PrintFor(application, "Rolling back to the last healthy state.")
 				wg.Done()
@@ -99,13 +106,38 @@ func run(cmd *cobra.Command, _ []string) {
 
 			PrintFor(application, "Removed ephemeral container.")
 
+			SuccessFor(application, "Application is live!")
 			wg.Done()
 		}(config.Applications[i])
 	}
 
 	wg.Wait()
 
+	_ = core.SetKey("last_deployment", time.Now().String())
 	_ = core.SetKey("previous_checksum", currentChecksum)
+}
+
+func GetEstimatedUpdateTime(config core.ConfigData) string {
+	estimate := 0
+
+	for _, application := range config.Applications {
+		inspection, _, err := core.GetDockerClient().ImageInspectWithRaw(context.Background(), application.Image)
+
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		if inspection.ContainerConfig.Healthcheck == nil {
+			estimate += 500
+		} else {
+			estimate += int(inspection.ContainerConfig.Healthcheck.Interval.Milliseconds())
+		}
+	}
+
+	duration, _ := time.ParseDuration(strconv.Itoa(estimate) + "ms")
+
+	return strconv.FormatFloat(duration.Seconds(), 'f', 0, 64)
 }
 
 func IsUnhealthy(container string) bool {
@@ -152,4 +184,12 @@ func ContainerIsStarting(containerId string) bool {
 
 func PrintFor(application core.Application, message string) {
 	fmt.Println(application.Host + ": " + message)
+}
+
+func ErrorFor(application core.Application, message string) {
+	fmt.Println("\033[31m" + application.Host + ": " + message + "\033[0m")
+}
+
+func SuccessFor(application core.Application, message string) {
+	fmt.Println("\033[32m" + application.Host + ": " + message + "\033[0m")
 }

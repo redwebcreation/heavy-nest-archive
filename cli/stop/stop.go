@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
-	"os"
 )
 
 func run(_ *cobra.Command, _ []string) {
@@ -16,16 +15,20 @@ func run(_ *cobra.Command, _ []string) {
 	}
 
 	for _, application := range config.Applications {
-		for _, binding := range application.Bindings {
-			fmt.Println("[" + binding.Name(false) + "]")
+		container, err := application.RemoveApplicationContainer()
 
-			err := application.CleanUpAllContainers()
-
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
+		if container == "" && err == nil {
+			continue
 		}
+
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
+		fmt.Println("Removing [" + application.Name(false) + "]")
+
+		_, _ = application.RemoveEphemeralContainer()
 	}
 
 	fmt.Println("Stopped all containers successfully.")
