@@ -1,14 +1,5 @@
 # Hez
 
-```bash
-apt install hez
-```
-
-#### Disclaimer
-
-Some commands might seem familiar with what [Kubernetes](https://kubernetes.io) does. It's a pure coincidence so don't
-expect things to work the same as Kubernetes.
-
 ## Getting started
 
 Hez stores its configuration in `/etc/hez/hez.yml`, you can generate it automatically using the command below:
@@ -79,7 +70,7 @@ hez apply
 ```
 
 This command will create all the containers as defined in your configuration. Every time you change your configuration,
-you should run `hez apply`to apply it.
+you may rerun `hez apply`to apply it.
 
 If you didn't change your config and still want to re-apply it, you'll need to force it:
 
@@ -110,16 +101,14 @@ hez proxy run --port 8080 --ssl 8443
 ```
 
 By default, the proxy will use Let's Encrypt to generate (and re-generate) SSL certificates, but you may want to use
-self-signed certificates for testing :
+self-signed certificates for testing as you can not use Let's Encrypt to secure localhost. :
 
 ````bash
 hez proxy run --self-signed
 ````
 
-> You can not use Let's Encrypt to secure localhost.
 
-
-By default the ports used, and the SSL strategy is defined in your configuration file :
+By default, the ports used, and the SSL strategy is defined in your configuration file :
 
 ```yaml
 proxy:

@@ -144,6 +144,10 @@ func GetEstimatedUpdateTime(config core.ConfigData) string {
 
 	duration, _ := time.ParseDuration(strconv.Itoa(estimate) + "ms")
 
+	if duration.Seconds() <= 1 {
+		duration, _ = time.ParseDuration("1s")
+	}
+
 	return strconv.FormatFloat(duration.Seconds(), 'f', 0, 64)
 }
 

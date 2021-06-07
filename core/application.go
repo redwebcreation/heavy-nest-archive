@@ -6,6 +6,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/docker/docker/api/types/mount"
 	"os"
 	"strconv"
 	"strings"
@@ -16,10 +17,14 @@ type Application struct {
 	Host          string `yaml:"host"`
 	ContainerPort int    `yaml:"container_port",omitempty`
 	Env           []string
+	Volumes       []struct {
+		From string `yaml:"from"`
+		To   string `yaml:"to"`
+	}
 }
 
 func (application Application) HasApplicationContainer() bool {
-	container, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{
+	containers, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: filters.NewArgs(filters.Arg(
 			"name",
 			application.Name(false)),
@@ -31,14 +36,23 @@ func (application Application) HasApplicationContainer() bool {
 		os.Exit(1)
 	}
 
-	return len(container) > 0
+	return len(containers) > 0
 }
 
 func (application Application) CreateContainer(isEphemeral bool) string {
 	var env []string
+	var mounts []mount.Mount
 
 	env = append(env, "VIRTUAL_HOST="+application.Host, "VIRTUAL_PORT="+strconv.Itoa(application.ContainerPort))
 	env = append(env, application.Env...)
+
+	for _, volume := range application.Volumes {
+		mounts = append(mounts, mount.Mount{
+			Type:   mount.TypeBind,
+			Source: volume.From,
+			Target: volume.To,
+		})
+	}
 
 	resp, err := GetDockerClient().ContainerCreate(context.Background(), &container.Config{
 		Env:   env,
@@ -47,6 +61,7 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 		RestartPolicy: container.RestartPolicy{
 			Name: "unless-stopped",
 		},
+		Mounts: mounts,
 	}, nil, nil, application.Name(isEphemeral))
 
 	if err != nil {
