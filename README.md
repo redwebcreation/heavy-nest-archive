@@ -185,6 +185,8 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* read env from file
+* variable interpolation for env: and env files
 * if container_port is not open on container x throw an error.
 * add request_uri to proxy logs
 * elevated privileges for update when current executable is not writable
