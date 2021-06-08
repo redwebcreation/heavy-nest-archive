@@ -183,6 +183,7 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* add request_uri to proxy logs
 * elevated privileges for update when current executable is not writable
 * if one container is stopped, apply should still run regardless of the config checksum. 
 * websockets, gRPC, HTTP2 (3?) 
