@@ -183,6 +183,9 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* pull container on apply or `--with-pulls`|
+* chmod to updated hez binar
+* it seems like it always updates to a new version
 * websockets, gRPC, HTTP2 (3?) 
 * container logs?
 * check if dns points to the server automatically
