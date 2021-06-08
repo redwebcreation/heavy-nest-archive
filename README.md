@@ -1,4 +1,12 @@
 # Hez
+ 
+## Installation
+
+```bash
+curl -L https://github.com/redwebcreation/hez/releases/download/0.1.0/hez -o hez
+chmod +x ./hez
+mv ./hez /usr/bin/hez
+```
 
 ## Getting started
 
@@ -175,6 +183,11 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* when no `previous_checksum` exists, some weird characters are shown
+* `apply` should have a `--skip⁻healthchecks` option
+* `apply` should have a  `--with-pulls` option
+* chmod to updated hez binar
+* it seems like it always updates to a new version
 * websockets, gRPC, HTTP2 (3?) 
 * container logs?
 * check if dns points to the server automatically
