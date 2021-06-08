@@ -1,4 +1,12 @@
 # Hez
+ 
+## Installation
+
+```bash
+curl -L https://github.com/redwebcreation/hez/releases/download/0.1.0/hez -o hez
+chmod +x ./hez
+mv ./hez /usr/bin/hez
+```
 
 ## Getting started
 
