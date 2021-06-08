@@ -183,7 +183,9 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
-* pull container on apply or `--with-pulls`|
+* when no `previous_checksum` exists, some weird characters are shown
+* `apply` should have a `--skip⁻healthchecks` option
+* `apply` should have a  `--with-pulls` option
 * chmod to updated hez binar
 * it seems like it always updates to a new version
 * websockets, gRPC, HTTP2 (3?) 
