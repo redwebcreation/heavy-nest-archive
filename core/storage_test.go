@@ -42,5 +42,5 @@ func TestGetKey(t *testing.T) {
 		t.Errorf("The test key `does_not_exists` should be equal to: some_value, given: %s", value)
 	}
 
-_ = os.Remove(StorageDirectory() + "/does_not_exists")
+	_ = os.Remove(StorageDirectory() + "/does_not_exists")
 }

@@ -14,7 +14,7 @@ type ConfigData struct {
 		Port       int   `yaml:"port",omitempty`
 		Ssl        int   `yaml:"ssl",omitempty`
 		SelfSigned *bool `yaml:"self_signed",omitempty`
-		Logs struct {
+		Logs       struct {
 			Level        int8 `yaml:"level",omitempty`
 			Redirections []string
 		}

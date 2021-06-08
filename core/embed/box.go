@@ -46,6 +46,7 @@ func Add(file string, content []byte) {
 func Get(file string) []byte {
 	return box.Get(file)
 }
+
 // Has a file in box
 func Has(file string) bool {
 	return box.Has(file)

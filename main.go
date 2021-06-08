@@ -14,5 +14,6 @@ func main() {
 			return
 		}
 	}
+
 	cli.Execute()
 }

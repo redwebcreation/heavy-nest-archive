@@ -57,8 +57,7 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 	}
 
 	for _, bridgeContainer := range bridgeDetails.Containers {
-		containerList, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{
-		})
+		containerList, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{})
 
 		if err != nil {
 			return nil, err

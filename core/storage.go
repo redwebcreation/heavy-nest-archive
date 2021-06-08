@@ -5,8 +5,7 @@ import (
 )
 
 func GetKey(key string) (string, error) {
-	filePath := StorageDirectory() + "/" + key
-	bytes, err := os.ReadFile(filePath)
+	bytes, err := os.ReadFile(GetPathFor(key))
 	data := string(bytes)
 
 	if os.IsNotExist(err) {
@@ -21,11 +20,23 @@ func GetKey(key string) (string, error) {
 }
 
 func SetKey(key string, value string) error {
+	err := os.WriteFile(GetPathFor(key), []byte(value), os.FileMode(0777))
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetPathFor(key string) string {
 	_ = os.MkdirAll(StorageDirectory(), os.FileMode(0700))
 
-	filePath := StorageDirectory() + "/" + key
+	return StorageDirectory() + "/" + key
+}
 
-	err := os.WriteFile(filePath, []byte(value), os.FileMode(0777))
+func CreateFile(name string, value []byte, perm os.FileMode) error {
+	err := os.WriteFile(GetPathFor(name), value, perm)
 
 	if err != nil {
 		return err
