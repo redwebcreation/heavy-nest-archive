@@ -4,9 +4,9 @@ printf "Enter the version : "
 
 read -r version
 
-mkdir static
-
 echo "$version" > static/version
+
+go generate ./...
 
 go build -ldflags="-s -w"
 

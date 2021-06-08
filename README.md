@@ -3,7 +3,7 @@
 ## Installation
 
 ```bash
-curl -L https://github.com/redwebcreation/hez/releases/download/0.1.0/hez -o hez
+curl -L https://github.com/redwebcreation/hez/releases/latest/download/hez -o hez
 chmod +x ./hez
 mv ./hez /usr/bin/hez
 ```
@@ -175,7 +175,9 @@ For the logs that have the minimum required level, you can redirect them to vari
 
 * `stdout` redirects the log to the standard output
 * `stderr` redirects the log to the standard error output
-* `an absolute path to a file` appends the log to a file, creates the file if it does not exist.
+* `an absolute path to a file`
+  
+appends the log to a file, creates the file if it does not exist.
 
 If you leave `redirections` empty, logs won't be saved.
 
