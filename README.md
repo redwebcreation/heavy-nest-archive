@@ -183,14 +183,9 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
-* when no `previous_checksum` exists, some weird characters are shown
-* `apply` should have a `--skip⁻healthchecks` option
-* `apply` should have a  `--with-pulls` option
-* chmod to updated hez binar
-* it seems like it always updates to a new version
+* elevated privileges for update when current executable is not writable
+* if one container is stopped, apply should still run regardless of the config checksum. 
 * websockets, gRPC, HTTP2 (3?) 
 * container logs?
 * check if dns points to the server automatically
 * diagnose command
-* self-update command / system
-* build on release commmand
