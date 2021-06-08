@@ -7,10 +7,13 @@ import (
 	"github.com/redwebcreation/hez/cli/health"
 	"github.com/redwebcreation/hez/cli/proxy"
 	"github.com/redwebcreation/hez/cli/stop"
+	"github.com/redwebcreation/hez/cli/update"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os"
 )
+
+var showsVersion bool
 
 var rootCli = &cobra.Command{
 	Use:   "hez",
@@ -29,10 +32,12 @@ var rootCli = &cobra.Command{
 }
 
 func Execute() {
+	rootCli.PersistentFlags().BoolVarP(&showsVersion, "version", "v", false, "Prints the current version")
 	rootCli.AddCommand(proxy.NewCommand())
 	rootCli.AddCommand(config.NewCommand())
 	rootCli.AddCommand(apply.NewCommand())
 	rootCli.AddCommand(stop.NewCommand())
 	rootCli.AddCommand(health.NewCommand())
+	rootCli.AddCommand(update.NewCommand())
 	cobra.CheckErr(rootCli.Execute())
 }

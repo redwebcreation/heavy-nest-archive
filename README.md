@@ -107,7 +107,6 @@ self-signed certificates for testing as you can not use Let's Encrypt to secure 
 hez proxy run --self-signed
 ````
 
-
 By default, the ports used, and the SSL strategy is defined in your configuration file :
 
 ```yaml
@@ -176,6 +175,7 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* websockets, gRPC, HTTP2 (3?) 
 * container logs?
 * check if dns points to the server automatically
 * diagnose command

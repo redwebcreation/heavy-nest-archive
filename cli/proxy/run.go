@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/acme/autocert"
-	"log"
 	"net"
 	"net/http"
 	"os"
@@ -59,7 +58,11 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 
 	if selfSigned {
 		go func() {
-			log.Fatal(http.ListenAndServe(":"+strconv.Itoa(Port), nil))
+			err := http.ListenAndServe(":"+strconv.Itoa(Port), nil)
+
+			if err != nil {
+				zap.L().Fatal(err.Error())
+			}
 		}()
 
 		keyPath, certPath := handleSSLForTesting()
@@ -67,8 +70,8 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 		err := http.ListenAndServeTLS(":"+strconv.Itoa(Ssl), certPath, keyPath, nil)
 
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			zap.L().Fatal(err.Error())
+			return
 		}
 	} else {
 		certManager := autocert.Manager{
@@ -86,10 +89,18 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 		go func() {
 			// HTTP server that redirects to the HTTPS one.
 			h := certManager.HTTPHandler(nil)
-			log.Fatal(http.ListenAndServe(":"+strconv.Itoa(Port), h))
+			err := http.ListenAndServe(":"+strconv.Itoa(Port), h)
+
+			if err != nil {
+				zap.L().Fatal(err.Error())
+			}
 		}()
 
-		log.Fatal(server.ListenAndServeTLS("", ""))
+		err := server.ListenAndServeTLS("", "")
+
+		if err != nil {
+			zap.L().Fatal(err.Error())
+		}
 	}
 }
 
