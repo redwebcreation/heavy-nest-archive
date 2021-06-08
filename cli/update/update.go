@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/redwebcreation/hez/core"
+	box "github.com/redwebcreation/hez/core/embed"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Release struct {
@@ -26,13 +28,13 @@ var draft bool
 var prerelease bool
 
 func run(_ *cobra.Command, _ []string) {
-	//currentVersion := strings.TrimSpace(string(box.Get("/version")))
+	currentVersion := strings.TrimSpace(string(box.Get("/version")))
 	latestRelease := FindRelease(draft, prerelease)
 
-	//if latestRelease.Version == currentVersion {
-	//	fmt.Printf("You are using the latest version of Hez (%s).\n", latestRelease.Version)
-	//	return
-	//}
+	if latestRelease.Version == currentVersion {
+		fmt.Printf("You are using the latest version of Hez (%s).\n", latestRelease.Version)
+		return
+	}
 
 	fmt.Printf("Updating to the latest version %s.\n", latestRelease.Version)
 
@@ -63,7 +65,7 @@ func run(_ *cobra.Command, _ []string) {
 
 	currentExecutable, _ := os.Executable()
 
-	err = core.CreateFile("updated_hez", body, os.FileMode(0744))
+	err = core.CreateFile("updated_hez", body, os.FileMode(0777))
 
 	if err != nil {
 		fmt.Println(err)
@@ -76,6 +78,8 @@ func run(_ *cobra.Command, _ []string) {
 		fmt.Println(err)
 		return
 	}
+
+	_ = os.Chmod(currentExecutable, os.FileMode(0777))
 
 	fmt.Println("You are now using the latest version of Hez.")
 }

@@ -9,7 +9,6 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 	"strconv"
 )
@@ -19,11 +18,16 @@ var Port int
 var Ssl int
 
 func runRunCommand(_ *cobra.Command, _ []string) {
-	proxiableContainers, _ := core.GetProxiableContainers()
+	proxiableContainers, err := core.GetProxiableContainers()
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	if len(proxiableContainers) == 0 {
 		fmt.Println("Found 0 proxiable containers. Aborting.")
-		os.Exit(1)
+		return
 	}
 
 	handler := func(writer http.ResponseWriter, request *http.Request) {

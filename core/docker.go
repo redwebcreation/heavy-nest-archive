@@ -2,8 +2,8 @@ package core
 
 import (
 	"context"
-	"errors"
 	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/client"
 	"strings"
 )
@@ -57,24 +57,24 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 	}
 
 	for _, bridgeContainer := range bridgeDetails.Containers {
-		containerList, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{})
+		containersList, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{Filters: filters.NewArgs(filters.KeyValuePair{
+			Key:   "name",
+			Value: bridgeContainer.Name,
+		})})
 
 		if err != nil {
 			return nil, err
 		}
 
-		if len(containerList) != 1 {
-			return nil, errors.New("zero or more than one container found")
-		}
+		container := containersList[0]
 
-		container := containerList[0]
 		inspectedContainer, err := GetDockerClient().ContainerInspect(context.Background(), container.ID)
 
 		if err != nil {
 			return nil, err
 		}
 
-		var virtualHost string
+		virtualHost := ""
 		virtualPort := "80"
 
 		for _, envVariable := range inspectedContainer.Config.Env {

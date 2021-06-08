@@ -96,3 +96,9 @@ func (application Application) RemoveApplicationContainer() (string, error) {
 func (application Application) RemoveEphemeralContainer() (string, error) {
 	return RemoveContainer(application.Name(true))
 }
+
+func (application Application) PullLatestImage() error {
+	_, err := GetDockerClient().ImagePull(context.Background(), application.Image, types.ImagePullOptions{})
+
+	return err
+}

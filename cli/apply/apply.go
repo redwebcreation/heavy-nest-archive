@@ -11,15 +11,17 @@ import (
 	"time"
 )
 
-func run(cmd *cobra.Command, _ []string) {
+var force bool
+var skipHealthchecks bool
+var withPulls bool
+
+func run(_ *cobra.Command, _ []string) {
 	configFile := core.FindConfig(core.ConfigFile())
 
 	currentChecksum, _ := configFile.Checksum()
 	previousChecksum, _ := core.GetKey("previous_checksum")
 	fmt.Println("Previous config checksum : " + previousChecksum)
 	fmt.Println("Current config checksum : " + currentChecksum)
-
-	force, _ := cmd.Flags().GetBool("force")
 
 	if currentChecksum == previousChecksum {
 		if force {
@@ -37,7 +39,7 @@ func run(cmd *cobra.Command, _ []string) {
 	// Some space
 	fmt.Println()
 
-	fmt.Println("Estimated update time : " + GetEstimatedUpdateTime(config) + "s")
+	fmt.Println("Estimated update time : " + GetEstimatedUpdateTime(config, skipHealthchecks) + "s")
 
 	// Some space
 	fmt.Println()
@@ -47,22 +49,33 @@ func run(cmd *cobra.Command, _ []string) {
 
 	for i := 0; i < len(config.Applications); i++ {
 		go func(application core.Application) {
+			if withPulls {
+				PrintFor(application, "Pulling latest image.")
+				err := application.PullLatestImage()
+
+				if err != nil {
+					fmt.Println(err)
+				}
+			}
+
 			if !application.HasApplicationContainer() {
 				container := application.CreateContainer(false)
 				PrintFor(application, "Created container from ["+application.Image+"].")
 
-				for ContainerIsStarting(container) {
-					time.Sleep(1 * time.Second)
-				}
+				if !skipHealthchecks {
+					for ContainerIsStarting(container) {
+						time.Sleep(1 * time.Second)
+					}
 
-				if IsUnhealthy(container) {
-					ErrorFor(application, "Container is is an unhealthy state.")
-					application.RemoveEphemeralContainer()
-					ErrorFor(application, "Not rolling back as there's no healthy running container for this application.")
-					wg.Done()
-					return
-				} else {
-					PrintFor(application, "Container is in an healthy state.")
+					if IsUnhealthy(container) {
+						ErrorFor(application, "Container is is an unhealthy state.")
+						application.RemoveEphemeralContainer()
+						ErrorFor(application, "Not rolling back as there's no healthy running container for this application.")
+						wg.Done()
+						return
+					} else {
+						PrintFor(application, "Container is in an healthy state.")
+					}
 				}
 
 				SuccessFor(application, "Application is live!")
@@ -74,18 +87,20 @@ func run(cmd *cobra.Command, _ []string) {
 
 			PrintFor(application, "Created an ephemeral container from ["+application.Image+"]")
 
-			for ContainerIsStarting(container) {
-				time.Sleep(1 * time.Second)
-			}
+			if !skipHealthchecks {
+				for ContainerIsStarting(container) {
+					time.Sleep(1 * time.Second)
+				}
 
-			if IsUnhealthy(container) {
-				ErrorFor(application, "Container is is an unhealthy state.")
-				application.RemoveEphemeralContainer()
-				PrintFor(application, "Rolling back to the last healthy state.")
-				wg.Done()
-				return
-			} else {
-				PrintFor(application, "Container is in an healthy state.")
+				if IsUnhealthy(container) {
+					ErrorFor(application, "Container is is an unhealthy state.")
+					application.RemoveEphemeralContainer()
+					PrintFor(application, "Rolling back to the last healthy state.")
+					wg.Done()
+					return
+				} else {
+					PrintFor(application, "Container is in an healthy state.")
+				}
 			}
 
 			application.RemoveApplicationContainer()
@@ -96,11 +111,20 @@ func run(cmd *cobra.Command, _ []string) {
 
 			PrintFor(application, "Created new container from ["+application.Image+"]")
 
-			for ContainerIsStarting(container) {
-				time.Sleep(1 * time.Second)
-			}
+			if !skipHealthchecks {
+				for ContainerIsStarting(container) {
+					time.Sleep(1 * time.Second)
+				}
 
-			PrintFor(application, "Container is in an healthy state.")
+				if IsUnhealthy(container) {
+					ErrorFor(application, "Container is is an unhealthy state.")
+					PrintFor(application, "Can not roll back to the last healthy state.")
+					wg.Done()
+					return
+				} else {
+					PrintFor(application, "Container is in an healthy state.")
+				}
+			}
 
 			application.RemoveEphemeralContainer()
 
@@ -113,11 +137,10 @@ func run(cmd *cobra.Command, _ []string) {
 
 	wg.Wait()
 
-	_ = core.SetKey("last_deployment", time.Now().String())
 	_ = core.SetKey("previous_checksum", currentChecksum)
 }
 
-func GetEstimatedUpdateTime(config core.ConfigData) string {
+func GetEstimatedUpdateTime(config core.ConfigData, skipHealthchecks bool) string {
 	estimate := 0
 	biggestInterval := 0
 
@@ -131,7 +154,7 @@ func GetEstimatedUpdateTime(config core.ConfigData) string {
 
 		if inspection.ContainerConfig.Healthcheck == nil {
 			estimate += 500
-		} else {
+		} else if !skipHealthchecks {
 			interval := int(inspection.ContainerConfig.Healthcheck.Interval.Milliseconds())
 
 			if interval > biggestInterval {
@@ -173,8 +196,9 @@ func NewCommand() *cobra.Command {
 		Run:   run,
 	}
 
-	applyCmd.Flags().BoolP("force", "f", false, "Force the apply command to run")
-
+	applyCmd.Flags().BoolVarP(&force, "force", "f", false, "Force the apply command to run")
+	applyCmd.Flags().BoolVar(&skipHealthchecks, "skip-healthchecks", false, "Do no wait for containers to be healthy")
+	applyCmd.Flags().BoolVar(&withPulls, "with-pulls", false, "Pull images to get the latest version")
 	return applyCmd
 }
 
