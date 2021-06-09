@@ -179,6 +179,7 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* private registry support for `--with-pulls`
 * proxy restart command (or take configuration changes into account)
 * logs redirections validation
 * read env from file
