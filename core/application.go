@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
 	"os"
 	"strconv"
 	"strings"
@@ -40,11 +41,15 @@ func (application Application) HasApplicationContainer() bool {
 }
 
 func (application Application) CreateContainer(isEphemeral bool) string {
+	config, _ := FindConfig(ConfigFile()).Resolve()
+
 	var mounts []mount.Mount
 	env := []string{
 		"VIRTUAL_HOST=" + application.Host,
 		"VIRTUAL_PORT=" + strconv.Itoa(application.ContainerPort),
 	}
+
+	networkDetails, _ := FindNetwork(config.Network)
 
 	for _, volume := range application.Volumes {
 		mounts = append(mounts, mount.Mount{
@@ -54,6 +59,8 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 		})
 	}
 
+	fmt.Println(networkDetails.Name)
+
 	resp, err := GetDockerClient().ContainerCreate(context.Background(), &container.Config{
 		Env:   ResolveEnvironmentVariables(env, application.Env),
 		Image: application.Image,
@@ -62,7 +69,13 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 			Name: "unless-stopped",
 		},
 		Mounts: mounts,
-	}, nil, nil, application.Name(isEphemeral))
+	}, &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			networkDetails.ID: {
+				NetworkID: networkDetails.ID,
+			},
+		},
+	}, nil, application.Name(isEphemeral))
 
 	if err != nil {
 		fmt.Println(err)

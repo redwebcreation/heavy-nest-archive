@@ -34,32 +34,46 @@ func GetWhitelistedDomains() []string {
 	return domains
 }
 
-func GetProxiableContainers() ([]ProxiableContainer, error) {
+func FindNetwork(name string) (types.NetworkResource, error) {
 	networks, err := GetDockerClient().NetworkList(context.Background(), types.NetworkListOptions{})
-	var proxiableContainers []ProxiableContainer
 
 	if err != nil {
-		return nil, err
+		return types.NetworkResource{}, err
 	}
 
-	var networkBridge types.NetworkResource
+	var network types.NetworkResource
 
-	for _, network := range networks {
-		if network.Name == "bridge" {
-			networkBridge = network
+	for _, maybeNetwork := range networks {
+		if maybeNetwork.Name == name {
+			network = maybeNetwork
+			break
 		}
 	}
 
-	bridgeDetails, err := GetDockerClient().NetworkInspect(context.Background(), networkBridge.ID, types.NetworkInspectOptions{})
+	networkDetails, err := GetDockerClient().NetworkInspect(context.Background(), network.ID, types.NetworkInspectOptions{})
+
+	if err != nil {
+		return networkDetails, err
+	}
+
+	return networkDetails, nil
+}
+
+func GetProxiableContainers() ([]ProxiableContainer, error) {
+	config, _ := FindConfig(ConfigFile()).Resolve()
+
+	networkDetails, err := FindNetwork(config.Network)
 
 	if err != nil {
 		return nil, err
 	}
 
-	for _, bridgeContainer := range bridgeDetails.Containers {
+	var proxiableContainers []ProxiableContainer
+
+	for _, networkContainer := range networkDetails.Containers {
 		containersList, err := GetDockerClient().ContainerList(context.Background(), types.ContainerListOptions{Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "name",
-			Value: bridgeContainer.Name,
+			Value: networkContainer.Name,
 		})})
 
 		if err != nil {
@@ -92,8 +106,8 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 		}
 
 		proxiableContainers = append(proxiableContainers, ProxiableContainer{
-			Name:        bridgeContainer.Name,
-			Ipv4:        bridgeContainer.IPv4Address,
+			Name:        networkContainer.Name,
+			Ipv4:        networkContainer.IPv4Address,
 			VirtualHost: virtualHost,
 			VirtualPort: virtualPort,
 			Container:   &inspectedContainer,

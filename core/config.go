@@ -6,12 +6,13 @@ import (
 )
 
 type ConfigData struct {
+	Network string `yaml:"network,omitempty"`
 	Proxy struct {
-		Port       int   `yaml:"port",omitempty`
-		Ssl        int   `yaml:"ssl",omitempty`
-		SelfSigned *bool `yaml:"self_signed",omitempty`
+		Port       int   `yaml:"port,omitempty"`
+		Ssl        int   `yaml:"ssl,omitempty"`
+		SelfSigned *bool `yaml:"self_signed,omitempty"`
 		Logs       struct {
-			Level        int8 `yaml:"level",omitempty`
+			Level        int8 `yaml:"level,omitempty"`
 			Redirections []string
 		}
 	}
@@ -66,6 +67,9 @@ func (config Config) Resolve() (ConfigData, error) {
 }
 
 func useDefaults(data *ConfigData) *ConfigData {
+	if data.Network == "" {
+		data.Network = "bridge"
+	}
 	if data.Proxy.Port == 0 {
 		data.Proxy.Port = 80
 	}

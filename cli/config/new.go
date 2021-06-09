@@ -37,6 +37,7 @@ func runNewCommand(_ *cobra.Command, _ []string) {
 
 func getDefaultConfigContents() string {
 	return strings.TrimSpace(`
+network: bridge
 applications: []
 proxy:
   port: 80
