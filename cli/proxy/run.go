@@ -78,11 +78,14 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 			return
 		}
 	} else {
+		fmt.Println("HTTPS init.")
 		certManager := autocert.Manager{
 			Prompt:     autocert.AcceptTOS,
 			HostPolicy: autocert.HostWhitelist(core.GetWhitelistedDomains()...),
 		}
 
+		fmt.Println("Cert manager created with domains : ")
+		fmt.Println(core.GetWhitelistedDomains())
 		server := &http.Server{
 			Addr: ":" + strconv.Itoa(Ssl),
 			TLSConfig: &tls.Config{
@@ -90,7 +93,10 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 			},
 		}
 
+		fmt.Println("Server created.")
+
 		go func() {
+			fmt.Println("HTTP server (in the goroutine)")
 			// HTTP server that redirects to the HTTPS one.
 			h := certManager.HTTPHandler(nil)
 			err := http.ListenAndServe(":"+strconv.Itoa(Port), h)
@@ -99,9 +105,9 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 				zap.L().Fatal(err.Error())
 			}
 		}()
-
+		fmt.Println("Serving TlS")
 		err := server.ListenAndServeTLS("", "")
-
+		fmt.Println("Server started")
 		if err != nil {
 			zap.L().Fatal(err.Error())
 		}
