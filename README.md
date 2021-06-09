@@ -180,6 +180,7 @@ If you leave `redirections` empty, logs won't be saved.
 TODO:
 
 * proxy restart command (or take configuration changes into account)
+* logs redirections validation
 * read env from file
 * variable interpolation for env: and env files
 * if container_port is not open on container x throw an error.
