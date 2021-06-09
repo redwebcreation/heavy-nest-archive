@@ -146,7 +146,9 @@ func (application Application) RemoveEphemeralContainer() (string, error) {
 func (application Application) PullLatestImage() error {
 	reader, err := GetDockerClient().ImagePull(context.Background(), application.Image, types.ImagePullOptions{})
 
-	io.Copy(os.Stdout, reader)
+	if err == nil {
+		io.Copy(os.Stdout, reader)
+	}
 
 	return err
 }
