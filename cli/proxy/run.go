@@ -35,7 +35,7 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 		request.Header.Set("X-Forwarded-For", ip)
 
 		for _, proxiableContainer := range proxiableContainers {
-			if request.Host == proxiableContainer.VirtualHost {
+			//if request.Host == proxiableContainer.VirtualHost {
 				success := core.ForwardRequest(proxiableContainer, writer, request)
 				if success {
 					zap.L().Info(
@@ -46,7 +46,7 @@ func runRunCommand(_ *cobra.Command, _ []string) {
 					)
 				}
 				return
-			}
+			//}
 		}
 
 		zap.L().Info(

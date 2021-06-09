@@ -40,11 +40,11 @@ func (application Application) HasApplicationContainer() bool {
 }
 
 func (application Application) CreateContainer(isEphemeral bool) string {
-	var env []string
 	var mounts []mount.Mount
-
-	env = append(env, "VIRTUAL_HOST="+application.Host, "VIRTUAL_PORT="+strconv.Itoa(application.ContainerPort))
-	env = append(env, application.Env...)
+	env := []string{
+		"VIRTUAL_HOST=" + application.Host,
+		"VIRTUAL_PORT=" + strconv.Itoa(application.ContainerPort),
+	}
 
 	for _, volume := range application.Volumes {
 		mounts = append(mounts, mount.Mount{
@@ -55,7 +55,7 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 	}
 
 	resp, err := GetDockerClient().ContainerCreate(context.Background(), &container.Config{
-		Env:   env,
+		Env:   ResolveEnvironmentVariables(env, application.Env),
 		Image: application.Image,
 	}, &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
@@ -77,6 +77,32 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 	}
 
 	return resp.ID
+}
+
+func ResolveEnvironmentVariables(variables []string, env []string) []string {
+	for _, envVariable := range env {
+		if strings.Contains(envVariable, "=") {
+			variables = append(variables, envVariable)
+		} else {
+			contents, err := os.ReadFile(envVariable)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			for _, envFileVariable := range strings.Split(string(contents), "\n") {
+				trimmed := strings.TrimSpace(envFileVariable)
+
+				if trimmed == "" {
+					continue
+				}
+
+				variables = append(variables, trimmed)
+			}
+		}
+	}
+
+	return variables
 }
 
 func (application Application) Name(isEphemeral bool) string {

@@ -11,33 +11,11 @@ import (
 	"time"
 )
 
-var force bool
 var skipHealthchecks bool
 var withPulls bool
 
 func run(_ *cobra.Command, _ []string) {
-	configFile := core.FindConfig(core.ConfigFile())
-
-	currentChecksum, _ := configFile.Checksum()
-	previousChecksum, _ := core.GetKey("previous_checksum")
-	fmt.Println("Previous config checksum : " + previousChecksum)
-	fmt.Println("Current config checksum : " + currentChecksum)
-
-	if currentChecksum == previousChecksum {
-		if force {
-			fmt.Println("No changes. Not aborting as --force is set to true.")
-		} else {
-			fmt.Println("No changes. Aborting.")
-			return
-		}
-	} else {
-		fmt.Println("Found changes.")
-	}
-
-	config, _ := configFile.Resolve()
-
-	// Some space
-	fmt.Println()
+	config, _ := core.FindConfig(core.ConfigFile()).Resolve()
 
 	fmt.Println("Estimated update time : " + GetEstimatedUpdateTime(config, skipHealthchecks) + "s")
 
@@ -136,8 +114,6 @@ func run(_ *cobra.Command, _ []string) {
 	}
 
 	wg.Wait()
-
-	_ = core.SetKey("previous_checksum", currentChecksum)
 }
 
 func GetEstimatedUpdateTime(config core.ConfigData, skipHealthchecks bool) string {
@@ -196,7 +172,6 @@ func NewCommand() *cobra.Command {
 		Run:   run,
 	}
 
-	applyCmd.Flags().BoolVarP(&force, "force", "f", false, "Force the apply command to run")
 	applyCmd.Flags().BoolVar(&skipHealthchecks, "skip-healthchecks", false, "Do no wait for containers to be healthy")
 	applyCmd.Flags().BoolVar(&withPulls, "with-pulls", false, "Pull images to get the latest version")
 	return applyCmd

@@ -1,12 +1,8 @@
 package core
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"gopkg.in/yaml.v2"
-	"io"
 	"os"
-	"strings"
 )
 
 type ConfigData struct {
@@ -90,21 +86,4 @@ func useDefaults(data *ConfigData) *ConfigData {
 	}
 
 	return data
-}
-
-func (config Config) Checksum() (string, error) {
-	contents, err := os.ReadFile(string(config))
-
-	if err != nil {
-		return "", err
-	}
-
-	hash := sha256.New()
-	input := strings.NewReader(string(contents))
-
-	if _, err := io.Copy(hash, input); err != nil {
-		return "", err
-	}
-
-	return hex.EncodeToString(hash.Sum(nil)), nil
 }

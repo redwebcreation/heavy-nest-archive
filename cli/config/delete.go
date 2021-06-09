@@ -25,11 +25,12 @@ func runDeleteCommand(_ *cobra.Command, _ []string) {
 		fmt.Println("  - The proxy was already disabled.")
 	}
 
-	fmt.Println("[container]")
+	fmt.Println("[applications]")
 	if len(config.Applications) == 0 {
 		fmt.Println("  - No applications found.")
 	} else {
 		for _, application := range config.Applications {
+			fmt.Println("  - Stopping " + application.Host)
 			_, _ = application.RemoveApplicationContainer()
 			_, _ = application.RemoveEphemeralContainer()
 		}

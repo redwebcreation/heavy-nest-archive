@@ -1,5 +1,5 @@
 # Hez
- 
+
 ## Installation
 
 ```bash
@@ -80,13 +80,7 @@ hez apply
 This command will create all the containers as defined in your configuration. Every time you change your configuration,
 you may rerun `hez apply`to apply it.
 
-If you didn't change your config and still want to re-apply it, you'll need to force it:
-
-```bash
-hez apply -f
-```
-
-You can also stop all the running containers.
+You may stop all the running containers.
 
 ```bash
 hez stop
@@ -176,7 +170,7 @@ For the logs that have the minimum required level, you can redirect them to vari
 * `stdout` redirects the log to the standard output
 * `stderr` redirects the log to the standard error output
 * `an absolute path to a file`
-  
+
 appends the log to a file, creates the file if it does not exist.
 
 If you leave `redirections` empty, logs won't be saved.
@@ -185,13 +179,14 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* proxy restart command (or take configuration changes into account)
 * read env from file
 * variable interpolation for env: and env files
 * if container_port is not open on container x throw an error.
 * add request_uri to proxy logs
 * elevated privileges for update when current executable is not writable
-* if one container is stopped, apply should still run regardless of the config checksum. 
-* websockets, gRPC, HTTP2 (3?) 
+* if one container is stopped, apply should still run regardless of the config checksum.
+* websockets, gRPC, HTTP2 (3?)
 * container logs?
 * check if dns points to the server automatically
 * diagnose command
