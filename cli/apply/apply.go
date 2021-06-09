@@ -124,8 +124,7 @@ func GetEstimatedUpdateTime(config core.ConfigData, skipHealthchecks bool) strin
 		inspection, _, err := core.GetDockerClient().ImageInspectWithRaw(context.Background(), application.Image)
 
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			continue
 		}
 
 		if inspection.ContainerConfig.Healthcheck == nil {

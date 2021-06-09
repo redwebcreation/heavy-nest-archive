@@ -7,7 +7,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
-	"github.com/docker/docker/api/types/network"
+	"io"
 	"os"
 	"strconv"
 	"strings"
@@ -49,6 +49,8 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 		"VIRTUAL_PORT=" + strconv.Itoa(application.ContainerPort),
 	}
 
+	fmt.Println(config.Network)
+
 	networkDetails, _ := FindNetwork(config.Network)
 
 	for _, volume := range application.Volumes {
@@ -59,8 +61,6 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 		})
 	}
 
-	fmt.Println(networkDetails.Name)
-
 	resp, err := GetDockerClient().ContainerCreate(context.Background(), &container.Config{
 		Env:   ResolveEnvironmentVariables(env, application.Env),
 		Image: application.Image,
@@ -69,13 +69,7 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 			Name: "unless-stopped",
 		},
 		Mounts: mounts,
-	}, &network.NetworkingConfig{
-		EndpointsConfig: map[string]*network.EndpointSettings{
-			networkDetails.ID: {
-				NetworkID: networkDetails.ID,
-			},
-		},
-	}, nil, application.Name(isEphemeral))
+	}, nil, nil, application.Name(isEphemeral))
 
 	if err != nil {
 		fmt.Println(err)
@@ -87,6 +81,19 @@ func (application Application) CreateContainer(isEphemeral bool) string {
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
+	}
+
+	err = GetDockerClient().NetworkDisconnect(context.Background(), networkDetails.ID, resp.ID, true)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	fmt.Println("Connection to network " + networkDetails.Name + " (" + networkDetails.ID + ")")
+	err = GetDockerClient().NetworkConnect(context.Background(), networkDetails.ID, resp.ID, nil)
+
+	if err != nil {
+		fmt.Println(err)
 	}
 
 	return resp.ID
@@ -137,7 +144,9 @@ func (application Application) RemoveEphemeralContainer() (string, error) {
 }
 
 func (application Application) PullLatestImage() error {
-	_, err := GetDockerClient().ImagePull(context.Background(), application.Image, types.ImagePullOptions{})
+	reader, err := GetDockerClient().ImagePull(context.Background(), application.Image, types.ImagePullOptions{})
+
+	io.Copy(os.Stdout, reader)
 
 	return err
 }
