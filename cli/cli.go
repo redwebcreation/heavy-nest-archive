@@ -22,20 +22,21 @@ func Execute() {
 		Long:  `Hez is a tool to orchestrate containers and manage the environment around it.`,
 	}
 
-	cli.Flags().BoolP("version", "v", false, "Prints Hez's version.")
+	cli.PersistentFlags().BoolP("version", "v", false, "Prints Hez's version.")
 
+	cli.AddCommand(InfoCommand())
 	cli.AddCommand(VersionCommand())
 
-	cobra.CheckErr(cli.Execute())
+	ansi.Check(cli.Execute())
 }
 
 type CommandConfigurationHandler func(command *cobra.Command)
 type CommandHandler func(_ *cobra.Command, _ []string) error
 
 func CreateCommand(command *cobra.Command, commandConfigurationHandler CommandConfigurationHandler, Handler CommandHandler) *cobra.Command {
-	command.Flags().BoolP("version", "v", false, "Prints Hez's version.")
-
-	commandConfigurationHandler(command)
+	if commandConfigurationHandler != nil {
+		commandConfigurationHandler(command)
+	}
 
 	command.RunE = func(cmd *cobra.Command, args []string) error {
 		showVersion, _ := cmd.Flags().GetBool("version")
@@ -51,6 +52,8 @@ func CreateCommand(command *cobra.Command, commandConfigurationHandler CommandCo
 
 		return Handler(cmd, args)
 	}
+	command.SilenceErrors = true
+	command.SilenceUsage = true
 
 	return command
 }
