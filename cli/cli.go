@@ -24,6 +24,7 @@ func Execute() {
 
 	cli.PersistentFlags().BoolP("version", "v", false, "Prints Hez's version.")
 
+	cli.AddCommand(SelfUpdateCommand())
 	cli.AddCommand(InfoCommand())
 	cli.AddCommand(VersionCommand())
 
