@@ -4,8 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
-	"math"
+	"os"
 	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -29,7 +30,17 @@ func RunInfoCommand(_ *cobra.Command, args []string) error {
 	ram := sysinfo.Totalram * uint64(sysinfo.Unit)
 
 	fmt.Println("Total memory: " + FormatBytes(ram))
-	fmt.Println("Free memory: " + FormatBytes(sysinfo.Freeram))
+	fmt.Println("Free memory (currently): " + FormatBytes(sysinfo.Freeram))
+
+	cpu, err := GetCpu()
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("Processor model : " + cpu.ModelName)
+	fmt.Println("Processor Cores : " + strconv.FormatUint(cpu.Cores, 10))
+
 	return nil
 }
 
@@ -43,21 +54,21 @@ func InfoCommand() *cobra.Command {
 	return command
 }
 
-func FormatBytes(bytes uint64) string {
-	var format int64 = 1
+func FormatBytes(b uint64) string {
+	const unit = 1000
 
-	for float64(bytes) > math.Pow(float64(format), float64(10)) {
-		format += 1
+	if b < unit {
+		return fmt.Sprintf("%d B", b)
 	}
 
-	inBytes := math.Round(float64(bytes / uint64(format)))
-	asString := strconv.FormatUint(uint64(inBytes/uint64(format)), 10)
-	switch format - 2 {
-	case 9:
-		asString += "Go"
+	div, exp := int64(unit), 0
+
+	for n := b / unit; n >= unit; n /= unit {
+		div *= unit
+		exp++
 	}
 
-	return asString
+	return fmt.Sprintf("%.1f %cB", float64(b)/float64(div), "kMGTPE"[exp])
 }
 
 func GetSysInfo() (*syscall.Sysinfo_t, error) {
@@ -69,4 +80,41 @@ func GetSysInfo() (*syscall.Sysinfo_t, error) {
 	}
 
 	return in, nil
+}
+
+type Core struct {
+	ModelName string
+	Cores     uint64
+}
+
+func GetCpu() (Core, error) {
+	contents, err := os.ReadFile("/proc/cpuinfo")
+
+	if err != nil {
+		return Core{}, err
+	}
+
+	core := Core{}
+
+	for _, line := range strings.Split(string(contents), "\n") {
+		if line == "" {
+			break
+		}
+
+		keyValue := strings.Split(line, ": ")
+		key := strings.TrimSpace(keyValue[0])
+		value := keyValue[1]
+
+		if key == "cpu cores" {
+			cpuCures, _ := strconv.ParseUint(value, 10, 64)
+
+			core.Cores = cpuCures
+		}
+
+		if key == "model name" {
+			core.ModelName = value
+		}
+	}
+
+	return core, nil
 }
