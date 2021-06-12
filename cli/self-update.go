@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"errors"
+	"github.com/redwebcreation/hez2/core"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/redwebcreation/hez2/util"
 	"github.com/spf13/cobra"
@@ -145,7 +146,7 @@ var Repo = Repository("redwebcreation/hez")
 
 func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	if dryRun {
-		globals.Ansi.Warning("Dry running the command, nothing will be executed.")
+		core.Ansi.Warning("Dry running the command, nothing will be executed.")
 	}
 	executable, _ := os.Executable()
 	usingGoRun := strings.HasPrefix(executable, "/tmp/go-build")
@@ -157,16 +158,16 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	}
 
 	if usingGoRun {
-		globals.Ansi.Warning("You're running this command using go run, you won't see any effects.")
-		globals.Ansi.Warning("Please build the binary and then run it.")
+		core.Ansi.Warning("You're running this command using go run, you won't see any effects.")
+		core.Ansi.Warning("Please build the binary and then run it.")
 		return nil
 	}
 
 	//goland:noinspection GoBoolExpressions
 	if globals.Version == "(development)" {
-		globals.Ansi.Warning("You're using the development build of Hez.")
-		globals.Ansi.Warning("Please, specify a version to use when building the binary.")
-		globals.Ansi.Warning("go build -ldflags=\"-X github.com/redwebcreation/hez2/globals.Version=$(git describe --tags)\"")
+		core.Ansi.Warning("You're using the development build of Hez.")
+		core.Ansi.Warning("Please, specify a version to use when building the binary.")
+		core.Ansi.Warning("go build -ldflags=\"-X github.com/redwebcreation/hez2/core.Version=$(git describe --tags)\"")
 		return nil
 	}
 
@@ -183,7 +184,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	latestRelease := releases[0]
 
 	if !force && latestRelease.TagName == globals.Version {
-		globals.Ansi.Success("You're already using Hez " + latestRelease.TagName + ".")
+		core.Ansi.Success("You're already using Hez " + latestRelease.TagName + ".")
 		return nil
 	}
 
@@ -193,7 +194,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 		return errors.New("The binary for the latest release is still being uploaded. \nPlease try again in a few seconds.")
 	}
 
-	globals.Ansi.Printf("Downloading %s.\n", binary.BrowserDownloadUrl)
+	core.Ansi.Printf("Downloading %s.\n", binary.BrowserDownloadUrl)
 
 	response, err := http.Get(binary.BrowserDownloadUrl)
 
@@ -206,7 +207,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	body, err := ioutil.ReadAll(response.Body)
 
 	if dryRun {
-		globals.Ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
+		core.Ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
 		return nil
 	}
 
@@ -228,7 +229,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 	_ = os.Chmod(executable, os.FileMode(0777))
 
-	globals.Ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
+	core.Ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
 
 	return nil
 }

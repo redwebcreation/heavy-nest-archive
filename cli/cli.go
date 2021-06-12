@@ -2,6 +2,7 @@ package cli
 
 import (
 	"github.com/redwebcreation/hez2/cli/proxy"
+	"github.com/redwebcreation/hez2/core"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/spf13/cobra"
 	"os"
@@ -10,7 +11,7 @@ import (
 func Execute() {
 	for _, arg := range os.Args {
 		if arg == "--version" || arg == "-v" {
-			globals.Ansi.Print("Hez " + globals.Version)
+			core.Ansi.Print("Hez " + globals.Version)
 			return
 		}
 	}
@@ -31,5 +32,5 @@ func Execute() {
 
 	cli.SilenceErrors = true
 
-	globals.Ansi.Check(cli.Execute())
+	core.Ansi.Check(cli.Execute())
 }

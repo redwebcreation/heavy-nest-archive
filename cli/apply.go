@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
+	"github.com/redwebcreation/hez2/core"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/redwebcreation/hez2/util"
 	"github.com/spf13/cobra"
@@ -41,7 +42,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 
 		temporaryContainer, err := application.CreateTemporaryContainer()
 
-		globals.Ansi.Printf("%s: Temporary container created.\n", application.Host)
+		core.Ansi.Printf("%s: Temporary container created.\n", application.Host)
 
 		if err != nil {
 			return err
@@ -61,7 +62,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			return err
 		}
 
-		globals.Ansi.Printf("%s: Container created.\n", application.Host)
+		core.Ansi.Printf("%s: Container created.\n", application.Host)
 
 		WaitForContainerToBeHealthy(container, application)
 
@@ -71,7 +72,13 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			return err
 		}
 
-		globals.Ansi.Success(application.Host + ": Application is live.")
+		core.Ansi.Success(application.Host + ": Application is live.")
+	}
+
+	err := core.RefreshLastApplyExecution()
+
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -81,15 +88,15 @@ func WaitForContainerToBeHealthy(containerId string, application globals.Applica
 	starting, _ := isContainerStarting(containerId)
 	var counter int
 
-	globals.Ansi.NewLine()
+	core.Ansi.NewLine()
 
 	for starting {
-		globals.Ansi.StatusLoader(application.Host+": Waiting for container to be healthy", &counter)
+		core.Ansi.StatusLoader(application.Host+": Waiting for container to be healthy", &counter)
 		starting, _ = isContainerStarting(containerId)
 	}
 
 	counter = 0
-	globals.Ansi.StatusLoader(application.Host+": Container is healthy.", &counter)
+	core.Ansi.StatusLoader(application.Host+": Container is healthy.", &counter)
 }
 
 func isContainerStarting(containerId string) (bool, error) {
@@ -136,7 +143,7 @@ func pullLatestImage(application globals.Application) error {
 			return err
 		}
 
-		if !globals.Ansi {
+		if !core.Ansi {
 			continue
 		}
 
@@ -151,13 +158,13 @@ func pullLatestImage(application globals.Application) error {
 			counter = 0
 		}
 
-		globals.Ansi.StatusLoader(application.Host+": "+strings.Replace(event.Status, "Status: ", "", 1), &counter)
+		core.Ansi.StatusLoader(application.Host+": "+strings.Replace(event.Status, "Status: ", "", 1), &counter)
 
 		status = newStatus
 	}
 
-	if !globals.Ansi {
-		globals.Ansi.Printf("%s: Pulled out the latest image for %s", application.Host, application.Image)
+	if !core.Ansi {
+		core.Ansi.Printf("%s: Pulled out the latest image for %s", application.Host, application.Image)
 	}
 	return nil
 }

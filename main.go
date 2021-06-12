@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/redwebcreation/hez2/cli"
+	"github.com/redwebcreation/hez2/core"
 	"github.com/redwebcreation/hez2/globals"
 	"os"
 	"runtime"
@@ -20,15 +21,15 @@ func main() {
 	}
 
 	if runtime.GOOS != "linux" && !allowsUntestedOs {
-		globals.Ansi.Warning("Hez is not meant to be used on [" + runtime.GOOS + "].")
-		globals.Ansi.Warning("Please run the command again with the flag --i-will-break-my-computer.")
+		core.Ansi.Warning("Hez is not meant to be used on [" + runtime.GOOS + "].")
+		core.Ansi.Warning("Please run the command again with the flag --i-will-break-my-computer.")
 		return
 	}
 
 	_, err := os.Stat(globals.ConfigFile)
 
 	if os.IsNotExist(err) {
-		globals.Ansi.ErrorBlock("Configuration file not found at " + globals.ConfigFile)
+		core.Ansi.ErrorBlock("Configuration file not found at " + globals.ConfigFile)
 		return
 	}
 
