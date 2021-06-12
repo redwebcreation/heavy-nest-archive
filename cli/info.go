@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"github.com/redwebcreation/hez2/util"
 	"github.com/spf13/cobra"
+	"io"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -30,8 +32,15 @@ func RunInfoCommand(_ *cobra.Command, args []string) error {
 
 	ram := sysinfo.Totalram * uint64(sysinfo.Unit)
 
-	fmt.Println("Total memory: " + FormatBytes(ram))
-	fmt.Println("Free memory (currently): " + FormatBytes(sysinfo.Freeram))
+	externalIp, err := GetExternalIp()
+
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("external_ip: ", externalIp)
+	fmt.Println("total_memory: " + FormatBytes(ram))
+	fmt.Println("free_memory: " + FormatBytes(sysinfo.Freeram))
 
 	cpu, err := GetCpu()
 
@@ -39,9 +48,8 @@ func RunInfoCommand(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println("Processor model : " + cpu.ModelName)
-	fmt.Println("Processor Cores : " + strconv.FormatUint(cpu.Cores, 10))
-
+	fmt.Println("processor: " + cpu.ModelName)
+	fmt.Println("processor_cores: " + strconv.FormatUint(cpu.Cores, 10))
 	return nil
 }
 
@@ -118,4 +126,23 @@ func GetCpu() (Core, error) {
 	}
 
 	return core, nil
+}
+
+func GetExternalIp() (string, error) {
+	// TODO: MAYBE Implement a Voter/Consensus system
+	response, err := http.Get("http://checkip.amazonaws.com/")
+	if err != nil {
+		return "", err
+
+	}
+
+	defer response.Body.Close()
+
+	contents, err := io.ReadAll(response.Body)
+
+	if err != nil {
+		return "", err
+	}
+
+	return strings.TrimSpace(string(contents)), nil
 }
