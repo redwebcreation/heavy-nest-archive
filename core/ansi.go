@@ -81,7 +81,7 @@ func (ansi ansiOutput) Error(message string) {
 
 func (ansi ansiOutput) Check(err error) {
 	if err != nil {
-		ansi.Error(err.Error())
+		ansi.ErrorBlock(err.Error())
 	}
 }
 
@@ -90,20 +90,18 @@ func (ansi ansiOutput) Block(message string, style string) {
 	paddingY := 1
 
 	if !ansi {
-		if !ansi {
-			paddingX = 0
-			paddingY = 0
-		}
-
-		line := style + strings.Repeat(" ", len(message)+paddingX*2) + "\033[0m\n"
-
-		message = style + strings.Repeat(" ", paddingX) + message + strings.Repeat(" ", paddingX) + "\033[0m\n"
-
-		topLines := strings.Repeat(line, paddingY)
-		bottomLines := strings.Repeat(line, paddingY)
-
-		ansi.Print(topLines + message + bottomLines)
+		paddingX = 0
+		paddingY = 0
 	}
+
+	line := style + strings.Repeat(" ", len(message)+paddingX*2) + "\033[0m\n"
+
+	message = style + strings.Repeat(" ", paddingX) + message + strings.Repeat(" ", paddingX) + "\033[0m\n"
+
+	topLines := strings.Repeat(line, paddingY)
+	bottomLines := strings.Repeat(line, paddingY)
+
+	ansi.Print(topLines + message + bottomLines)
 }
 
 func (ansi ansiOutput) ErrorBlock(message string) {

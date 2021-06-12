@@ -12,6 +12,9 @@ func RootCommand() *cobra.Command {
 	}
 
 	cli.AddCommand(RunCommand())
+	cli.AddCommand(DisableCommand())
+	cli.AddCommand(EnableCommand())
+	cli.AddCommand(StatusCommand())
 
 	return cli
 }
