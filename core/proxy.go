@@ -44,18 +44,19 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 			return nil, err
 		}
 
-		net, err := globals.FindNetwork(application.Network)
+		containerNetwork, err := globals.FindNetwork(application.Network)
+
+		if err != nil {
+			return nil, err
+		}
+
 		var networkConfiguration types.EndpointResource
 
-		for _, c := range net.Containers {
+		for _, c := range containerNetwork.Containers {
 			if container.Names[0] == c.Name {
 				networkConfiguration = c
 				break
 			}
-		}
-
-		if err != nil {
-			return nil, err
 		}
 
 		virtualHost := ""
@@ -86,7 +87,6 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 
 	return proxiableContainers, nil
 }
-
 
 func HandleRequest(lastApplyExecution string, proxiables []ProxiableContainer) func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {

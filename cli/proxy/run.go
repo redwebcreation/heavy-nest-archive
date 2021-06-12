@@ -2,18 +2,17 @@ package proxy
 
 import (
 	"crypto/tls"
-	"fmt"
 	"github.com/redwebcreation/hez2/core"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/redwebcreation/hez2/util"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/acme/autocert"
 	"net/http"
+	"strconv"
 )
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
 	lastApplyExecution := core.GetLastApplyExecution()
-
 	proxiables, err := core.GetProxiableContainers()
 
 	if err != nil {
@@ -22,38 +21,37 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 
 	http.HandleFunc("/", core.HandleRequest(lastApplyExecution, proxiables))
 
-	fmt.Println("HTTPS init.")
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(core.GetWhitelistedDomains()...),
+		Cache:      autocert.DirCache(globals.CertificatesDirectory),
 	}
 
-	fmt.Println("Cert manager created with domains : ")
-	fmt.Println(core.GetWhitelistedDomains())
-	server := &http.Server{
-		Addr: ":443",
-		TLSConfig: &tls.Config{
-			GetCertificate: certManager.GetCertificate,
-		},
+	if globals.Config.Proxy.Http.Enabled {
+		go func() {
+			// HTTP server that redirects to the HTTPS one.
+			h := certManager.HTTPHandler(nil)
+			err := http.ListenAndServe(":"+strconv.Itoa(globals.Config.Proxy.Http.Port), h)
+
+			if err != nil {
+				globals.Logger.Fatal(err.Error())
+			}
+		}()
 	}
 
-	fmt.Println("Server created.")
+	if globals.Config.Proxy.Https.Enabled {
+		server := &http.Server{
+			Addr: ":" + strconv.Itoa(globals.Config.Proxy.Https.Port),
+			TLSConfig: &tls.Config{
+				GetCertificate: certManager.GetCertificate,
+			},
+		}
 
-	go func() {
-		fmt.Println("HTTP server (in the goroutine)")
-		// HTTP server that redirects to the HTTPS one.
-		h := certManager.HTTPHandler(nil)
-		err := http.ListenAndServe(":80", h)
+		err = server.ListenAndServeTLS("", "")
 
 		if err != nil {
 			globals.Logger.Fatal(err.Error())
 		}
-	}()
-	fmt.Println("Serving TlS")
-	err = server.ListenAndServeTLS("", "")
-	fmt.Println("Server started")
-	if err != nil {
-		globals.Logger.Fatal(err.Error())
 	}
 
 	return nil
