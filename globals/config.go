@@ -175,44 +175,55 @@ func (application Application) createContainer(name string) (string, error) {
 	return resp.ID, nil
 }
 
-func (application Application) StopApplicationContainer() (string, error) {
+func (application Application) StopApplicationContainer() (types.Container, error) {
 	return application.stopContainer(application.Name())
 }
 
-func (application Application) StopTemporaryContainer() (string, error) {
+func (application Application) StopTemporaryContainer() (types.Container, error) {
 	return application.stopContainer(
 		application.NameWithSuffix("temporary"),
 	)
 }
 
-func (application Application) stopContainer(name string) (string, error) {
-	containers, _ := Docker.ContainerList(context.Background(), types.ContainerListOptions{})
+func GetContainer(name string) (types.Container, error) {
+	containers, err := Docker.ContainerList(context.Background(), types.ContainerListOptions{})
+
+	if err != nil {
+		return types.Container{}, err
+	}
 
 	var currentContainer types.Container
 
 	for _, c := range containers {
 		if c.Names[0] == "/"+name {
 			currentContainer = c
+			break
 		}
 	}
 
-	if currentContainer.ID == "" {
-		return "", nil
-	}
+	return currentContainer, nil
+}
 
-	err := Docker.ContainerStop(context.Background(), currentContainer.ID, nil)
+func (application Application) stopContainer(name string) (types.Container, error) {
+	currentContainer, err := GetContainer(name)
 
 	if err != nil {
-		return "", err
+		return currentContainer, err
+	}
+
+	err = Docker.ContainerStop(context.Background(), currentContainer.ID, nil)
+
+	if err != nil {
+		return currentContainer, err
 	}
 
 	err = Docker.ContainerRemove(context.Background(), currentContainer.Names[0], types.ContainerRemoveOptions{})
 
 	if err != nil {
-		return "", err
+		return currentContainer, err
 	}
 
-	return containers[0].ID, nil
+	return currentContainer, nil
 }
 
 func ResolveEnvironmentVariables(variables []string, env []string) []string {
