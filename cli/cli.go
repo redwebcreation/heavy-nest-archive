@@ -1,8 +1,7 @@
 package cli
 
 import (
-	"fmt"
-	"github.com/redwebcreation/hez2/ansi"
+	"github.com/redwebcreation/hez2/cli/proxy"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/spf13/cobra"
 	"os"
@@ -11,7 +10,7 @@ import (
 func Execute() {
 	for _, arg := range os.Args {
 		if arg == "--version" || arg == "-v" {
-			ansi.Print("Hez " + globals.Version)
+			globals.Ansi.Print("Hez " + globals.Version)
 			return
 		}
 	}
@@ -24,37 +23,13 @@ func Execute() {
 
 	cli.PersistentFlags().BoolP("version", "v", false, "Prints Hez's version.")
 
+	cli.AddCommand(proxy.RootCommand())
+	cli.AddCommand(ApplyCommand())
 	cli.AddCommand(SelfUpdateCommand())
 	cli.AddCommand(InfoCommand())
 	cli.AddCommand(VersionCommand())
 
-	ansi.Check(cli.Execute())
-}
+	cli.SilenceErrors = true
 
-type CommandConfigurationHandler func(command *cobra.Command)
-type CommandHandler func(_ *cobra.Command, _ []string) error
-
-func CreateCommand(command *cobra.Command, commandConfigurationHandler CommandConfigurationHandler, Handler CommandHandler) *cobra.Command {
-	if commandConfigurationHandler != nil {
-		commandConfigurationHandler(command)
-	}
-
-	command.RunE = func(cmd *cobra.Command, args []string) error {
-		showVersion, _ := cmd.Flags().GetBool("version")
-
-		if showVersion {
-			fmt.Println("Hez " + globals.Version)
-			return nil
-		}
-
-		if Handler == nil {
-			return nil
-		}
-
-		return Handler(cmd, args)
-	}
-	command.SilenceErrors = true
-	command.SilenceUsage = true
-
-	return command
+	globals.Ansi.Check(cli.Execute())
 }

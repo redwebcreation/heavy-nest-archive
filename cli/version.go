@@ -1,8 +1,8 @@
 package cli
 
 import (
-	"github.com/redwebcreation/hez2/ansi"
 	"github.com/redwebcreation/hez2/globals"
+	"github.com/redwebcreation/hez2/util"
 	"github.com/spf13/cobra"
 )
 
@@ -10,16 +10,16 @@ var short bool
 
 func RunVersionCommand(_ *cobra.Command, _ []string) error {
 	if short {
-		ansi.Print(globals.Version)
+		globals.Ansi.Print(globals.Version)
 	} else {
-		ansi.Print("Hez " + globals.Version)
+		globals.Ansi.Print("Hez " + globals.Version)
 	}
 
 	return nil
 }
 
 func VersionCommand() *cobra.Command {
-	return CreateCommand(&cobra.Command{
+	return util.CreateCommand(&cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of Hez",
 		Long:  `All software has versions. This is Hez's.`,
