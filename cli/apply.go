@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +12,9 @@ import (
 	"github.com/redwebcreation/hez2/util"
 	"github.com/spf13/cobra"
 	"io"
+	"net/http"
+	"os/exec"
+	"strconv"
 	"strings"
 )
 
@@ -66,10 +70,24 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 
 		WaitForContainerToBeHealthy(container, application)
 
+		err = ExecuteContainerDeployedHooks(container, application)
+
+		if err != nil {
+			return err
+		}
+
 		_, err = application.StopTemporaryContainer()
 
 		if err != nil {
 			return err
+		}
+
+		if *application.Warm {
+			err := WarmContainer(container, application)
+
+			if err != nil {
+				return err
+			}
 		}
 
 		core.Ansi.Success(application.Host + ": Application is live.")
@@ -84,6 +102,74 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
+func ExecuteContainerDeployedHooks(container string, application globals.Application) error {
+	if len(application.Hooks.ContainerDeployed) == 0 {
+		return nil
+	}
+
+	// TODO: I couldn't make it work using the standard docker client.
+	for _, c := range application.Hooks.ContainerDeployed {
+		command := []string{
+			"exec",
+			container,
+		}
+
+		for _, piece := range strings.Split(c, " ") {
+			command = append(command, piece)
+		}
+
+		cmd := exec.Command("docker", command...)
+
+		var stderr bytes.Buffer
+
+		cmd.Stderr = &stderr
+
+		err := cmd.Run()
+
+		if stderr.Len() > 0 {
+			return errors.New(stderr.String())
+		}
+
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func WarmContainer(container string, application globals.Application) error {
+	if core.IsProxyEnabled() {
+		for i := 0; i < 10; i++ {
+			_, err := http.Get(application.Host)
+
+			if err != nil {
+				return err
+			}
+		}
+	} else {
+		containers, err := core.GetProxiableContainers()
+		if err != nil {
+			return err
+		}
+
+		for _, proxiableContainer := range containers {
+			if proxiableContainer.Container.ID == container {
+				counter := 0
+				for i := 0; i < 10; i++ {
+					core.Ansi.StatusLoader(application.Host+": Warming up "+strconv.Itoa(i+1)+"/10", &counter)
+					_, err = http.Get(proxiableContainer.Ipv4 + ":" + proxiableContainer.VirtualPort)
+				}
+
+				counter = 0
+				core.Ansi.StatusLoader(application.Host+": Container warmed up.", &counter)
+				break
+			}
+		}
+	}
+
+	return nil
+}
 func WaitForContainerToBeHealthy(containerId string, application globals.Application) {
 	starting, _ := isContainerStarting(containerId)
 	var counter int
@@ -122,7 +208,9 @@ func ApplyCommand() *cobra.Command {
 }
 
 func pullLatestImage(application globals.Application) error {
-	events, err := globals.Docker.ImagePull(context.Background(), application.Image, types.ImagePullOptions{})
+	events, err := globals.Docker.ImagePull(context.Background(), application.Image, types.ImagePullOptions{
+	})
+
 	if err != nil {
 		return err
 	}

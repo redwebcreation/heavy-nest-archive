@@ -53,7 +53,7 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 		var networkConfiguration types.EndpointResource
 
 		for _, c := range containerNetwork.Containers {
-			if container.Names[0] == c.Name {
+			if container.Names[0] == "/"+c.Name {
 				networkConfiguration = c
 				break
 			}

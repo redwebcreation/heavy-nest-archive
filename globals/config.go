@@ -29,6 +29,9 @@ type HezConfig struct {
 			Port       int   `yaml:"port"`
 			SelfSigned *bool `yaml:"self_signed"`
 		} `yaml:"https"`
+		Firewall struct {
+			Rate int `yaml:"rate"` // max requests every 5 minutes per ip.
+		} `yaml:"firewall"`
 	} `yaml:"proxy"`
 }
 
@@ -43,15 +46,16 @@ type Application struct {
 		From string
 		To   string
 	} `yaml:"volumes"`
+	Registry struct {
+		Username string `yaml:"username"`
+		Password string `yaml:"password"`
+		Server   string `yaml:"server"`
+	}
 	//Replicas      int
-	Cpu      string `yaml:"cpu"`
-	Ram      string `yaml:"ram"`
-	Firewall struct {
-		Rate int `yaml:"rate"` // max requests every 5 minutes per ip.
-	} `yaml:"firewall"`
+	Cpu   string `yaml:"cpu"`
+	Ram   string `yaml:"ram"`
 	Hooks struct {
-		Before []string `yaml:"before"`
-		After  []string `yaml:"after"`
+		ContainerDeployed []string `yaml:"container_deployed"`
 	} `yaml:"hooks"`
 }
 
@@ -206,6 +210,10 @@ func GetContainer(name string) (types.Container, error) {
 
 func (application Application) stopContainer(name string) (types.Container, error) {
 	currentContainer, err := GetContainer(name)
+
+	if currentContainer.ID == "" {
+		return currentContainer, nil
+	}
 
 	if err != nil {
 		return currentContainer, err

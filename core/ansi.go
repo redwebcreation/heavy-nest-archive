@@ -60,28 +60,21 @@ func (ansi ansiOutput) Printf(format string, elements ...interface{}) {
 	fmt.Printf(format, elements...)
 }
 
-func (ansi ansiOutput) Reset() {
-	fmt.Print("\033[0m")
-}
-
 func (ansi ansiOutput) Success(message string) {
-	ansi.Println("\033[32m" + message)
-	ansi.Reset()
+	ansi.Println("\033[32m" + message + "\033[0m")
 }
 
 func (ansi ansiOutput) Warning(message string) {
-	ansi.Println("\033[33m" + message)
-	ansi.Reset()
+	ansi.Println("\033[33m" + message + "\033[0m")
 }
 
 func (ansi ansiOutput) Error(message string) {
-	ansi.Println("\033[31m" + message)
-	ansi.Reset()
+	ansi.Println("\033[31m" + message + "\033[0m")
 }
 
 func (ansi ansiOutput) Check(err error) {
 	if err != nil {
-		ansi.ErrorBlock(err.Error())
+		ansi.Error(err.Error())
 	}
 }
 
@@ -122,12 +115,11 @@ func (ansi ansiOutput) ClearLine() {
 	}
 }
 
-func (ansi ansiOutput) StatusLoader(messages string, count *int) {
+func (ansi ansiOutput) StatusLoader(status string, count *int) {
 	ansi.ClearLine()
-	ansi.Print(messages + strings.Repeat(".", *count) + "\n")
+	ansi.Print(status + strings.Repeat(".", *count) + "\n")
 
 	*count++
-
 	if *count > 3 {
 		*count = 0
 	}
