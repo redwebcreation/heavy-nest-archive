@@ -284,3 +284,9 @@ func FindNetwork(name string) (types.NetworkResource, error) {
 
 	return networkDetails, nil
 }
+
+func (application Application) HasRegistry() bool {
+	return application.Registry.Server != "" &&
+		application.Registry.Username != "" &&
+		application.Registry.Password != ""
+}

@@ -3,10 +3,12 @@ package cli
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
+	"github.com/redwebcreation/hez2/ansi"
 	"github.com/redwebcreation/hez2/core"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/redwebcreation/hez2/util"
@@ -16,6 +18,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Event struct {
@@ -46,7 +49,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 
 		temporaryContainer, err := application.CreateTemporaryContainer()
 
-		core.Ansi.Printf("%s: Temporary container created.\n", application.Host)
+		fmt.Printf("%s: Temporary container created.\n", application.Host)
 
 		if err != nil {
 			return err
@@ -66,7 +69,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			return err
 		}
 
-		core.Ansi.Printf("%s: Container created.\n", application.Host)
+		fmt.Printf("%s: Container created.\n", application.Host)
 
 		WaitForContainerToBeHealthy(container, application)
 
@@ -90,7 +93,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			}
 		}
 
-		core.Ansi.Success(application.Host + ": Application is live.")
+		ansi.Text(application.Host+": Application is live.", ansi.Green)
 	}
 
 	err := core.RefreshLastApplyExecution()
@@ -157,12 +160,12 @@ func WarmContainer(container string, application globals.Application) error {
 			if proxiableContainer.Container.ID == container {
 				counter := 0
 				for i := 0; i < 10; i++ {
-					core.Ansi.StatusLoader(application.Host+": Warming up "+strconv.Itoa(i+1)+"/10", &counter)
+					ansi.Loader(application.Host+": Warming up "+strconv.Itoa(i+1)+"/10", &counter)
 					_, err = http.Get(proxiableContainer.Ipv4 + ":" + proxiableContainer.VirtualPort)
 				}
 
 				counter = 0
-				core.Ansi.StatusLoader(application.Host+": Container warmed up.", &counter)
+				ansi.Loader(application.Host+": Container warmed up.", &counter)
 				break
 			}
 		}
@@ -171,32 +174,37 @@ func WarmContainer(container string, application globals.Application) error {
 	return nil
 }
 func WaitForContainerToBeHealthy(containerId string, application globals.Application) {
-	starting, _ := isContainerStarting(containerId)
+	inspection, _ := inspectContainer(containerId)
 	var counter int
+	var secondsWaited int
 
-	core.Ansi.NewLine()
-
-	for starting {
-		core.Ansi.StatusLoader(application.Host+": Waiting for container to be healthy", &counter)
-		starting, _ = isContainerStarting(containerId)
+	for isContainerStarting(inspection) {
+		ansi.Loader(application.Host+": Waiting for container to be healthy ("+strconv.Itoa(secondsWaited)+"/"+strconv.FormatFloat(inspection.Config.Healthcheck.Interval.Seconds(), 'f', 0, 64)+")", &counter)
+		inspection, _ = inspectContainer(containerId)
+		time.Sleep(1 * time.Second)
+		secondsWaited += 1
 	}
 
 	counter = 0
-	core.Ansi.StatusLoader(application.Host+": Container is healthy.", &counter)
+	ansi.Loader(application.Host+": Container is healthy.", &counter)
 }
 
-func isContainerStarting(containerId string) (bool, error) {
+func inspectContainer(containerId string) (types.ContainerJSON, error) {
 	inspection, err := globals.Docker.ContainerInspect(context.Background(), containerId)
 
 	if err != nil {
-		return false, err
+		return inspection, err
 	}
 
-	if inspection.State.Health == nil {
-		return false, nil
+	return inspection, nil
+}
+
+func isContainerStarting(container types.ContainerJSON) bool {
+	if container.State.Health == nil {
+		return false
 	}
 
-	return inspection.State.Health.Status != "healthy", nil
+	return container.State.Health.Status == "starting"
 }
 
 func ApplyCommand() *cobra.Command {
@@ -208,8 +216,18 @@ func ApplyCommand() *cobra.Command {
 }
 
 func pullLatestImage(application globals.Application) error {
-	events, err := globals.Docker.ImagePull(context.Background(), application.Image, types.ImagePullOptions{
-	})
+	options := types.ImagePullOptions{}
+
+	if application.HasRegistry() {
+		encodedAuth, _ := json.Marshal(map[string]string{
+			"username": application.Registry.Username,
+			"password": application.Registry.Password,
+		})
+
+		options.RegistryAuth = base64.StdEncoding.EncodeToString(encodedAuth)
+	}
+
+	events, err := globals.Docker.ImagePull(context.Background(), application.Image, options)
 
 	if err != nil {
 		return err
@@ -231,10 +249,6 @@ func pullLatestImage(application globals.Application) error {
 			return err
 		}
 
-		if !core.Ansi {
-			continue
-		}
-
 		if first {
 			fmt.Print("\n")
 			first = false
@@ -246,13 +260,10 @@ func pullLatestImage(application globals.Application) error {
 			counter = 0
 		}
 
-		core.Ansi.StatusLoader(application.Host+": "+strings.Replace(event.Status, "Status: ", "", 1), &counter)
+		ansi.Loader(application.Host+": "+strings.Replace(event.Status, "Status: ", "", 1), &counter)
 
 		status = newStatus
 	}
 
-	if !core.Ansi {
-		core.Ansi.Printf("%s: Pulled out the latest image for %s", application.Host, application.Image)
-	}
 	return nil
 }

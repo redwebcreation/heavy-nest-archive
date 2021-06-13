@@ -1,8 +1,9 @@
 package cli
 
 import (
+	"fmt"
+	"github.com/redwebcreation/hez2/ansi"
 	"github.com/redwebcreation/hez2/cli/proxy"
-	"github.com/redwebcreation/hez2/core"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/spf13/cobra"
 	"os"
@@ -11,7 +12,7 @@ import (
 func Execute() {
 	for _, arg := range os.Args {
 		if arg == "--version" || arg == "-v" {
-			core.Ansi.Print("Hez " + globals.Version)
+			fmt.Println("Hez " + globals.Version)
 			return
 		}
 	}
@@ -32,5 +33,9 @@ func Execute() {
 
 	cli.SilenceErrors = true
 
-	core.Ansi.Check(cli.Execute())
+	err := cli.Execute()
+
+	if err != nil {
+		ansi.Text(err.Error(), ansi.Red)
+	}
 }

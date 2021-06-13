@@ -1,7 +1,7 @@
 package cli
 
 import (
-	"github.com/redwebcreation/hez2/core"
+	"fmt"
 	"github.com/redwebcreation/hez2/globals"
 	"github.com/redwebcreation/hez2/util"
 	"github.com/spf13/cobra"
@@ -11,9 +11,9 @@ var short bool
 
 func RunVersionCommand(_ *cobra.Command, _ []string) error {
 	if short {
-		core.Ansi.Print(globals.Version)
+		fmt.Println(globals.Version)
 	} else {
-		core.Ansi.Print("Hez " + globals.Version)
+		fmt.Println("Hez " + globals.Version)
 	}
 
 	return nil
