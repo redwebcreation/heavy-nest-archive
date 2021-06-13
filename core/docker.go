@@ -1,4 +1,4 @@
-package globals
+package core
 
 import "github.com/docker/docker/client"
 

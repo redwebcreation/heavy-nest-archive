@@ -2,9 +2,7 @@ package proxy
 
 import (
 	"crypto/tls"
-	"github.com/redwebcreation/hez2/core"
-	"github.com/redwebcreation/hez2/globals"
-	"github.com/redwebcreation/hez2/util"
+	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/acme/autocert"
 	"net/http"
@@ -12,7 +10,7 @@ import (
 )
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
-	lastApplyExecution := core.GetLastApplyExecution()
+	lastApplyExecution := core.LastChangedTimestamp()
 	proxiables, err := core.GetProxiableContainers()
 
 	if err != nil {
@@ -24,24 +22,24 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 	certManager := autocert.Manager{
 		Prompt:     autocert.AcceptTOS,
 		HostPolicy: autocert.HostWhitelist(core.GetWhitelistedDomains()...),
-		Cache:      autocert.DirCache(globals.CertificatesDirectory),
+		Cache:      autocert.DirCache(core.CertificatesDirectory),
 	}
 
-	if globals.Config.Proxy.Http.Enabled {
+	if core.Config.Proxy.Http.Enabled {
 		go func() {
 			// HTTP server that redirects to the HTTPS one.
 			h := certManager.HTTPHandler(nil)
-			err := http.ListenAndServe(":"+strconv.Itoa(globals.Config.Proxy.Http.Port), h)
+			err := http.ListenAndServe(":"+strconv.Itoa(core.Config.Proxy.Http.Port), h)
 
 			if err != nil {
-				globals.Logger.Fatal(err.Error())
+				core.Logger.Fatal(err.Error())
 			}
 		}()
 	}
 
-	if globals.Config.Proxy.Https.Enabled {
+	if core.Config.Proxy.Https.Enabled {
 		server := &http.Server{
-			Addr: ":" + strconv.Itoa(globals.Config.Proxy.Https.Port),
+			Addr: ":" + strconv.Itoa(core.Config.Proxy.Https.Port),
 			TLSConfig: &tls.Config{
 				GetCertificate: certManager.GetCertificate,
 			},
@@ -50,7 +48,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 		err = server.ListenAndServeTLS("", "")
 
 		if err != nil {
-			globals.Logger.Fatal(err.Error())
+			core.Logger.Fatal(err.Error())
 		}
 	}
 
@@ -58,7 +56,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 }
 
 func RunCommand() *cobra.Command {
-	command := util.CreateCommand(&cobra.Command{
+	command := core.CreateCommand(&cobra.Command{
 		Use:   "run",
 		Short: "Starts the proxy server.",
 		Long:  `Starts the proxy server on the configured ports.`,

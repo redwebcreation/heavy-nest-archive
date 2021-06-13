@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/redwebcreation/hez2/ansi"
-	"github.com/redwebcreation/hez2/globals"
-	"github.com/redwebcreation/hez2/util"
+	"github.com/redwebcreation/hez/ansi"
+	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/globals"
 	"github.com/spf13/cobra"
 	"io"
 	"io/ioutil"
@@ -168,7 +168,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	if globals.Version == "(development)" {
 		ansi.Text("You're using the development build of Hez.", ansi.Orange)
 		ansi.Text("Please, specify a version to use when building the binary.", ansi.Orange)
-		ansi.Text("go build -ldflags=\"-X github.com/redwebcreation/hez2/globals.Version=$(git describe --tags)\"", ansi.Orange)
+		ansi.Text("go build -ldflags=\"-X github.com/redwebcreation/hez/globals.Version=$(git describe --tags)\"", ansi.Orange)
 		return nil
 	}
 
@@ -236,7 +236,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 }
 
 func SelfUpdateCommand() *cobra.Command {
-	command := util.CreateCommand(&cobra.Command{
+	command := core.CreateCommand(&cobra.Command{
 		Use:   "self-update [version]",
 		Short: "Updates Hez to the latest version.",
 		Long:  `Updates Hez to the latest version or the one given as the first argument.`,

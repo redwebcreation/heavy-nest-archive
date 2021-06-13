@@ -3,7 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"github.com/redwebcreation/hez2/util"
+	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"io"
 	"net/http"
@@ -54,7 +54,7 @@ func RunInfoCommand(_ *cobra.Command, args []string) error {
 }
 
 func InfoCommand() *cobra.Command {
-	command := util.CreateCommand(&cobra.Command{
+	command := core.CreateCommand(&cobra.Command{
 		Use:   "info [node name]",
 		Short: "Displays various metrics about your system.",
 		Long:  `Display various metrics about the master's hardware such as available memory, cpu cores...`,

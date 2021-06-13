@@ -1,4 +1,4 @@
-module github.com/redwebcreation/hez2
+module github.com/redwebcreation/hez
 
 go 1.16
 

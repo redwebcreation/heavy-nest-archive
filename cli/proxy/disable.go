@@ -3,8 +3,7 @@ package proxy
 import (
 	"errors"
 	"fmt"
-	"github.com/redwebcreation/hez2/core"
-	"github.com/redwebcreation/hez2/util"
+	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +28,7 @@ func runDisableCommand(_ *cobra.Command, _ []string) error {
 }
 
 func DisableCommand() *cobra.Command {
-	return util.CreateCommand(&cobra.Command{
+	return core.CreateCommand(&cobra.Command{
 		Use:   "disable",
 		Short: "Disables the reverse proxy.",
 		Long:  `Disables the reverse proxy configuration file in systemd`,

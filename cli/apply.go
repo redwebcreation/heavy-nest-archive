@@ -8,10 +8,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
-	"github.com/redwebcreation/hez2/ansi"
-	"github.com/redwebcreation/hez2/core"
-	"github.com/redwebcreation/hez2/globals"
-	"github.com/redwebcreation/hez2/util"
+	"github.com/redwebcreation/hez/ansi"
+	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"io"
 	"net/http"
@@ -32,13 +30,13 @@ type Event struct {
 }
 
 func RunApplyCommand(_ *cobra.Command, _ []string) error {
-	applications := globals.Config.Applications
+	applications := core.Config.Applications
 
 	if len(applications) == 0 {
 		return errors.New("no applications found in the configuration")
 	}
 
-	for _, application := range globals.Config.Applications {
+	for _, application := range core.Config.Applications {
 		err := pullLatestImage(application)
 
 		if err != nil {
@@ -96,7 +94,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 		ansi.Text(application.Host+": Application is live.", ansi.Green)
 	}
 
-	err := core.RefreshLastApplyExecution()
+	err := core.RefreshLastChangedTimestamp()
 
 	if err != nil {
 		return err
@@ -105,7 +103,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func ExecuteContainerDeployedHooks(container string, application globals.Application) error {
+func ExecuteContainerDeployedHooks(container string, application core.Application) error {
 	if len(application.Hooks.ContainerDeployed) == 0 {
 		return nil
 	}
@@ -141,7 +139,7 @@ func ExecuteContainerDeployedHooks(container string, application globals.Applica
 	return nil
 }
 
-func WarmContainer(container string, application globals.Application) error {
+func WarmContainer(container string, application core.Application) error {
 	if core.IsProxyEnabled() {
 		for i := 0; i < 10; i++ {
 			_, err := http.Get(application.Host)
@@ -158,22 +156,20 @@ func WarmContainer(container string, application globals.Application) error {
 
 		for _, proxiableContainer := range containers {
 			if proxiableContainer.Container.ID == container {
-				counter := 0
 				for i := 0; i < 10; i++ {
-					ansi.Loader(application.Host+": Warming up "+strconv.Itoa(i+1)+"/10", &counter)
 					_, err = http.Get(proxiableContainer.Ipv4 + ":" + proxiableContainer.VirtualPort)
 				}
 
-				counter = 0
-				ansi.Loader(application.Host+": Container warmed up.", &counter)
 				break
 			}
 		}
 	}
 
+	fmt.Println(application.Host + ": Container warmed up.")
+
 	return nil
 }
-func WaitForContainerToBeHealthy(containerId string, application globals.Application) {
+func WaitForContainerToBeHealthy(containerId string, application core.Application) {
 	inspection, _ := inspectContainer(containerId)
 	var counter int
 	var secondsWaited int
@@ -190,7 +186,7 @@ func WaitForContainerToBeHealthy(containerId string, application globals.Applica
 }
 
 func inspectContainer(containerId string) (types.ContainerJSON, error) {
-	inspection, err := globals.Docker.ContainerInspect(context.Background(), containerId)
+	inspection, err := core.Docker.ContainerInspect(context.Background(), containerId)
 
 	if err != nil {
 		return inspection, err
@@ -208,14 +204,14 @@ func isContainerStarting(container types.ContainerJSON) bool {
 }
 
 func ApplyCommand() *cobra.Command {
-	return util.CreateCommand(&cobra.Command{
+	return core.CreateCommand(&cobra.Command{
 		Use:   "apply",
 		Short: "Applies your configuration to the server.",
 		Long:  `Applies your configuration to the server.`,
 	}, nil, RunApplyCommand)
 }
 
-func pullLatestImage(application globals.Application) error {
+func pullLatestImage(application core.Application) error {
 	options := types.ImagePullOptions{}
 
 	if application.HasRegistry() {
@@ -227,7 +223,7 @@ func pullLatestImage(application globals.Application) error {
 		options.RegistryAuth = base64.StdEncoding.EncodeToString(encodedAuth)
 	}
 
-	events, err := globals.Docker.ImagePull(context.Background(), application.Image, options)
+	events, err := core.Docker.ImagePull(context.Background(), application.Image, options)
 
 	if err != nil {
 		return err

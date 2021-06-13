@@ -1,4 +1,4 @@
-package globals
+package core
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-type HezConfig struct {
+type Hez struct {
 	DefaultNetwork string        `yaml:"default_network"`
 	Applications   []Application `yaml:"applications"`
 	Proxy          struct {
@@ -59,11 +59,11 @@ type Application struct {
 	} `yaml:"hooks"`
 }
 
-var Config *HezConfig
+var Config *Hez
 var ConfigFile = "/etc/hez/hez.yml"
 
 func init() {
-	data := HezConfig{}
+	data := Hez{}
 	bytes, _ := os.ReadFile(ConfigFile)
 
 	err := yaml.Unmarshal(bytes, &data)
@@ -77,7 +77,7 @@ func init() {
 	Config = &data
 }
 
-func useDefaults(config *HezConfig) {
+func useDefaults(config *Hez) {
 	if config.DefaultNetwork == "" {
 		config.DefaultNetwork = "bridge"
 	}
@@ -210,6 +210,10 @@ func GetContainer(name string) (types.Container, error) {
 
 func (application Application) stopContainer(name string) (types.Container, error) {
 	currentContainer, err := GetContainer(name)
+
+	if err != nil {
+		return currentContainer, err
+	}
 
 	if currentContainer.ID == "" {
 		return currentContainer, nil

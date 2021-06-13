@@ -2,9 +2,8 @@ package proxy
 
 import (
 	"errors"
-	"github.com/redwebcreation/hez2/ansi"
-	"github.com/redwebcreation/hez2/core"
-	"github.com/redwebcreation/hez2/util"
+	"github.com/redwebcreation/hez/ansi"
+	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 )
 
@@ -28,7 +27,7 @@ func runEnableCommand(_ *cobra.Command, _ []string) error {
 }
 
 func EnableCommand() *cobra.Command {
-	return util.CreateCommand(&cobra.Command{
+	return core.CreateCommand(&cobra.Command{
 		Use:   "enable",
 		Short: "Enables the reverse proxy.",
 		Long:  `Registers the reverse proxy in systemd`,

@@ -1,8 +1,8 @@
-package util
+package core
 
 import (
 	"fmt"
-	"github.com/redwebcreation/hez2/globals"
+	"github.com/redwebcreation/hez/globals"
 	"github.com/spf13/cobra"
 )
 

@@ -4,8 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/redwebcreation/hez2/core"
-	"github.com/redwebcreation/hez2/util"
+	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"os/exec"
 )
@@ -31,7 +30,7 @@ func runStatusCommand(_ *cobra.Command, _ []string) error {
 }
 
 func StatusCommand() *cobra.Command {
-	return util.CreateCommand(&cobra.Command{
+	return core.CreateCommand(&cobra.Command{
 		Use:   "run",
 		Short: "Returns the status of the reverse proxy.",
 		Long:  `Returns the status of the reverse proxy.`,

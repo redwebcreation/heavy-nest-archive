@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/redwebcreation/hez2/ansi"
-	"github.com/redwebcreation/hez2/cli/proxy"
-	"github.com/redwebcreation/hez2/globals"
+	"github.com/redwebcreation/hez/ansi"
+	"github.com/redwebcreation/hez/cli/proxy"
+	"github.com/redwebcreation/hez/globals"
 	"github.com/spf13/cobra"
 	"os"
 )

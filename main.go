@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/redwebcreation/hez2/ansi"
-	"github.com/redwebcreation/hez2/cli"
-	"github.com/redwebcreation/hez2/globals"
+	"github.com/redwebcreation/hez/ansi"
+	"github.com/redwebcreation/hez/cli"
+	"github.com/redwebcreation/hez/core"
 	"os"
 	"runtime"
 )
@@ -26,10 +26,10 @@ func main() {
 		return
 	}
 
-	_, err := os.Stat(globals.ConfigFile)
+	_, err := os.Stat(core.ConfigFile)
 
 	if os.IsNotExist(err) {
-		ansi.Text("Configuration file not found at "+globals.ConfigFile, ansi.Red)
+		ansi.Text("Configuration file not found at "+core.ConfigFile, ansi.Red)
 		return
 	}
 

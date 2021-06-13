@@ -1,4 +1,4 @@
-package globals
+package core
 
 import "os"
 

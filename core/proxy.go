@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"github.com/docker/docker/api/types"
-	"github.com/redwebcreation/hez2/globals"
 	"go.uber.org/zap"
 	"io"
 	"net"
@@ -36,15 +35,15 @@ func GetWhitelistedDomains() []string {
 func GetProxiableContainers() ([]ProxiableContainer, error) {
 	var proxiableContainers []ProxiableContainer
 
-	for _, application := range globals.Config.Applications {
-		container, _ := globals.GetContainer(application.Name())
+	for _, application := range Config.Applications {
+		container, _ := GetContainer(application.Name())
 
-		inspectedContainer, err := globals.Docker.ContainerInspect(context.Background(), container.ID)
+		inspectedContainer, err := Docker.ContainerInspect(context.Background(), container.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		containerNetwork, err := globals.FindNetwork(application.Network)
+		containerNetwork, err := FindNetwork(application.Network)
 
 		if err != nil {
 			return nil, err
@@ -90,7 +89,7 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 
 func HandleRequest(lastApplyExecution string, proxiables []ProxiableContainer) func(writer http.ResponseWriter, request *http.Request) {
 	return func(writer http.ResponseWriter, request *http.Request) {
-		if lastApplyExecution != GetLastApplyExecution() {
+		if lastApplyExecution != LastChangedTimestamp() {
 			proxiables, _ = GetProxiableContainers()
 		}
 
@@ -101,7 +100,7 @@ func HandleRequest(lastApplyExecution string, proxiables []ProxiableContainer) f
 			if request.Host == proxiableContainer.VirtualHost {
 				success := ForwardRequest(proxiableContainer, writer, request)
 				if success {
-					globals.Logger.Info(
+					Logger.Info(
 						"request.success",
 						zap.String("method", request.Method),
 						zap.String("ip", ip),
@@ -112,7 +111,7 @@ func HandleRequest(lastApplyExecution string, proxiables []ProxiableContainer) f
 			}
 		}
 
-		globals.Logger.Info(
+		Logger.Info(
 			"request.invalid",
 			zap.String("method", request.Method),
 			zap.String("ip", ip),
