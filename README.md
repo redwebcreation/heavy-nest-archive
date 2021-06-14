@@ -13,23 +13,23 @@ mv ./hez /usr/bin/hez
 Hez stores its configuration in `/etc/hez/hez.yml`, you can generate it automatically using the command below:
 
 ```bash
-hez config new
+hez init
 ```
 
 This command creates the `/etc/hez/hez.yml` contains the main configuration.
-
-You may delete your configuration file using `hez config delete`.
-
-> This will also stop any running containers and/or the reverse proxy.
 
 The config file looks like this :
 
 ````yaml
 applications: [ ]
 proxy:
-  port: 80
-  ssl: 443
-  self_signed: false
+  http:
+    enabled: true
+    port: 80
+  https:
+    enabled: true
+    port: 443
+    self_signed: false
   logs:
     level: 0
     redirections:
@@ -38,16 +38,27 @@ proxy:
 
 ## Applications
 
-An application in the configuration looks like that :
+A complex application configuration could look like that :
 
 ```yaml
 applications:
   - image: example-app
     host: example.com
     container_port: 80
+    network: some-network
+    warm: true
+    volumes:
+      - /data/example_com/storage:/var/www/html/storage
+    registry:
+      username: someone
+      password: cool
+      server: rg.fr-par.scw.cloud/namespace/app
     env:
-      - APP_ENV=local
+      - /dat
       - ...
+    hooks:
+      container_deployed:
+        - php artisan migrate -f
 ```
 
 Let's break it down, line by line.
@@ -57,6 +68,8 @@ The `image` is the docker image of your application, you can also specify a vers
 ```yaml
 example-app:4.2.0
 ```
+
+The `host` tells the proxy to forward any request for this host to the container on the `container_port`
 
 The `env` key lets you provide environment variables to the image, you can provide one per line using the syntax you are
 used to.
@@ -69,7 +82,13 @@ applications:
       - YES="not at all"
 ```
 
-The `host` tells the proxy to forward any request for this host to the application on the `container_port`
+You can also reference an env file :
+
+```yaml
+applications:
+  - env:
+      - /data/envs/example.env
+```
 
 You can now apply your configuration :
 
@@ -80,7 +99,7 @@ hez apply
 This command will create all the containers as defined in your configuration. Every time you change your configuration,
 you may rerun `hez apply`to apply it.
 
-You may stop all the running containers.
+You may stop all running containers.
 
 ```bash
 hez stop
@@ -90,33 +109,21 @@ hez stop
 
 Hez has an integrated reverse proxy that forwards any request to the right container.
 
+```yaml
+proxy:
+  http:
+    enabled: true
+    port: 80
+  https:
+    enabled: true
+    port: 443
+  logs: ...
+```
+
 You can start it like that :
 
 ```bash
 hez proxy run
-```
-
-You can also specify the ports that the proxy should listen to.
-
-```bash
-hez proxy run --port 8080 --ssl 8443
-```
-
-By default, the proxy will use Let's Encrypt to generate (and re-generate) SSL certificates, but you may want to use
-self-signed certificates for testing as you can not use Let's Encrypt to secure localhost. :
-
-````bash
-hez proxy run --self-signed
-````
-
-By default, the ports used, and the SSL strategy is defined in your configuration file :
-
-```yaml
-proxy:
-  port: 80
-  ssl: 443
-  self_signed: true
-  logs: ...
 ```
 
 You can also register the proxy to run automatically and restart on reboot using systemd:
@@ -179,15 +186,11 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
-* private registry support for `--with-pulls`
 * proxy restart command (or take configuration changes into account)
 * logs redirections validation
-* read env from file
 * variable interpolation for env: and env files
 * if container_port is not open on container x throw an error.
 * add request_uri to proxy logs
-* elevated privileges for update when current executable is not writable
-* if one container is stopped, apply should still run regardless of the config checksum.
 * websockets, gRPC, HTTP2 (3?)
 * container logs?
 * check if dns points to the server automatically
