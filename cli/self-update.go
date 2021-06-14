@@ -146,6 +146,10 @@ func (repository Repository) Releases(filter ReleaseFilter) ([]Release, error) {
 var Repo = Repository("redwebcreation/hez")
 
 func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
+	if !core.IsRunningAsRoot() {
+		return errors.New("this command requires elevated privileges")
+	}
+
 	if dryRun {
 		ansi.Text("Dry running the command, nothing will be executed.", ansi.Orange)
 	}
@@ -208,7 +212,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	body, err := ioutil.ReadAll(response.Body)
 
 	if dryRun {
-		ansi.Text("Successfully updated Hez to the version " + latestRelease.TagName, ansi.Green)
+		ansi.Text("Successfully updated Hez to the version "+latestRelease.TagName, ansi.Green)
 		return nil
 	}
 
@@ -230,7 +234,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 	_ = os.Chmod(executable, os.FileMode(0777))
 
-	ansi.Text("Successfully updated Hez to the version " + latestRelease.TagName, ansi.Green)
+	ansi.Text("Successfully updated Hez to the version "+latestRelease.TagName, ansi.Green)
 
 	return nil
 }
