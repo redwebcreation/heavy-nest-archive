@@ -1,21 +1,31 @@
 package core
 
-import (
-	"os"
-)
+import "os"
 
-func GetPathFor(key string) string {
-	_ = os.MkdirAll(StorageDirectory(), os.FileMode(0700))
+var DataDirectory string
+var CertificatesDirectory string
 
-	return StorageDirectory() + "/" + key
-}
-
-func CreateFile(name string, value []byte, perm os.FileMode) error {
-	err := os.WriteFile(GetPathFor(name), value, perm)
+func init() {
+	home, err := os.UserHomeDir()
 
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	return nil
+	DataDirectory = home + "/.config/hez/data"
+
+	err = os.MkdirAll(DataDirectory, os.FileMode(0777))
+
+	if err != nil {
+		panic(err)
+	}
+
+	CertificatesDirectory = DataDirectory + "/certificates"
+
+	err = os.MkdirAll(CertificatesDirectory, os.FileMode(0777))
+
+	if err != nil {
+		panic(err)
+	}
 }
+

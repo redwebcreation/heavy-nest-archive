@@ -1,41 +1,35 @@
 package proxy
 
 import (
-	"fmt"
+	"errors"
+	"github.com/redwebcreation/hez/ansi"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
-	"os"
 )
 
-func runEnableCommand(_ *cobra.Command, _ []string) {
+func runEnableCommand(_ *cobra.Command, _ []string) error {
 	if !core.IsRunningAsRoot() {
-		fmt.Println("This command requires elevated privileges.")
-		os.Exit(1)
+		return errors.New("this command requires elevated privileges")
 	}
 
 	if core.IsProxyEnabled() {
-		fmt.Println("Proxy is already enabled.")
-		os.Exit(1)
+		return errors.New("proxy is already enabled")
 	}
 
 	err := core.EnableProxy()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
-	fmt.Println("Proxy has been successfully enabled.")
+	ansi.Text("Proxy has been successfully enabled.", ansi.Green)
+	return nil
 }
 
-func initEnableCommand() *cobra.Command {
-	enableCommand := &cobra.Command{
+func EnableCommand() *cobra.Command {
+	return core.CreateCommand(&cobra.Command{
 		Use:   "enable",
 		Short: "Enables the reverse proxy.",
-		Run:   runEnableCommand,
-	}
-
-	enableCommand.Flags().BoolVar(&selfSigned, "self-signed", false, "Force the use of self signed certificates.")
-
-	return enableCommand
+		Long:  `Registers the reverse proxy in systemd`,
+	}, nil, runEnableCommand)
 }
