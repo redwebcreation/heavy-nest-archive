@@ -20,8 +20,8 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 	http.HandleFunc("/", core.HandleRequest(lastApplyExecution, proxiables))
 
 	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,
-		HostPolicy: autocert.HostWhitelist(core.GetWhitelistedDomains()...),
+		Prompt:     autocert.AcceptTOS,go
+		HostPolicy:nil,
 		Cache:      autocert.DirCache(core.CertificatesDirectory),
 	}
 
