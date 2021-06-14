@@ -112,7 +112,11 @@ func GetCpu() (Core, error) {
 
 		keyValue := strings.Split(line, ": ")
 		key := strings.TrimSpace(keyValue[0])
-		value := keyValue[1]
+		var value string
+
+		if len(keyValue) > 1 {
+			value = keyValue[1]
+		}
 
 		if key == "cpu cores" {
 			cpuCures, _ := strconv.ParseUint(value, 10, 64)
