@@ -1,37 +1,36 @@
 package proxy
 
 import (
+	"errors"
 	"fmt"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
-	"os"
 )
 
-func runDisableCommand(_ *cobra.Command, _ []string) {
+func runDisableCommand(_ *cobra.Command, _ []string) error {
 	if !core.IsRunningAsRoot() {
-		fmt.Println("This command requires elevated privileges.")
-		os.Exit(1)
+		return errors.New("this command requires elevated privileges")
 	}
 
 	if !core.IsProxyEnabled() {
-		fmt.Println("Proxy is already disabled.")
-		os.Exit(1)
+		return errors.New("proxy is already disabled")
 	}
 
 	err := core.DisableProxy()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Println("Proxy has been successfully disabled.")
+
+	return nil
 }
 
-func initDisableCommand() *cobra.Command {
-	return &cobra.Command{
+func DisableCommand() *cobra.Command {
+	return core.CreateCommand(&cobra.Command{
 		Use:   "disable",
 		Short: "Disables the reverse proxy.",
-		Run:   runDisableCommand,
-	}
+		Long:  `Disables the reverse proxy configuration file in systemd`,
+	}, nil, runDisableCommand)
 }

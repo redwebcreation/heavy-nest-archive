@@ -2,17 +2,16 @@ package proxy
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
-	"os"
 	"os/exec"
 )
 
-func runStatusCommand(_ *cobra.Command, _ []string) {
+func runStatusCommand(_ *cobra.Command, _ []string) error {
 	if !core.IsProxyEnabled() {
-		fmt.Println("Proxy is disabled.")
-		os.Exit(1)
+		return errors.New("proxy is disabled")
 	}
 
 	var stdOut bytes.Buffer
@@ -22,17 +21,18 @@ func runStatusCommand(_ *cobra.Command, _ []string) {
 	err := cmd.Run()
 
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 
 	fmt.Printf(stdOut.String())
+
+	return nil
 }
 
-func initStatusCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "status",
-		Short: "Returns the status of the reverse proxy.",
-		Run:   runStatusCommand,
-	}
+func StatusCommand() *cobra.Command {
+	return core.CreateCommand(&cobra.Command{
+		Use:   "run",
+		Short: "Returns the status of the reverse proxy",
+		Long:  `Returns the status of the reverse proxy`,
+	}, nil, runStatusCommand)
 }
