@@ -1,7 +1,9 @@
 package proxy
 
 import (
+	"context"
 	"crypto/tls"
+	"errors"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/acme/autocert"
@@ -20,9 +22,19 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 	http.HandleFunc("/", core.HandleRequest(lastApplyExecution, proxiables))
 
 	certManager := autocert.Manager{
-		Prompt:     autocert.AcceptTOS,go
-		HostPolicy:nil,
-		Cache:      autocert.DirCache(core.CertificatesDirectory),
+		Prompt: autocert.AcceptTOS,
+		HostPolicy: func(ctx context.Context, host string) error {
+			domains := core.GetWhitelistedDomains()
+
+			for _, domain := range domains {
+				if domain == host {
+					return nil
+				}
+			}
+
+			return errors.New("host not configured in whitelist")
+		},
+		Cache: autocert.DirCache(core.CertificatesDirectory),
 	}
 
 	if core.Config.Proxy.Http.Enabled {
