@@ -31,7 +31,7 @@ func runStatusCommand(_ *cobra.Command, _ []string) error {
 
 func StatusCommand() *cobra.Command {
 	return core.CreateCommand(&cobra.Command{
-		Use:   "run",
+		Use:   "status",
 		Short: "Returns the status of the reverse proxy",
 		Long:  `Returns the status of the reverse proxy`,
 	}, nil, runStatusCommand)
