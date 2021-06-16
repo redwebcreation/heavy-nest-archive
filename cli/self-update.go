@@ -241,9 +241,10 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 func SelfUpdateCommand() *cobra.Command {
 	command := core.CreateCommand(&cobra.Command{
-		Use:   "self-update [version]",
-		Short: "Updates Hez to the latest version.",
-		Long:  `Updates Hez to the latest version or the one given as the first argument.`,
+		Aliases: []string{"selfupdate", "update"},
+		Use:     "self-update [version]",
+		Short:   "Updates Hez to the latest version.",
+		Long:    `Updates Hez to the latest version or the one given as the first argument.`,
 	}, func(command *cobra.Command) {
 		command.Flags().BoolVar(&dryRun, "dry-run", false, "Dry run Hez's update process.")
 		command.Flags().BoolVarP(&force, "force", "f", false, "Force the update.")
