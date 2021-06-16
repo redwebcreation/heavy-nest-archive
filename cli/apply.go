@@ -14,6 +14,7 @@ import (
 	"io"
 	"net/http"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -205,7 +206,7 @@ func WaitForContainerToBeHealthy(application core.Application, containerType int
 		i++
 
 		if i%10 == 0 {
-			fmt.Printf(": Waiting for container to be healthy")
+			fmt.Println("Waiting for container to be healthy (" + strconv.Itoa(i) + ")")
 		}
 		time.Sleep(1 * time.Second)
 	}
