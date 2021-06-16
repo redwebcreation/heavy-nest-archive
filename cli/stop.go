@@ -9,15 +9,15 @@ import (
 
 func runStopCommand(_ *cobra.Command, _ []string) error {
 	for _, application := range core.Config.Applications {
-		current, _ := application.StopApplicationContainer()
-		temporary, _ := application.StopTemporaryContainer()
+		current, _ := application.StopContainer(core.ApplicationContainer)
+		temporary, _ := application.StopContainer(core.TemporaryContainer)
 
-		if current.ID != "" {
-			fmt.Printf("Stopped %s (%s).\n", application.Name(), current.ID)
+		if current.Ref.ID != "" {
+			fmt.Printf("Stopped %s (%s).\n", application.Name(core.ApplicationContainer), current.Ref.ID)
 		}
 
-		if temporary.ID != "" {
-			fmt.Printf("Stopped %s (%s).\n", application.NameWithSuffix("temporary"), temporary.ID)
+		if temporary.Ref.ID != "" {
+			fmt.Printf("Stopped %s (%s).\n", application.Name(core.TemporaryContainer), temporary.Ref.ID)
 		}
 	}
 	ansi.Text("All container have been stopped successfully.", ansi.Green)

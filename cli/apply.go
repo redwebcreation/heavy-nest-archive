@@ -45,47 +45,56 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			return err
 		}
 
-		_, _ = application.StopTemporaryContainer()
+		_, _ = application.StopContainer(core.TemporaryContainer)
 
-		temporaryContainer, err := application.CreateTemporaryContainer()
-
-		if err != nil {
-			//fatalErrors <- err
-			return err
-		}
-
-		fmt.Printf("%s: container %s created\n", application.Host, application.NameWithSuffix("temporary"))
-
-		WaitForContainerToBeHealthy(temporaryContainer, application)
-
-		_, err = application.StopApplicationContainer()
+		_, err = application.CreateContainer(core.TemporaryContainer)
 
 		if err != nil {
 			//fatalErrors <- err
 			return err
 		}
 
-		container, err := application.CreateApplicationContainer()
+		err = ExecuteContainerDeployedHooks(application, core.TemporaryContainer)
 
 		if err != nil {
 			//fatalErrors <- err
 			return err
 		}
 
-		fmt.Printf("%s: new container %s created\n", application.Host, application.Name())
+		fmt.Printf("%s: container %s created\n", application.Host, application.Name(core.TemporaryContainer))
 
-		WaitForContainerToBeHealthy(container, application)
+		err = WaitForContainerToBeHealthy(application, core.TemporaryContainer)
 
-		err = ExecuteContainerDeployedHooks(container, application)
+		if err != nil {
+			return err
+		}
+
+		_, _ = application.StopContainer(core.ApplicationContainer)
+		_, err = application.CreateContainer(core.ApplicationContainer)
 
 		if err != nil {
 			//fatalErrors <- err
 			return err
 		}
 
-		_, err = application.StopTemporaryContainer()
+		fmt.Printf("%s: new container %s created\n", application.Host, application.Name(core.ApplicationContainer))
 
-		fmt.Printf("%s: stopped temporary container %s\n", application.Host, application.NameWithSuffix("temporary"))
+		err = ExecuteContainerDeployedHooks(application, core.ApplicationContainer)
+
+		if err != nil {
+			return err
+		}
+
+		err = WaitForContainerToBeHealthy(application, core.ApplicationContainer)
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		_, err = application.StopContainer(core.TemporaryContainer)
+
+		fmt.Printf("%s: stopped temporary container %s\n", application.Host, application.Name(core.TemporaryContainer))
 
 		if err != nil {
 			//fatalErrors <- err
@@ -93,7 +102,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 		}
 
 		if *application.Warm {
-			err := WarmContainer(application.Name())
+			err := WarmContainer(application, core.ApplicationContainer)
 
 			if err != nil {
 				return err
@@ -130,16 +139,21 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func ExecuteContainerDeployedHooks(container string, application core.Application) error {
+func ExecuteContainerDeployedHooks(application core.Application, containerType int) error {
 	if len(application.Hooks.ContainerDeployed) == 0 {
 		return nil
 	}
 
-	// TODO: I couldn't make it work using the standard docker client.
+	container, err := application.GetContainer(containerType)
+
+	if err != nil {
+		return err
+	}
+
 	for _, c := range application.Hooks.ContainerDeployed {
 		command := []string{
 			"exec",
-			container,
+			container.Ref.ID,
 		}
 
 		for _, piece := range strings.Split(c, " ") {
@@ -166,32 +180,37 @@ func ExecuteContainerDeployedHooks(container string, application core.Applicatio
 	return nil
 }
 
-func WarmContainer(container string) error {
-	containers, err := core.GetProxiableContainers()
+func WarmContainer(application core.Application, containerType int) error {
+	container, err := application.GetContainer(containerType)
+
 	if err != nil {
 		return err
 	}
 
-	for _, proxiableContainer := range containers {
-		if proxiableContainer.Container.ID == container {
-			for i := 0; i < 10; i++ {
-				_, err = http.Get(proxiableContainer.Ipv4 + ":" + proxiableContainer.VirtualPort)
-			}
-
-			break
+	for i := 0; i < 10; i++ {
+		_, err = http.Get("http://" + container.Ip + ":" + container.Port)
+		if err != nil {
+			return err
 		}
 	}
 
 	return nil
 }
-func WaitForContainerToBeHealthy(containerId string, application core.Application) {
-	inspection, _ := inspectContainer(containerId)
+func WaitForContainerToBeHealthy(application core.Application, containerType int) error {
+	container, err := application.GetContainer(containerType)
+
+	if err != nil {
+		return err
+	}
+
+	inspection, _ := inspectContainer(container.Ref.ID)
 
 	for isContainerStarting(inspection) {
-		inspection, _ = inspectContainer(containerId)
+		inspection, _ = inspectContainer(container.Ref.ID)
 		time.Sleep(1 * time.Second)
 	}
 	fmt.Printf("%s: %s is healthy.\n", application.Host, inspection.Name[1:])
+	return nil
 }
 
 func inspectContainer(containerId string) (types.ContainerJSON, error) {

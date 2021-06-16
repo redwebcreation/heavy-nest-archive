@@ -189,7 +189,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	latestRelease := releases[0]
 
 	if !force && latestRelease.TagName == globals.Version {
-		fmt.Println("You're already using Hez " + latestRelease.TagName + ".")
+		fmt.Println("You're already using the latest version.")
 		return nil
 	}
 

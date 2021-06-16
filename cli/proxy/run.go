@@ -8,18 +8,10 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/acme/autocert"
 	"net/http"
-	"strconv"
 )
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
-	lastApplyExecution := core.LastChangedTimestamp()
-	proxiables, err := core.GetProxiableContainers()
-
-	if err != nil {
-		return err
-	}
-
-	http.HandleFunc("/", core.HandleRequest(lastApplyExecution, proxiables))
+	http.HandleFunc("/", core.HandleRequest)
 
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
@@ -41,7 +33,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 		go func() {
 			// HTTP server that redirects to the HTTPS one.
 			h := certManager.HTTPHandler(nil)
-			err := http.ListenAndServe(":"+strconv.Itoa(core.Config.Proxy.Http.Port), h)
+			err := http.ListenAndServe(":"+core.Config.Proxy.Http.Port, h)
 
 			if err != nil {
 				core.Logger.Fatal(err.Error())
@@ -51,13 +43,13 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 
 	if core.Config.Proxy.Https.Enabled {
 		server := &http.Server{
-			Addr: ":" + strconv.Itoa(core.Config.Proxy.Https.Port),
+			Addr: ":" + core.Config.Proxy.Https.Port,
 			TLSConfig: &tls.Config{
 				GetCertificate: certManager.GetCertificate,
 			},
 		}
 
-		err = server.ListenAndServeTLS("", "")
+		err := server.ListenAndServeTLS("", "")
 
 		if err != nil {
 			core.Logger.Fatal(err.Error())
