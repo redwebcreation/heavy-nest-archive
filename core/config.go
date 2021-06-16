@@ -14,11 +14,9 @@ type Hez struct {
 			Redirections []string `yaml:"redirections"`
 		} `yaml:"logs"`
 		Http struct {
-			Enabled bool   `yaml:"enabled"`
 			Port    string `yaml:"port"`
 		} `yaml:"http"`
 		Https struct {
-			Enabled    bool   `yaml:"enabled"`
 			Port       string `yaml:"port"`
 			SelfSigned *bool  `yaml:"self_signed"`
 		} `yaml:"https"`

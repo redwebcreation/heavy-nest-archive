@@ -30,7 +30,7 @@ func HandleRequest(writer http.ResponseWriter, request *http.Request) {
 			success := ForwardRequest(application, writer, request)
 			if success {
 				Logger.Info(
-					"request.success",
+					"request.forwarded",
 					zap.String("method", request.Method),
 					zap.String("ip", ip),
 					zap.String("vhost", request.Host),
@@ -43,7 +43,7 @@ func HandleRequest(writer http.ResponseWriter, request *http.Request) {
 	}
 
 	Logger.Info(
-		"request.invalid",
+		"request.ignored",
 		zap.String("method", request.Method),
 		zap.String("ip", ip),
 		zap.String("vhost", request.Host),
@@ -94,6 +94,8 @@ func ForwardRequest(application Application, writer http.ResponseWriter, request
 		}
 	}
 
+	writer.Header().Set("Set-Cookie", response.Header.Get("Set-Cookie"))
+
 
 	done := make(chan bool)
 
@@ -125,8 +127,6 @@ func ForwardRequest(application Application, writer http.ResponseWriter, request
 			writer.Header().Set(key, value)
 		}
 	}
-
-	writer.Header().Set("Set-Cookie", response.Header.Get("Set-Cookie"))
 
 	close(done)
 	return true

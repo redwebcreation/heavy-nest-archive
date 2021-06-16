@@ -29,31 +29,27 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 		Cache: autocert.DirCache(core.CertificatesDirectory),
 	}
 
-	if core.Config.Proxy.Http.Enabled {
-		go func() {
-			// HTTP server that redirects to the HTTPS one.
-			h := certManager.HTTPHandler(nil)
-			err := http.ListenAndServe(":"+core.Config.Proxy.Http.Port, h)
-
-			if err != nil {
-				core.Logger.Fatal(err.Error())
-			}
-		}()
-	}
-
-	if core.Config.Proxy.Https.Enabled {
-		server := &http.Server{
-			Addr: ":" + core.Config.Proxy.Https.Port,
-			TLSConfig: &tls.Config{
-				GetCertificate: certManager.GetCertificate,
-			},
-		}
-
-		err := server.ListenAndServeTLS("", "")
+	go func() {
+		// HTTP server that redirects to the HTTPS one.
+		h := certManager.HTTPHandler(nil)
+		err := http.ListenAndServe(":"+core.Config.Proxy.Http.Port, h)
 
 		if err != nil {
 			core.Logger.Fatal(err.Error())
 		}
+	}()
+
+	server := &http.Server{
+		Addr: ":" + core.Config.Proxy.Https.Port,
+		TLSConfig: &tls.Config{
+			GetCertificate: certManager.GetCertificate,
+		},
+	}
+
+	err := server.ListenAndServeTLS("", "")
+
+	if err != nil {
+		core.Logger.Fatal(err.Error())
 	}
 
 	return nil
