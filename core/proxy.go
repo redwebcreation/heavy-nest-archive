@@ -2,6 +2,7 @@ package core
 
 import (
 	"context"
+	"fmt"
 	"github.com/docker/docker/api/types"
 	"go.uber.org/zap"
 	"io"
@@ -36,7 +37,11 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 	var proxiableContainers []ProxiableContainer
 
 	for _, application := range Config.Applications {
-		container, _ := GetContainer(application.Name())
+		container, err := GetContainer(application.Name())
+
+		if err != nil {
+			continue
+		}
 
 		inspectedContainer, err := Docker.ContainerInspect(context.Background(), container.ID)
 		if err != nil {
@@ -46,6 +51,7 @@ func GetProxiableContainers() ([]ProxiableContainer, error) {
 		containerNetwork, err := FindNetwork(application.Network)
 
 		if err != nil {
+			fmt.Println("OOOOO")
 			return nil, err
 		}
 

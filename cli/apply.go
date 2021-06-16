@@ -15,7 +15,6 @@ import (
 	"net/http"
 	"os/exec"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -32,96 +31,95 @@ type Event struct {
 func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	applications := core.Config.Applications
 
-	var pool sync.WaitGroup
-	pool.Add(len(applications))
+	//var pool sync.WaitGroup
+	//pool.Add(len(applications))
 
-	fatalErrors := make(chan error)
-	done := make(chan bool)
+	//fatalErrors := make(chan error)
+	//done := make(chan bool)
 
 	for _, application := range applications {
-		go func(application core.Application) {
-			err := pullLatestImage(application)
+		err := pullLatestImage(application)
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		_, _ = application.StopTemporaryContainer()
+
+		temporaryContainer, err := application.CreateTemporaryContainer()
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		fmt.Printf("%s: container %s created\n", application.Host, application.NameWithSuffix("temporary"))
+
+		WaitForContainerToBeHealthy(temporaryContainer, application)
+
+		_, err = application.StopApplicationContainer()
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		container, err := application.CreateApplicationContainer()
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		fmt.Printf("%s: new container %s created\n", application.Host, application.Name())
+
+		WaitForContainerToBeHealthy(container, application)
+
+		err = ExecuteContainerDeployedHooks(container, application)
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		_, err = application.StopTemporaryContainer()
+
+		fmt.Printf("%s: stopped temporary container %s\n", application.Host, application.NameWithSuffix("temporary"))
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		if *application.Warm {
+			err := WarmContainer(application.Name())
 
 			if err != nil {
-				fatalErrors <- err
-				return
+				return err
+				//fatalErrors <- err
+				//return
 			}
 
-			_, _ = application.StopTemporaryContainer()
+			fmt.Printf("%s: container warmed up\n", application.Host)
+		}
 
-			temporaryContainer, err := application.CreateTemporaryContainer()
-
-			if err != nil {
-				fatalErrors <- err
-				return
-			}
-
-			fmt.Printf("%s: container %s created\n", application.Host, application.NameWithSuffix("temporary"))
-
-			WaitForContainerToBeHealthy(temporaryContainer, application)
-
-			_, err = application.StopApplicationContainer()
-
-			if err != nil {
-				fatalErrors <- err
-				return
-			}
-
-			container, err := application.CreateApplicationContainer()
-
-			if err != nil {
-				fatalErrors <- err
-				return
-			}
-
-			fmt.Printf("%s: new container %s created\n", application.Host, application.Name())
-
-			WaitForContainerToBeHealthy(container, application)
-
-			err = ExecuteContainerDeployedHooks(container, application)
-
-			if err != nil {
-				fatalErrors <- err
-				return
-			}
-
-			_, err = application.StopTemporaryContainer()
-
-			fmt.Printf("%s: stopped temporary container %s\n", application.Host, application.NameWithSuffix("temporary"))
-
-			if err != nil {
-				fatalErrors <- err
-				return
-			}
-
-			if *application.Warm {
-				err := WarmContainer(container, application)
-
-				if err != nil {
-					fatalErrors <- err
-					return
-				}
-
-				fmt.Printf("%s: container warmed up\n", application.Host)
-			}
-
-			ansi.Text(application.Host+": application is live", ansi.Green)
-			pool.Done()
-		}(application)
+		ansi.Text(application.Host+": application is live", ansi.Green)
+		//pool.Done()
 	}
 
-	go func() {
-		pool.Wait()
-		close(done)
-	}()
-
-	select {
-	case <-done:
-		break
-	case err := <-fatalErrors:
-		close(fatalErrors)
-		return err
-	}
+	//go func() {
+	//	pool.Wait()
+	//	close(done)
+	//}()
+	//
+	//select {
+	//case <-done:
+	//	break
+	//case err := <-fatalErrors:
+	//	close(fatalErrors)
+	//	return err
+	//}
 
 	err := core.RefreshLastChangedTimestamp()
 
@@ -168,29 +166,19 @@ func ExecuteContainerDeployedHooks(container string, application core.Applicatio
 	return nil
 }
 
-func WarmContainer(container string, application core.Application) error {
-	if core.IsProxyEnabled() {
-		for i := 0; i < 10; i++ {
-			_, err := http.Get(application.Host)
+func WarmContainer(container string) error {
+	containers, err := core.GetProxiableContainers()
+	if err != nil {
+		return err
+	}
 
-			if err != nil {
-				return err
+	for _, proxiableContainer := range containers {
+		if proxiableContainer.Container.ID == container {
+			for i := 0; i < 10; i++ {
+				_, err = http.Get(proxiableContainer.Ipv4 + ":" + proxiableContainer.VirtualPort)
 			}
-		}
-	} else {
-		containers, err := core.GetProxiableContainers()
-		if err != nil {
-			return err
-		}
 
-		for _, proxiableContainer := range containers {
-			if proxiableContainer.Container.ID == container {
-				for i := 0; i < 10; i++ {
-					_, err = http.Get(proxiableContainer.Ipv4 + ":" + proxiableContainer.VirtualPort)
-				}
-
-				break
-			}
+			break
 		}
 	}
 
