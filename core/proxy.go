@@ -23,6 +23,7 @@ func GetWhitelistedDomains() []string {
 func HandleRequest(writer http.ResponseWriter, request *http.Request) {
 	ip, _, _ := net.SplitHostPort(request.RemoteAddr)
 	request.Header.Set("X-Forwarded-For", ip)
+	request.Header.Set("X-Forwarded-Proto", request.Proto)
 
 	for _, application := range Config.Applications {
 		if request.Host == application.Host {
@@ -76,10 +77,6 @@ func ForwardRequest(application Application, writer http.ResponseWriter, request
 	request.URL.Scheme = containerUrl.Scheme
 	request.RequestURI = ""
 
-	for _, cookie := range request.Cookies() {
-		request.AddCookie(cookie)
-	}
-
 	response, err := http.DefaultClient.Do(request)
 
 	if err != nil {
@@ -90,11 +87,13 @@ func ForwardRequest(application Application, writer http.ResponseWriter, request
 		)
 		return false
 	}
+
 	for key, values := range response.Header {
 		for _, value := range values {
-			writer.Header().Set(key, value)
+			writer.Header().Add(key, value)
 		}
 	}
+
 
 	done := make(chan bool)
 
