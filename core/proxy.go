@@ -126,7 +126,7 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 	containerUrl, err := url.Parse("http://" + container.Ipv4 + ":" + container.VirtualPort)
 
 	if err != nil {
-		zap.L().Error(
+		Logger.Error(
 			"url.invalid",
 			zap.String("error", err.Error()),
 		)
@@ -142,7 +142,7 @@ func ForwardRequest(container ProxiableContainer, writer http.ResponseWriter, re
 	response, err := http.DefaultClient.Do(request)
 
 	if err != nil {
-		zap.L().Error(
+		Logger.Error(
 			"forward.failed",
 			zap.String("container_url", containerUrl.String()),
 			zap.String("error", err.Error()),
