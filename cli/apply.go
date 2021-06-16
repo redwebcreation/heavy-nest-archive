@@ -199,14 +199,20 @@ func WaitForContainerToBeHealthy(application core.Application, containerType int
 
 	inspection, _ := inspectContainer(container.Ref.ID)
 
+	i := 0
 	for isContainerStarting(inspection) {
 		inspection, _ = inspectContainer(container.Ref.ID)
+		i++
+
+		if i%10 == 0 {
+			fmt.Printf(": Waiting for container to be healthy")
+		}
 		time.Sleep(1 * time.Second)
 	}
 
 	inspection, _ = inspectContainer(container.Ref.ID)
 
-	if inspection.State.Health == nil || inspection.State.Health.Status == "healthy" {
+	if inspection.State.Health == nil || inspection.State.Health.Status != "healthy" {
 		fmt.Printf("%s: %s is healthy.\n", application.Host, inspection.Name[1:])
 		return nil
 	}
