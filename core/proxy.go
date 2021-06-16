@@ -71,8 +71,8 @@ func ForwardRequest(application Application, writer http.ResponseWriter, request
 		return false
 	}
 
-	request.Host = containerUrl.Host + ":" + application.ContainerPort
-	request.URL.Host = request.Host
+	request.Host = containerUrl.Host
+	request.URL.Host = containerUrl.Host
 	request.URL.Scheme = containerUrl.Scheme
 	request.RequestURI = ""
 
