@@ -126,6 +126,8 @@ func ForwardRequest(application Application, writer http.ResponseWriter, request
 		}
 	}
 
+	writer.Header().Set("Set-Cookie", response.Header.Get("Set-Cookie"))
+
 	close(done)
 	return true
 }
