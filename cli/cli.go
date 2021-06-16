@@ -38,5 +38,6 @@ func Execute() {
 
 	if err != nil {
 		ansi.Text(err.Error(), ansi.Red)
+		os.Exit(1)
 	}
 }

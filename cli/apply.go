@@ -209,8 +209,15 @@ func WaitForContainerToBeHealthy(application core.Application, containerType int
 		inspection, _ = inspectContainer(container.Ref.ID)
 		time.Sleep(1 * time.Second)
 	}
-	fmt.Printf("%s: %s is healthy.\n", application.Host, inspection.Name[1:])
-	return nil
+
+	inspection, _ = inspectContainer(container.Ref.ID)
+
+	if inspection.State.Health == nil || inspection.State.Health.Status == "healthy" {
+		fmt.Printf("%s: %s is healthy.\n", application.Host, inspection.Name[1:])
+		return nil
+	}
+
+	return errors.New("container is unhealthy")
 }
 
 func inspectContainer(containerId string) (types.ContainerJSON, error) {

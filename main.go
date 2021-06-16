@@ -23,14 +23,14 @@ func main() {
 	if runtime.GOOS != "linux" && !allowsUntestedOs {
 		ansi.Text("Hez is not meant to be used on ["+runtime.GOOS+"].", ansi.Orange)
 		ansi.Text("Please run the command again with the flag --i-will-break-my-computer.", ansi.Orange)
-		return
+		os.Exit(1)
 	}
 
 	_, err := os.Stat(core.ConfigFile)
 
 	if os.IsNotExist(err) {
 		ansi.Text("Configuration file not found at "+core.ConfigFile, ansi.Red)
-		return
+		os.Exit(1)
 	}
 
 	cli.Execute()
