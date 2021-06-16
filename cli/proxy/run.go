@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"github.com/NYTimes/gziphandler"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/acme/autocert"
@@ -11,7 +12,13 @@ import (
 )
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
-	http.HandleFunc("/", core.HandleRequest)
+	raw := http.HandlerFunc(core.HandleRequest)
+
+	gzipped := gziphandler.GzipHandler(raw)
+
+	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+		gzipped.ServeHTTP(writer, request)
+	})
 
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,

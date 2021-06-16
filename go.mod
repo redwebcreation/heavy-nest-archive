@@ -3,6 +3,7 @@ module github.com/redwebcreation/hez
 go 1.16
 
 require (
+	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/containerd/containerd v1.5.2 // indirect
 	github.com/docker/docker v20.10.6+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect

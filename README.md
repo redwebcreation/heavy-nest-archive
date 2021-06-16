@@ -186,6 +186,7 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* hez update --edge error when len(releases) == 0
 * customizable 404, 500 page
 * logs redirections validation
 * variable interpolation for env: and env files
