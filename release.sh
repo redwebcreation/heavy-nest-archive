@@ -1,9 +1,10 @@
-export GOOS=linux
+if [ -z "$1" ]; then
+  echo "Usage: release [version]"
+  exit 1
+fi
 
-printf "Enter the version : "
+echo "Releasing version: $1"
 
-read -r version
+GOOS=linux go build -ldflags="-w -s -X github.com/redwebcreation/hez/globals.Version=$1" -gcflags=all="-l"
 
-go build -ldflags="-w -s -X github.com/redwebcreation/hez/globals.Version=$version" -gcflags=all="-l"
-
-gh release create "$version" ./hez -t "Release $version" -d --notes "Automated release of $version."
+gh release create "$1" ./hez -t "Release $1" -d --notes "Automated release of $1." $2
