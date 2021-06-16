@@ -186,7 +186,7 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
-* proxy restart command (or take configuration changes into account)
+* customizable 404, 500 page
 * logs redirections validation
 * variable interpolation for env: and env files
 * if container_port is not open on container x throw an error.
@@ -195,3 +195,4 @@ TODO:
 * container logs?
 * check if dns points to the server automatically
 * diagnose command
+

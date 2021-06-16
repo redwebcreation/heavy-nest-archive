@@ -3,7 +3,6 @@ package core
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -84,8 +83,14 @@ func (application Application) CreateContainer(containerType int) (string, error
 		})
 	}
 
+	resolvedEnvironment, err := ResolveEnvironmentVariables(env, application.Env)
+
+	if err != nil {
+		return "", err
+	}
+
 	resp, err := Docker.ContainerCreate(context.Background(), &container.Config{
-		Env:   ResolveEnvironmentVariables(env, application.Env),
+		Env:   resolvedEnvironment,
 		Image: application.Image,
 	}, &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
@@ -153,9 +158,9 @@ func (application Application) GetContainer(containerType int) (Container, error
 	}
 
 	for _, c := range containers {
-		name :=  application.Name(containerType)
+		name := application.Name(containerType)
 
-		if "/" +  name == c.Names[0] {
+		if "/"+name == c.Names[0] {
 			return Container{
 				Type: containerType,
 				Ip:   c.NetworkSettings.Networks[application.Network].IPAddress,
@@ -192,16 +197,14 @@ func (application Application) StopContainer(containerType int) (Container, erro
 	return c, nil
 }
 
-func ResolveEnvironmentVariables(variables []string, env []string) []string {
+func ResolveEnvironmentVariables(variables []string, env []string) ([]string, error) {
 	for _, envVariable := range env {
 		if strings.Contains(envVariable, "=") {
 			variables = append(variables, envVariable)
 		} else {
 			contents, err := os.ReadFile(envVariable)
 			if err != nil {
-				// TODO: old os.Exit
-				fmt.Println(err)
-				os.Exit(1)
+				return nil, err
 			}
 
 			for _, envFileVariable := range strings.Split(string(contents), "\n") {
@@ -216,5 +219,5 @@ func ResolveEnvironmentVariables(variables []string, env []string) []string {
 		}
 	}
 
-	return variables
+	return variables, nil
 }

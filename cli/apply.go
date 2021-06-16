@@ -130,12 +130,6 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	//	return err
 	//}
 
-	err := core.RefreshLastChangedTimestamp()
-
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -217,7 +211,9 @@ func WaitForContainerToBeHealthy(application core.Application, containerType int
 		return nil
 	}
 
-	return errors.New("container is unhealthy")
+	_, _ = application.StopContainer(containerType)
+
+	return errors.New("container is unhealthy, rolling back")
 }
 
 func inspectContainer(containerId string) (types.ContainerJSON, error) {

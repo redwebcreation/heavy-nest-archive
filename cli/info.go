@@ -26,31 +26,31 @@ func RunInfoCommand(_ *cobra.Command, args []string) error {
 	}
 
 	sysinfo, err := GetSysInfo()
-	if err != nil {
-		return err
-	}
 
-	ram := sysinfo.Totalram * uint64(sysinfo.Unit)
+	if err == nil {
+		ram := sysinfo.Totalram * uint64(sysinfo.Unit)
+
+		fmt.Println("total_memory: " + FormatBytes(ram))
+		fmt.Println("free_memory: " + FormatBytes(sysinfo.Freeram))
+	}
 
 	externalIp, err := GetExternalIp()
 
-	if err != nil {
-		return err
+	if err == nil {
+		fmt.Println("external_ip: ", externalIp)
 	}
-
-	fmt.Println("external_ip: ", externalIp)
-	fmt.Println("total_memory: " + FormatBytes(ram))
-	fmt.Println("free_memory: " + FormatBytes(sysinfo.Freeram))
 
 	cpu, err := GetCpu()
 
-	if err != nil {
-		return err
+	if err == nil {
+		fmt.Println("processor: " + cpu.ModelName)
+		fmt.Println("processor_cores: " + strconv.FormatUint(cpu.Cores, 10))
 	}
 
-	fmt.Println("processor: " + cpu.ModelName)
-	fmt.Println("processor_cores: " + strconv.FormatUint(cpu.Cores, 10))
-	return nil
+	fmt.Println("config_file: ", core.ConfigFile)
+	fmt.Println("certificates_directory: ", core.CertificatesDirectory)
+
+	return err
 }
 
 func InfoCommand() *cobra.Command {
@@ -133,7 +133,6 @@ func GetCpu() (Core, error) {
 }
 
 func GetExternalIp() (string, error) {
-	// TODO: MAYBE Implement a Voter/Consensus system
 	response, err := http.Get("http://checkip.amazonaws.com/")
 	if err != nil {
 		return "", err
