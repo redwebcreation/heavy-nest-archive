@@ -4,20 +4,53 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/NYTimes/gziphandler"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/acme/autocert"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 )
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
-	raw := http.HandlerFunc(core.HandleRequest)
-
-	gzipped := gziphandler.GzipHandler(raw)
-
 	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
-		gzipped.ServeHTTP(writer, request)
+		for _, application := range core.Config.Applications {
+			if request.Host == application.Host {
+				container, err := application.GetContainer(core.AnyType)
+
+				if err != nil {
+					core.Logger.Error(
+						"container missing",
+						zap.String("vhost", request.Host),
+						zap.String("container_name", application.Name(core.ApplicationContainer)),
+					)
+					break
+				}
+
+				containerUrl, err := url.Parse("http://" + container.Ip + ":" + application.ContainerPort)
+
+				if err != nil {
+					core.Logger.Error(
+						"invalid url",
+						zap.String("error", err.Error()),
+					)
+					break
+				}
+
+				// create the reverse proxy
+				proxy := httputil.NewSingleHostReverseProxy(containerUrl)
+
+				// Update the headers to allow for SSL redirection
+				request.URL.Host = containerUrl.Host
+				request.URL.Scheme = containerUrl.Scheme
+				request.Header.Set("X-Forwarded-Host", request.Header.Get("Host"))
+				request.Host = containerUrl.Host
+
+				// Note that ServeHttp is non blocking and uses a go routine under the hood
+				proxy.ServeHTTP(writer, request)
+			}
+		}
 	})
 
 	certManager := autocert.Manager{
@@ -37,9 +70,8 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 	}
 
 	go func() {
-		// HTTP server that redirects to the HTTPS one.
-		h := certManager.HTTPHandler(nil)
-		err := http.ListenAndServe(":"+core.Config.Proxy.Http.Port, h)
+		//HTTP server that redirects to the HTTPS.
+		err := http.ListenAndServe(":"+core.Config.Proxy.Http.Port, certManager.HTTPHandler(nil))
 
 		if err != nil {
 			core.Logger.Fatal(err.Error())
