@@ -76,6 +76,10 @@ func ForwardRequest(application Application, writer http.ResponseWriter, request
 	request.URL.Scheme = containerUrl.Scheme
 	request.RequestURI = ""
 
+	for _, cookie := range request.Cookies() {
+		request.AddCookie(cookie)
+	}
+
 	response, err := http.DefaultClient.Do(request)
 
 	if err != nil {
