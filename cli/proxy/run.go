@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
+	"github.com/NYTimes/gziphandler"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -14,7 +15,7 @@ import (
 )
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
-	http.HandleFunc("/", func(writer http.ResponseWriter, request *http.Request) {
+	raw := func(writer http.ResponseWriter, request *http.Request) {
 		for _, application := range core.Config.Applications {
 			if request.Host == application.Host {
 				container, err := application.GetContainer(core.AnyType)
@@ -51,7 +52,10 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 				proxy.ServeHTTP(writer, request)
 			}
 		}
-	})
+	}
+	gzipped := gziphandler.GzipHandler(http.HandlerFunc(raw))
+
+	http.Handle("/", gzipped)
 
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
