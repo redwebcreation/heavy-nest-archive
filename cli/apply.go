@@ -213,13 +213,12 @@ func WaitForContainerToBeHealthy(application core.Application, containerType int
 
 	inspection, _ = inspectContainer(container.Ref.ID)
 
-	if inspection.State.Health == nil || inspection.State.Health.Status != "healthy" {
+	if inspection.State.Health == nil || inspection.State.Health.Status == "healthy" {
 		fmt.Printf("%s: %s is healthy.\n", application.Host, inspection.Name[1:])
 		return nil
 	}
 
 	_, _ = application.StopContainer(containerType)
-
 	return errors.New("container is unhealthy, rolling back")
 }
 
