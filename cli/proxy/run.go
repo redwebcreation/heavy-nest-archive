@@ -46,6 +46,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 				request.URL.Host = containerUrl.Host
 				request.URL.Scheme = containerUrl.Scheme
 				request.Header.Set("X-Forwarded-Host", request.Header.Get("Host"))
+				request.Header.Set("X-Forwarded-Proto", request.URL.Scheme)
 				request.Host = application.Host
 
 				// Note that ServeHttp is non blocking and uses a go routine under the hood
