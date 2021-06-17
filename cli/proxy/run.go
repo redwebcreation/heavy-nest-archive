@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"errors"
-	"github.com/NYTimes/gziphandler"
+	"github.com/klauspost/compress/gzhttp"
 	"github.com/redwebcreation/hez/core"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
@@ -53,7 +53,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 			}
 		}
 	}
-	gzipped := gziphandler.GzipHandler(http.HandlerFunc(raw))
+	gzipped := gzhttp.GzipHandler(http.HandlerFunc(raw))
 
 	http.Handle("/", gzipped)
 
