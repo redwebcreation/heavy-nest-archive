@@ -155,6 +155,7 @@ func (application Application) GetContainer(containerType int) (Container, error
 	containers, err := Docker.ContainerList(context.Background(), types.ContainerListOptions{})
 
 	if err != nil {
+		return Container{}, err
 	}
 
 	for _, c := range containers {
