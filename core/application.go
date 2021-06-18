@@ -73,7 +73,11 @@ func (application Application) CreateContainer(containerType int) (string, error
 		"VIRTUAL_PORT=" + application.ContainerPort,
 	}
 
-	networkDetails, _ := application.GetNetwork()
+	networkDetails, err := application.GetNetwork()
+
+	if err != nil {
+		return "", err
+	}
 
 	for _, volume := range application.Volumes {
 		mounts = append(mounts, mount.Mount{
