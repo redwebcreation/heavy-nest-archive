@@ -51,6 +51,13 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 
 				// Note that ServeHttp is non blocking and uses a go routine under the hood
 				proxy.ServeHTTP(writer, request)
+
+				core.Logger.Info(
+					"request served",
+					zap.String("vhost", request.Host),
+					zap.String("request_uri", request.RequestURI),
+					zap.String("ip", request.RemoteAddr),
+				)
 			}
 		}
 	}
