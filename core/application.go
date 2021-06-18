@@ -161,13 +161,18 @@ func (application Application) GetContainer(containerType int) (Container, error
 		name := application.Name(containerType)
 
 		if "/"+name == c.Names[0] {
-			return Container{
+			found := Container{
 				Type: containerType,
-				Ip:   c.NetworkSettings.Networks[application.Network].IPAddress,
 				Port: application.ContainerPort,
 				Name: name,
 				Ref:  &c,
-			}, err
+			}
+
+			if c.NetworkSettings != nil && c.NetworkSettings.Networks[application.Network] != nil {
+				found.Ip = c.NetworkSettings.Networks[application.Network].IPAddress
+			}
+
+			return found, err
 		}
 
 	}
