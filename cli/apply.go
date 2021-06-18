@@ -157,16 +157,23 @@ func ExecuteContainerDeployedHooks(application core.Application, containerType i
 
 		cmd := exec.Command("docker", command...)
 
+		var stdout bytes.Buffer
 		var stderr bytes.Buffer
 
+		cmd.Stdout = &stdout
 		cmd.Stderr = &stderr
 
 		err := cmd.Run()
+
+		fmt.Println(application.Host + ": running command [" + strings.Join(command[2:], " ") + "]")
 
 		if stderr.Len() > 0 {
 			return errors.New(stderr.String())
 		}
 
+		if stdout.Len() > 0 && err != nil {
+			return errors.New(stdout.String())
+		}
 		if err != nil {
 			return err
 		}
@@ -200,15 +207,17 @@ func WaitForContainerToBeHealthy(application core.Application, containerType int
 
 	inspection, _ := inspectContainer(container.Ref.ID)
 
-	i := 0
+	i := -1.0
 	for isContainerStarting(inspection) {
 		inspection, _ = inspectContainer(container.Ref.ID)
-		i++
 
-		if i%10 == 0 {
-			fmt.Println("Waiting for container to be healthy (" + strconv.Itoa(i) + ")")
+		if i == -1 {
+			i = inspection.Config.Healthcheck.Interval.Seconds()
 		}
+
+		fmt.Println("Waiting for container to be healthy (" + strconv.FormatFloat(i, 'f', 0, 64) + "/" + strconv.FormatFloat(inspection.Config.Healthcheck.Interval.Seconds(), 'f', 0, 64) + ")")
 		time.Sleep(1 * time.Second)
+		i--
 	}
 
 	inspection, _ = inspectContainer(container.Ref.ID)
