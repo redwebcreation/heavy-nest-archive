@@ -139,7 +139,7 @@ func (application Application) GetNetwork() (types.NetworkResource, error) {
 	networkDetails, err := Docker.NetworkInspect(context.Background(), network.ID, types.NetworkInspectOptions{})
 
 	if err != nil {
-		return networkDetails, err
+		return networkDetails, errors.New("could not find network " + network.Name + " (" + err.Error() + ")")
 	}
 
 	return networkDetails, nil
