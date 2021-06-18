@@ -12,11 +12,11 @@ func runStopCommand(_ *cobra.Command, _ []string) error {
 		current, _ := application.StopContainer(core.ApplicationContainer)
 		temporary, _ := application.StopContainer(core.TemporaryContainer)
 
-		if current.Ref.ID != "" {
+		if current.Ref != nil && current.Ref.ID != "" {
 			fmt.Printf("Stopped %s (%s).\n", application.Name(core.ApplicationContainer), current.Ref.ID)
 		}
 
-		if temporary.Ref.ID != "" {
+		if temporary.Ref != nil && temporary.Ref.ID != "" {
 			fmt.Printf("Stopped %s (%s).\n", application.Name(core.TemporaryContainer), temporary.Ref.ID)
 		}
 	}
