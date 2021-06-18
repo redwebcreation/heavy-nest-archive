@@ -188,17 +188,11 @@ func (application Application) GetContainer(containerType int) (Container, error
 func (application Application) StopContainer(containerType int) (Container, error) {
 	c, err := application.GetContainer(containerType)
 
-	if err != nil {
-		return Container{}, err
+	if err == nil {
+		_ = Docker.ContainerStop(context.Background(), c.Ref.ID, nil)
 	}
 
-	err = Docker.ContainerStop(context.Background(), c.Ref.ID, nil)
-
-	if err != nil {
-		return c, err
-	}
-
-	err = Docker.ContainerRemove(context.Background(), c.Name, types.ContainerRemoveOptions{})
+	err = Docker.ContainerRemove(context.Background(), application.Name(containerType), types.ContainerRemoveOptions{})
 
 	if err != nil {
 		return c, err
