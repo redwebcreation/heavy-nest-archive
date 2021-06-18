@@ -29,6 +29,8 @@ type Event struct {
 	} `json:"progressDetail"`
 }
 
+var skipHealthchecks bool
+
 func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	applications := core.Config.Applications
 
@@ -71,6 +73,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 		}
 
 		_, _ = application.StopContainer(core.ApplicationContainer)
+
 		_, err = application.CreateContainer(core.ApplicationContainer)
 
 		if err != nil {
@@ -199,6 +202,10 @@ func WarmContainer(application core.Application, containerType int) error {
 	return nil
 }
 func WaitForContainerToBeHealthy(application core.Application, containerType int) error {
+	if skipHealthchecks {
+		return nil
+	}
+	
 	container, err := application.GetContainer(containerType)
 
 	if err != nil {
@@ -254,7 +261,9 @@ func ApplyCommand() *cobra.Command {
 		Use:   "apply",
 		Short: "Applies your configuration to the server",
 		Long:  `Applies your configuration to the server`,
-	}, nil, RunApplyCommand)
+	}, func(command *cobra.Command) {
+		command.Flags().BoolVar(&skipHealthchecks, "skip-healthchecks", false, "Skip new container's healthchecks")
+	}, RunApplyCommand)
 }
 
 func pullLatestImage(application core.Application) error {
