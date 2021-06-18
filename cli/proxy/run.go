@@ -68,10 +68,8 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 	certManager := autocert.Manager{
 		Prompt: autocert.AcceptTOS,
 		HostPolicy: func(ctx context.Context, host string) error {
-			domains := core.GetWhitelistedDomains()
-
-			for _, domain := range domains {
-				if domain == host {
+			for _, application := range core.Config.Applications {
+				if host == application.Host {
 					return nil
 				}
 			}
