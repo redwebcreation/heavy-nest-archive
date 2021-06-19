@@ -4,18 +4,41 @@ import (
 	"fmt"
 	"strings"
 )
+const (
+	Foreground = "38;2;%d;%d;%d"
+)
 
-var Black = RGB{
-	Red:   0,
-	Green: 0,
-	Blue:  0,
+type RGB struct {
+	Red   int
+	Green int
+	Blue  int
 }
 
-var White = RGB{
-	Red:   255,
-	Green: 255,
-	Blue:  255,
+type Modifier interface {
+	String() string
 }
+
+type Color struct {
+	Kind   string
+	Values RGB
+}
+
+func (color Color) String() string {
+	return "\033[" + fmt.Sprintf(color.Kind, color.Values.Red, color.Values.Green, color.Values.Blue) + "m"
+}
+
+type Content string
+
+func (content Content) String() string {
+	return string(content)
+}
+
+type Effect string
+
+func (effect Effect) String() string {
+	return "\033[" + string(effect)
+}
+
 var Red = RGB{
 	Red:   220,
 	Green: 38,
@@ -31,28 +54,6 @@ var Green = RGB{
 	Green: 185,
 	Blue:  129,
 }
-var Blue = RGB{
-	Red:   59,
-	Green: 130,
-	Blue:  246,
-}
-var Purple = RGB{
-	Red:   139,
-	Green: 92,
-	Blue:  246,
-}
-
-func Print(message string, modifiers []Modifier) {
-	lines := strings.Split(message, "\n")
-
-	for _, line := range lines {
-		for _, modifier := range modifiers {
-			fmt.Print(modifier.String())
-		}
-
-		fmt.Print(line + "\033[0m")
-	}
-}
 
 func Println(message string, modifiers []Modifier) {
 	lines := strings.Split(message, "\n")
@@ -64,4 +65,13 @@ func Println(message string, modifiers []Modifier) {
 
 		fmt.Print(line + "\033[0m\n")
 	}
+}
+
+func Text(message string, foreground RGB) {
+	Println(message, []Modifier{
+		Color{
+			Kind:   Foreground,
+			Values: foreground,
+		},
+	})
 }
