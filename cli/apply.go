@@ -117,7 +117,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			fmt.Printf("%s: container warmed up\n", application.Host)
 		}
 
-		ansi.Text(application.Host+": application is live", ansi.Green)
+		ansi.Success(application.Host + ": application is live")
 		//pool.Done()
 	}
 
@@ -137,7 +137,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func ExecuteContainerDeployedHooks(application core.Application, containerType int) error {
+func ExecuteContainerDeployedHooks(application *core.Application, containerType int) error {
 	if len(application.Hooks.ContainerDeployed) == 0 {
 		return nil
 	}
@@ -185,7 +185,7 @@ func ExecuteContainerDeployedHooks(application core.Application, containerType i
 	return nil
 }
 
-func WarmContainer(application core.Application, containerType int) error {
+func WarmContainer(application *core.Application, containerType int) error {
 	container, err := application.GetContainer(containerType)
 
 	if err != nil {
@@ -201,7 +201,7 @@ func WarmContainer(application core.Application, containerType int) error {
 
 	return nil
 }
-func WaitForContainerToBeHealthy(application core.Application, containerType int) error {
+func WaitForContainerToBeHealthy(application *core.Application, containerType int) error {
 	if skipHealthchecks {
 		return nil
 	}
@@ -266,13 +266,13 @@ func ApplyCommand() *cobra.Command {
 	}, RunApplyCommand)
 }
 
-func pullLatestImage(application core.Application) error {
+func pullLatestImage(application *core.Application) error {
 	options := types.ImagePullOptions{}
 
 	if !application.HasRegistry() {
 		return nil
 	}
-	
+
 	encodedAuth, _ := json.Marshal(map[string]string{
 		"username": application.Registry.Username,
 		"password": application.Registry.Password,

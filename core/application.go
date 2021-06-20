@@ -11,8 +11,8 @@ import (
 )
 
 type Application struct {
-	Image         string   `yaml:"image"`
-	Host          string   `yaml:"host"`
+	Image         string `yaml:"image"`
+	Host          string
 	ContainerPort string   `yaml:"container_port"`
 	Network       string   `yaml:"network"`
 	Warm          *bool    `yaml:"warm"`
@@ -26,7 +26,6 @@ type Application struct {
 		Password string `yaml:"password"`
 		Server   string `yaml:"server"`
 	}
-	//Replicas      int
 	Hooks struct {
 		ContainerDeployed []string `yaml:"container_deployed"`
 	} `yaml:"hooks"`

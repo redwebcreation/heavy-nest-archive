@@ -12,7 +12,9 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"os"
 	"os/exec"
+	"strings"
 )
 
 func GetCertificateManager() autocert.Manager {
@@ -33,52 +35,47 @@ func GetCertificateManager() autocert.Manager {
 }
 
 func RequestHandler(writer http.ResponseWriter, request *http.Request) {
-	// TODO: Use Host as the key to remove this loop
-	var requestServed bool
+	application := core.Config.Applications[request.Host]
 
-	for _, application := range core.Config.Applications {
-		//if request.Host == application.Host {
-			requestServed = true
-			container, err := application.GetContainer(core.AnyType)
-
-			if err != nil {
-				logWithRequestContext(
-					"container missing",
-					request,
-					zap.String("container_name", application.Name(core.ApplicationContainer)),
-				)
-				break
-			}
-
-			containerUrl, err := url.Parse("http://" + container.Ip + ":" + application.ContainerPort)
-
-			if err != nil {
-				logWithRequestContext("invalid url", request)
-				break
-			}
-
-			// create the reverse proxy
-			proxy := httputil.NewSingleHostReverseProxy(containerUrl)
-
-			// Update the headers to allow for SSL redirection
-			request.URL.Host = containerUrl.Host
-			request.URL.Scheme = containerUrl.Scheme
-			request.Header.Set("X-Forwarded-Host", request.Header.Get("Host"))
-			request.Header.Set("X-Forwarded-Proto", request.URL.Scheme)
-			request.Host = application.Host
-
-			// Note that ServeHttp is non blocking and uses a go routine under the hood
-			proxy.ServeHTTP(writer, request)
-
-			logWithRequestContext("request served", request)
-		//}
-	}
-
-	if !requestServed && request.Host != "" {
+	if application == nil {
 		logWithRequestContext("no such host", request)
 		writer.WriteHeader(503)
 		_, _ = writer.Write([]byte("Service unavailable."))
+		return
 	}
+
+	container, err := application.GetContainer(core.AnyType)
+
+	if err != nil {
+		logWithRequestContext(
+			"container missing",
+			request,
+			zap.String("container_name", application.Name(core.ApplicationContainer)),
+		)
+		return
+	}
+
+	containerUrl, err := url.Parse("http://" + container.Ip + ":" + application.ContainerPort)
+
+	if err != nil {
+		logWithRequestContext("invalid url", request)
+		return
+	}
+
+	// create the reverse proxy
+	proxy := httputil.NewSingleHostReverseProxy(containerUrl)
+
+	// Update the headers to allow for SSL redirection
+	request.URL.Host = containerUrl.Host
+	request.URL.Scheme = containerUrl.Scheme
+	request.Header.Set("X-Forwarded-Host", request.Header.Get("Host"))
+	request.Header.Set("X-Forwarded-Proto", request.URL.Scheme)
+	request.Host = application.Host
+
+	// Note that ServeHttp is non blocking and uses a go routine under the hood
+	proxy.ServeHTTP(writer, request)
+
+	logWithRequestContext("request served", request)
 }
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
@@ -139,6 +136,13 @@ func createCertificates() (string, string, error) {
 	keyPath := core.DataDirectory + "/key.pem"
 	certPath := core.DataDirectory + "/cert.pem"
 
+	_, keyExists := os.Stat(keyPath)
+	_, certExists := os.Stat(certPath)
+
+	if !os.IsNotExist(keyExists) && !os.IsNotExist(certExists) {
+		return keyPath, certPath, nil
+	}
+
 	cmd := exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath, "-out", certPath, "-days", "365", "-nodes", "-subj", "/CN=localhost")
 
 	err := cmd.Run()
@@ -151,12 +155,14 @@ func createCertificates() (string, string, error) {
 }
 
 func logWithRequestContext(message string, request *http.Request, fields ...zap.Field) {
+	ip := strings.Split(request.RemoteAddr, ":")[0]
+
 	fields = append(fields, zap.String("vhost", request.Host))
-	fields = append(fields, zap.String("ua", request.UserAgent()))
-	fields = append(fields, zap.String("referer", request.Referer()))
 	fields = append(fields, zap.String("method", request.Method))
 	fields = append(fields, zap.String("request_uri", request.RequestURI))
-	fields = append(fields, zap.String("ip", request.RemoteAddr))
+	fields = append(fields, zap.String("ip", ip))
+	fields = append(fields, zap.String("referer", request.Referer()))
+	fields = append(fields, zap.String("ua", request.UserAgent()))
 
 	core.Logger.Info(
 		message,

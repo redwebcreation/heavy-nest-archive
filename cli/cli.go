@@ -37,7 +37,7 @@ func Execute() {
 	err := cli.Execute()
 
 	if err != nil {
-		ansi.Text(err.Error(), ansi.Red)
+		ansi.Error(err.Error())
 		os.Exit(1)
 	}
 }

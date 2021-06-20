@@ -146,13 +146,16 @@ func (repository Repository) Releases(filter ReleaseFilter) ([]Release, error) {
 var Repo = Repository("redwebcreation/hez")
 
 func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
-	if !core.IsRunningAsRoot() {
-		return errors.New("this command requires elevated privileges")
+	err := core.ElevateProcess()
+
+	if err != nil {
+		return err
 	}
 
 	if dryRun {
-		ansi.Text("Dry running the command, nothing will be executed.", ansi.Orange)
+		ansi.Warning("Dry running the command, nothing will be executed.")
 	}
+
 	executable, _ := os.Executable()
 	usingGoRun := strings.HasPrefix(executable, "/tmp/go-build")
 
@@ -163,16 +166,16 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	}
 
 	if usingGoRun {
-		ansi.Text("You're running this command using go run, you won't see any effects.", ansi.Orange)
-		ansi.Text("Please build the binary and then run it.", ansi.Orange)
+		ansi.Warning("You're running this command using go run, you won't see any effects.")
+		ansi.Warning("Please build the binary and then run it.")
 		return nil
 	}
 
 	//goland:noinspection GoBoolExpressions
 	if globals.Version == "(development)" {
-		ansi.Text("You're using the development build of Hez.", ansi.Orange)
-		ansi.Text("Please, specify a version to use when building the binary.", ansi.Orange)
-		ansi.Text("go build -ldflags=\"-X github.com/redwebcreation/hez/globals.Version=$(git describe --tags)\"", ansi.Orange)
+		ansi.Warning("You're using the development build of Hez.")
+		ansi.Warning("Please, specify a version to use when building the binary.")
+		ansi.Warning("go build -ldflags=\"-X github.com/redwebcreation/hez/globals.Version=$(git describe --tags)\"")
 		return nil
 	}
 
@@ -212,7 +215,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	body, err := ioutil.ReadAll(response.Body)
 
 	if dryRun {
-		ansi.Text("Successfully updated Hez to the version "+latestRelease.TagName, ansi.Green)
+		ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
 		return nil
 	}
 
@@ -234,7 +237,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 	_ = os.Chmod(executable, os.FileMode(0777))
 
-	ansi.Text("Successfully updated Hez to the version "+latestRelease.TagName, ansi.Green)
+	ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
 
 	return nil
 }

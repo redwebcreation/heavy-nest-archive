@@ -20,7 +20,7 @@ func runStopCommand(_ *cobra.Command, _ []string) error {
 			fmt.Printf("Stopped %s (%s).\n", application.Name(core.TemporaryContainer), temporary.Ref.ID)
 		}
 	}
-	ansi.Text("All container have been stopped successfully.", ansi.Green)
+	ansi.Success("All container have been stopped successfully.")
 
 	return nil
 }

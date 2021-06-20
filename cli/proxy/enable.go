@@ -22,7 +22,7 @@ func runEnableCommand(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ansi.Text("Proxy has been successfully enabled.", ansi.Green)
+	ansi.Success("Proxy has been successfully enabled.")
 	return nil
 }
 

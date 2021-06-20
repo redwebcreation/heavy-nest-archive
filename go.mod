@@ -13,5 +13,6 @@ require (
 	github.com/spf13/cobra v1.1.3
 	go.uber.org/zap v1.17.0
 	golang.org/x/crypto v0.0.0-20210513164829-c07d793c2f9a
+	golang.org/x/sys v0.0.0-20210616094352-59db8d763f22 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )

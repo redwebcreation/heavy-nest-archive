@@ -6,15 +6,15 @@ import (
 )
 
 type Hez struct {
-	DefaultNetwork string        `yaml:"default_network"`
-	Applications   []Application `yaml:"applications"`
+	DefaultNetwork string                  `yaml:"default_network"`
+	Applications   map[string]*Application `yaml:"applications"`
 	Proxy          struct {
 		Logs struct {
 			Level        int      `yaml:"level"`
 			Redirections []string `yaml:"redirections"`
 		} `yaml:"logs"`
 		Http struct {
-			Port    string `yaml:"port"`
+			Port string `yaml:"port"`
 		} `yaml:"http"`
 		Https struct {
 			Port       string `yaml:"port"`

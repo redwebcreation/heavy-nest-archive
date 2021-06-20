@@ -147,3 +147,13 @@ WantedBy=multi-user.target`
 func IsRunningAsRoot() bool {
 	return os.Geteuid() == 0
 }
+
+func ElevateProcess() error {
+	cmd := exec.Command("sudo", "touch", "/tmp/upgrade-process")
+
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+
+	return cmd.Run()
+}

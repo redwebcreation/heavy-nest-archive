@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 )
+
 const (
 	Foreground = "38;2;%d;%d;%d"
 )
@@ -74,4 +75,16 @@ func Text(message string, foreground RGB) {
 			Values: foreground,
 		},
 	})
+}
+
+func Success(message string) {
+	Text(message, Green)
+}
+
+func Warning(message string) {
+	Text(message, Orange)
+}
+
+func Error(message string) {
+	Text(message, Red)
 }
