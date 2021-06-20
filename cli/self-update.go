@@ -13,9 +13,8 @@ import (
 	"strings"
 )
 
-var dryRun bool
 var force bool
-var draft bool
+var edge bool
 var prerelease bool
 
 func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
@@ -23,10 +22,6 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 	if err != nil {
 		return err
-	}
-
-	if dryRun {
-		ansi.Warning("Dry running the command, nothing will be executed.")
 	}
 
 	executable, _ := os.Executable()
@@ -44,53 +39,50 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 		return nil
 	}
 
-	//goland:noinspection GoBoolExpressions
-	if globals.Version == "(development)" {
-		ansi.Warning("You're using the development build of Hez.")
-		ansi.Warning("Please, specify a version to use when building the binary.")
-		ansi.Warning("go build -ldflags=\"-X github.com/redwebcreation/hez/globals.Version=$(git describe --tags)\"")
-		return nil
-	}
+	var response *http.Response
+	var latestRelease core.Release
 
-	releases, err := core.Repository.Releases(core.ReleaseFilter{
-		Draft:      draft,
-		Prerelease: prerelease,
-		Version:    version,
-	})
+	if edge {
+		response, err = UpdateToEdge()
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}
+	} else {
+		releases, err := core.Repository.Releases(core.ReleaseFilter{
+			Prerelease: prerelease,
+			Version:    version,
+		})
 
-	latestRelease := releases[0]
+		if err != nil {
+			return err
+		}
 
-	if !force && latestRelease.TagName == globals.Version {
-		fmt.Println("You're already using the latest version.")
-		return nil
-	}
+		latestRelease = releases[0]
 
-	binary := latestRelease.Assets[0]
+		if !force && latestRelease.TagName == globals.Version {
+			fmt.Println("You're already using the latest version.")
+			return nil
+		}
 
-	if binary.State != "uploaded" {
-		return errors.New("The binary for the latest release is still being uploaded. \nPlease try again in a few seconds.")
-	}
+		binary := latestRelease.Assets[0]
 
-	fmt.Printf("Downloading %s.\n", binary.BrowserDownloadUrl)
+		if binary.State != "uploaded" {
+			return errors.New("The binary for the latest release is still being uploaded. \nPlease try again in a few seconds.")
+		}
 
-	response, err := http.Get(binary.BrowserDownloadUrl)
+		fmt.Printf("Downloading %s.\n", binary.BrowserDownloadUrl)
 
-	if err != nil {
-		return err
+		response, err = http.Get(binary.BrowserDownloadUrl)
+
+		if err != nil {
+			return err
+		}
 	}
 
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
-
-	if dryRun {
-		ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
-		return nil
-	}
 
 	if err != nil {
 		return err
@@ -110,9 +102,24 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 	_ = os.Chmod(executable, os.FileMode(0777))
 
-	ansi.Success("Successfully updated Hez to the version " + latestRelease.TagName)
+	var updatedVersion string
+	if edge {
+		updatedVersion = "development version"
+	} else {
+		updatedVersion = "version " + latestRelease.TagName
+	}
+
+	ansi.Success("Successfully updated Hez to the " + updatedVersion)
 
 	return nil
+}
+
+func UpdateToEdge() (*http.Response, error) {
+	url := "https://raw.githubusercontent.com/" + string(core.Repository) + "/master/hez"
+
+	fmt.Printf("Downloading %s.\n", url)
+
+	return http.Get(url)
 }
 
 func SelfUpdateCommand() *cobra.Command {
@@ -122,9 +129,8 @@ func SelfUpdateCommand() *cobra.Command {
 		Short:   "Updates Hez to the latest version.",
 		Long:    `Updates Hez to the latest version or the one given as the first argument.`,
 	}, func(command *cobra.Command) {
-		command.Flags().BoolVar(&dryRun, "dry-run", false, "Dry run Hez's update process.")
 		command.Flags().BoolVarP(&force, "force", "f", false, "Force the update.")
-		command.Flags().BoolVarP(&draft, "edge", "e", false, "Updates to the main branch build.")
+		command.Flags().BoolVarP(&edge, "edge", "e", false, "Updates to the main branch build.")
 		command.Flags().BoolVarP(&prerelease, "prerelease", "p", false, "Updates to the latest prerelease.")
 	}, RunSelfUpdateCommand)
 
