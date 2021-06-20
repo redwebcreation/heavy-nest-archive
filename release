@@ -4,10 +4,24 @@ if [ -z "$1" ]; then
   exit 1
 fi
 
+# Git repo is dirty
+if [[ $(git diff --stat) != '' ]]; then
+  echo "Repo is dirty"
+  exit 1
+fi
+
+echo "List of commits not synced with remote"
+git cherry -v
+echo "List ends here."
+
+read -r
+
 echo "Releasing version: $1"
 
 GOOS=linux go build -ldflags="-w -s -X github.com/redwebcreation/hez/globals.Version=$1" -gcflags=all="-l"
 
-git log --pretty="* %H - %s" "$(git describe --tags --abbrev=0)"..HEAD --no-merges >release-notes.txt
+git log --pretty="* %H - %s" "$(git describe --tags --abbrev=0)"..HEAD --no-merges >releases-notes.txt
 
-#gh release create "$1" ./hez -t "Release $1" --notes "Automated release of $1." $2
+gh release create "$1" ./hez --title "Release $1" --notes-file releases-notes.txt --draft
+
+rm releases-notes.txt
