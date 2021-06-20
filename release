@@ -25,10 +25,6 @@ git log --pretty="* %H - %s" "$(git describe --tags --abbrev=0)"..HEAD --no-merg
 sed -i "/wip/d" releases-notes.txt
 sed -i "/cleanup/d" releases-notes.txt
 
-sort releases-notes.txt | uniq >uniques.txt
-
-mv uniques.txt releases-notes.txt
-
-gh release create "$1" ./hez --title "Release $1" --notes-file releases-notes.txt --draft
+gh release create "$1" ./hez --title "Release $1" --notes-file releases-notes.txt
 
 rm releases-notes.txt

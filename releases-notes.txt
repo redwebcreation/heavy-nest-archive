@@ -1,3 +1,0 @@
-* 03b79b8da4b81c239baee6b59c7dfbb0800eef3c - cleanup
-* 3c323fac7d230eb5b3ff0c0e762e46196bcecbda - wip
-* 45ca23b89412ca1401ce7e283dd4bdcfa4983fe7 - better release process
