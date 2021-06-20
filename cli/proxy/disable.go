@@ -8,15 +8,17 @@ import (
 )
 
 func runDisableCommand(_ *cobra.Command, _ []string) error {
-	if !core.IsRunningAsRoot() {
-		return errors.New("this command requires elevated privileges")
+	err := core.ElevateProcess()
+
+	if err != nil {
+		return err
 	}
 
 	if !core.IsProxyEnabled() {
 		return errors.New("proxy is already disabled")
 	}
 
-	err := core.DisableProxy()
+	err = core.DisableProxy()
 
 	if err != nil {
 		return err

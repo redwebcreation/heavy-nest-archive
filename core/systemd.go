@@ -57,15 +57,15 @@ func EnableProxy() error {
 		return err
 	}
 
-	var commands = []string{
-		"systemctl daemon-reload",
-		"systemctl enable hezproxy",
-		"service hezproxy start",
+	var commands = [][]string{
+		{"systemctl", "daemon-reload"},
+		{"systemctl", "enable", "hezproxy"},
+		{"service", "hezproxy", "start"},
 	}
 
 	for _, command := range commands {
-		err := runCommand(command)
-		fmt.Println("Running [" + command + "]")
+		err := RunCommand(command...)
+		fmt.Println("Running [" + strings.Join(command, " ") + "]")
 
 		if err != nil {
 			return err
@@ -73,18 +73,6 @@ func EnableProxy() error {
 	}
 
 	return nil
-}
-
-func runCommand(command string) error {
-	commandParts := strings.Split(command, " ")
-	name := commandParts[0]
-	args := commandParts[1:]
-
-	cmd := exec.Command(name, args...)
-
-	err := cmd.Run()
-
-	return err
 }
 
 func DisableProxy() error {
@@ -97,7 +85,7 @@ func DisableProxy() error {
 	}
 
 	for _, command := range commands {
-		err := runCommand(command)
+		err := RunCommand(command)
 		fmt.Println("Running [" + command + "]")
 
 		if err != nil {
@@ -142,18 +130,4 @@ WantedBy=multi-user.target`
 	stub = strings.Replace(stub, "[executable]", executable, 1)
 
 	return stub, nil
-}
-
-func IsRunningAsRoot() bool {
-	return os.Geteuid() == 0
-}
-
-func ElevateProcess() error {
-	cmd := exec.Command("sudo", "touch", "/tmp/upgrade-process")
-
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
 }

@@ -1,149 +1,22 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/redwebcreation/hez/ansi"
 	"github.com/redwebcreation/hez/core"
 	"github.com/redwebcreation/hez/globals"
 	"github.com/spf13/cobra"
-	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strings"
-	"time"
 )
 
 var dryRun bool
 var force bool
 var draft bool
 var prerelease bool
-
-type Repository string
-
-type Asset struct {
-	Url                string    `json:"url"`
-	Id                 int       `json:"id"`
-	NodeId             string    `json:"node_id"`
-	Name               string    `json:"name"`
-	Label              string    `json:"label"`
-	Uploader           User      `json:"uploader"`
-	ContentType        string    `json:"content_type"`
-	State              string    `json:"state"`
-	Size               int       `json:"size"`
-	DownloadCount      int       `json:"download_count"`
-	CreatedAt          time.Time `json:"created_at"`
-	UpdatedAt          time.Time `json:"updated_at"`
-	BrowserDownloadUrl string    `json:"browser_download_url"`
-}
-
-type User struct {
-	Login             string `json:"login"`
-	Id                int    `json:"id"`
-	NodeId            string `json:"node_id"`
-	AvatarUrl         string `json:"avatar_url"`
-	GravatarId        string `json:"gravatar_id"`
-	Url               string `json:"url"`
-	HtmlUrl           string `json:"html_url"`
-	FollowersUrl      string `json:"followers_url"`
-	FollowingUrl      string `json:"following_url"`
-	GistsUrl          string `json:"gists_url"`
-	StarredUrl        string `json:"starred_url"`
-	SubscriptionsUrl  string `json:"subscriptions_url"`
-	OrganizationsUrl  string `json:"organizations_url"`
-	ReposUrl          string `json:"repos_url"`
-	EventsUrl         string `json:"events_url"`
-	ReceivedEventsUrl string `json:"received_events_url"`
-	Type              string `json:"type"`
-	SiteAdmin         bool   `json:"site_admin"`
-}
-
-type Release struct {
-	Url             string    `json:"url"`
-	AssetsUrl       string    `json:"assets_url"`
-	UploadUrl       string    `json:"upload_url"`
-	HtmlUrl         string    `json:"html_url"`
-	Id              int       `json:"id"`
-	Author          User      `json:"author"`
-	NodeId          string    `json:"node_id"`
-	TagName         string    `json:"tag_name"`
-	TargetCommitish string    `json:"target_commitish"`
-	Name            string    `json:"name"`
-	Draft           bool      `json:"draft"`
-	Prerelease      bool      `json:"prerelease"`
-	CreatedAt       time.Time `json:"created_at"`
-	PublishedAt     time.Time `json:"published_at"`
-	Assets          []Asset   `json:"assets"`
-	TarballUrl      string    `json:"tarball_url"`
-	ZipballUrl      string    `json:"zipball_url"`
-	Body            string    `json:"body"`
-}
-
-type ReleaseFilter struct {
-	Draft      bool
-	Prerelease bool
-	Version    string
-}
-
-func NewGithubRequest(url string, data interface{}) error {
-	response, err := http.Get("https://api.github.com/" + url)
-
-	if err != nil {
-		return err
-	}
-
-	defer func(Body io.ReadCloser) {
-		_ = Body.Close()
-	}(response.Body)
-
-	body, err := io.ReadAll(response.Body)
-
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(body, &data)
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (repository Repository) Releases(filter ReleaseFilter) ([]Release, error) {
-	var releases []Release
-
-	err := NewGithubRequest("repos/"+string(repository)+"/releases", &releases)
-
-	if err != nil {
-		return releases, err
-	}
-
-	var filtered []Release
-
-	for _, release := range releases {
-		if release.TagName != filter.Version && filter.Version != "" {
-			continue
-		}
-
-		if release.Draft != filter.Draft {
-			continue
-		}
-
-		if release.Prerelease != filter.Prerelease {
-			continue
-		}
-
-		filtered = append(filtered, release)
-	}
-
-	return filtered, nil
-}
-
-var Repo = Repository("redwebcreation/hez")
 
 func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	err := core.ElevateProcess()
@@ -179,7 +52,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 		return nil
 	}
 
-	releases, err := Repo.Releases(ReleaseFilter{
+	releases, err := core.Repository.Releases(core.ReleaseFilter{
 		Draft:      draft,
 		Prerelease: prerelease,
 		Version:    version,

@@ -8,4 +8,6 @@ echo "Releasing version: $1"
 
 GOOS=linux go build -ldflags="-w -s -X github.com/redwebcreation/hez/globals.Version=$1" -gcflags=all="-l"
 
-gh release create "$1" ./hez -t "Release $1" --notes "Automated release of $1." $2
+git log --pretty="* %H - %s" "$(git describe --tags --abbrev=0)"..HEAD --no-merges >release-notes.txt
+
+#gh release create "$1" ./hez -t "Release $1" --notes "Automated release of $1." $2
