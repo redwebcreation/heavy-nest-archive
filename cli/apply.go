@@ -40,7 +40,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	//fatalErrors := make(chan error)
 	//done := make(chan bool)
 
-	for _, application := range applications {
+	for host, application := range applications {
 		err := pullLatestImage(application)
 
 		if err != nil {
@@ -64,7 +64,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			return err
 		}
 
-		fmt.Printf("%s: container %s created\n", application.Host, application.Name(core.TemporaryContainer))
+		fmt.Printf("%s: container %s created\n", host, application.Name(core.TemporaryContainer))
 
 		err = WaitForContainerToBeHealthy(application, core.TemporaryContainer)
 
@@ -81,7 +81,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			return err
 		}
 
-		fmt.Printf("%s: new container %s created\n", application.Host, application.Name(core.ApplicationContainer))
+		fmt.Printf("%s: new container %s created\n", host, application.Name(core.ApplicationContainer))
 
 		err = ExecuteContainerDeployedHooks(application, core.ApplicationContainer)
 
@@ -98,7 +98,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 
 		_, err = application.StopContainer(core.TemporaryContainer)
 
-		fmt.Printf("%s: stopped temporary container %s\n", application.Host, application.Name(core.TemporaryContainer))
+		fmt.Printf("%s: stopped temporary container %s\n", host, application.Name(core.TemporaryContainer))
 
 		if err != nil {
 			//fatalErrors <- err
@@ -114,10 +114,10 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 				//return
 			}
 
-			fmt.Printf("%s: container warmed up\n", application.Host)
+			fmt.Printf("%s: container warmed up\n", host)
 		}
 
-		ansi.Success(application.Host + ": application is live")
+		ansi.Success(host + ": application is live")
 		//pool.Done()
 	}
 

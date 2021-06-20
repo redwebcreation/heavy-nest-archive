@@ -1,126 +1,88 @@
 package proxy
 
 import (
-	"context"
-	"crypto/tls"
-	"errors"
-	"github.com/klauspost/compress/gzhttp"
 	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/ntee"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
-	"golang.org/x/crypto/acme/autocert"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
-	"os/exec"
 	"strings"
 )
 
-func GetCertificateManager() autocert.Manager {
-	return autocert.Manager{
-		Prompt: autocert.AcceptTOS,
-		HostPolicy: func(ctx context.Context, host string) error {
-			for _, application := range core.Config.Applications {
-				if host == application.Host {
-					return nil
-				}
+func RunRunCommand(_ *cobra.Command, _ []string) error {
+	proxy := ntee.Proxy{
+		Paths: ntee.PathsConfig{
+			CertificatesDirectory: core.CertificatesDirectory,
+			KeyFile:               core.DataDirectory + "/key.pem",
+			CertFile:              core.DataDirectory + "/cert.pem",
+		},
+		Http: ntee.HttpConfig{
+			Port: core.Config.Proxy.Http.Port,
+		},
+		Https: ntee.HttpsConfig{
+			Port:       core.Config.Proxy.Https.Port,
+			SelfSigned: *core.Config.Proxy.Https.SelfSigned,
+		},
+		Handler: func(writer http.ResponseWriter, request *http.Request) {
+			application := core.Config.Applications["madeinfranz.fr"]
+
+			if application == nil {
+				logWithRequestContext("no such host", request)
+				writer.WriteHeader(503)
+				_, _ = writer.Write([]byte("Service unavailable."))
+				return
 			}
 
-			return errors.New("host not configured in whitelist")
+			container, err := application.GetContainer(core.AnyType)
+
+			if err != nil {
+				logWithRequestContext(
+					"container missing",
+					request,
+					zap.String("container_name", application.Name(core.ApplicationContainer)),
+				)
+				return
+			}
+
+			containerUrl, err := url.Parse("http://" + container.Ip + ":" + application.ContainerPort)
+
+			if err != nil {
+				logWithRequestContext("invalid url", request)
+				return
+			}
+
+			// create the reverse proxy
+			proxy := &httputil.ReverseProxy{
+				Director: func(req *http.Request) {
+					req.URL.Scheme = containerUrl.Scheme
+					req.URL.Host = containerUrl.Host
+					req.Header.Set("X-Forwarded-Host", application.Host)
+					req.Header.Set("X-Forwarded-Proto", containerUrl.Scheme)
+					req.Host = application.Host
+				},
+				ModifyResponse: func(response *http.Response) error {
+					response.Header.Del("Server")
+
+					return nil
+				},
+				ErrorHandler: func(writer http.ResponseWriter, request *http.Request, err error) {
+					writer.WriteHeader(http.StatusBadGateway)
+					_, _ = writer.Write([]byte(http.StatusText(http.StatusBadGateway)))
+					core.Logger.Fatal(err.Error())
+				},
+			}
+
+			// Note that ServeHttp is non blocking and uses a go routine under the hood
+			proxy.ServeHTTP(writer, request)
+
+			logWithRequestContext("request served", request)
 		},
-		Cache: autocert.DirCache(core.CertificatesDirectory),
+		IsAllowedHost: nil,
 	}
 
-}
-
-func RequestHandler(writer http.ResponseWriter, request *http.Request) {
-	application := core.Config.Applications[request.Host]
-
-	if application == nil {
-		logWithRequestContext("no such host", request)
-		writer.WriteHeader(503)
-		_, _ = writer.Write([]byte("Service unavailable."))
-		return
-	}
-
-	container, err := application.GetContainer(core.AnyType)
-
-	if err != nil {
-		logWithRequestContext(
-			"container missing",
-			request,
-			zap.String("container_name", application.Name(core.ApplicationContainer)),
-		)
-		return
-	}
-
-	containerUrl, err := url.Parse("http://" + container.Ip + ":" + application.ContainerPort)
-
-	if err != nil {
-		logWithRequestContext("invalid url", request)
-		return
-	}
-
-	// create the reverse proxy
-	proxy := httputil.NewSingleHostReverseProxy(containerUrl)
-
-	// Update the headers to allow for SSL redirection
-	request.URL.Host = containerUrl.Host
-	request.URL.Scheme = containerUrl.Scheme
-	request.Header.Set("X-Forwarded-Host", request.Header.Get("Host"))
-	request.Header.Set("X-Forwarded-Proto", request.URL.Scheme)
-	request.Host = application.Host
-
-	// Note that ServeHttp is non blocking and uses a go routine under the hood
-	proxy.ServeHTTP(writer, request)
-
-	logWithRequestContext("request served", request)
-}
-
-func RunRunCommand(_ *cobra.Command, _ []string) error {
-	certificateManager := GetCertificateManager()
-	handler := gzhttp.GzipHandler(http.HandlerFunc(RequestHandler))
-	http.Handle("/", handler)
-
-	go func() {
-		err := http.ListenAndServe(
-			":"+core.Config.Proxy.Http.Port,
-			certificateManager.HTTPHandler(nil),
-		)
-
-		if err != nil {
-			core.Logger.Fatal(err.Error())
-		}
-	}()
-
-	if *core.Config.Proxy.Https.SelfSigned {
-		keyPath, certPath, err := createCertificates()
-
-		if err != nil {
-			return err
-		}
-
-		err = http.ListenAndServeTLS(":"+core.Config.Proxy.Https.Port, certPath, keyPath, nil)
-
-		if err != nil {
-			core.Logger.Fatal(err.Error())
-		}
-	} else {
-		server := &http.Server{
-			Addr: ":" + core.Config.Proxy.Https.Port,
-			TLSConfig: &tls.Config{
-				GetCertificate: certificateManager.GetCertificate,
-			},
-		}
-		err := server.ListenAndServeTLS("", "")
-
-		if err != nil {
-			core.Logger.Fatal(err.Error())
-		}
-	}
-
-	return nil
+	return proxy.Serve()
 }
 
 func RunCommand() *cobra.Command {
@@ -131,27 +93,6 @@ func RunCommand() *cobra.Command {
 	}, nil, RunRunCommand)
 
 	return command
-}
-func createCertificates() (string, string, error) {
-	keyPath := core.DataDirectory + "/key.pem"
-	certPath := core.DataDirectory + "/cert.pem"
-
-	_, keyExists := os.Stat(keyPath)
-	_, certExists := os.Stat(certPath)
-
-	if !os.IsNotExist(keyExists) && !os.IsNotExist(certExists) {
-		return keyPath, certPath, nil
-	}
-
-	cmd := exec.Command("openssl", "req", "-x509", "-newkey", "rsa:4096", "-keyout", keyPath, "-out", certPath, "-days", "365", "-nodes", "-subj", "/CN=localhost")
-
-	err := cmd.Run()
-
-	if err != nil {
-		return "", "", err
-	}
-
-	return keyPath, certPath, nil
 }
 
 func logWithRequestContext(message string, request *http.Request, fields ...zap.Field) {

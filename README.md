@@ -186,6 +186,7 @@ If you leave `redirections` empty, logs won't be saved.
 
 TODO:
 
+* `hez diagnose` command
 * customizable 404, 500 page
 * logs redirections validation
 * variable interpolation for env: and env files

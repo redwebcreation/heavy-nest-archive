@@ -63,6 +63,8 @@ func useDefaults(config *Hez) {
 	}
 
 	for i := range config.Applications {
+		config.Applications[i].Host = i
+
 		if config.Applications[i].ContainerPort == "" {
 			config.Applications[i].ContainerPort = "80"
 		}
