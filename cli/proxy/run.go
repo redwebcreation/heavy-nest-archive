@@ -37,7 +37,7 @@ func RequestHandler(writer http.ResponseWriter, request *http.Request) {
 	var requestServed bool
 
 	for _, application := range core.Config.Applications {
-		if request.Host == application.Host {
+		//if request.Host == application.Host {
 			requestServed = true
 			container, err := application.GetContainer(core.AnyType)
 
@@ -71,11 +71,11 @@ func RequestHandler(writer http.ResponseWriter, request *http.Request) {
 			proxy.ServeHTTP(writer, request)
 
 			logWithRequestContext("request served", request)
-		}
+		//}
 	}
 
-	if !requestServed {
-		logWithRequestContext("request washed up", request)
+	if !requestServed && request.Host != "" {
+		logWithRequestContext("no such host", request)
 		writer.WriteHeader(503)
 		_, _ = writer.Write([]byte("Service unavailable."))
 	}

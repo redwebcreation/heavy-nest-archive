@@ -205,7 +205,7 @@ func WaitForContainerToBeHealthy(application core.Application, containerType int
 	if skipHealthchecks {
 		return nil
 	}
-	
+
 	container, err := application.GetContainer(containerType)
 
 	if err != nil {
@@ -269,14 +269,16 @@ func ApplyCommand() *cobra.Command {
 func pullLatestImage(application core.Application) error {
 	options := types.ImagePullOptions{}
 
-	if application.HasRegistry() {
-		encodedAuth, _ := json.Marshal(map[string]string{
-			"username": application.Registry.Username,
-			"password": application.Registry.Password,
-		})
-
-		options.RegistryAuth = base64.StdEncoding.EncodeToString(encodedAuth)
+	if !application.HasRegistry() {
+		return nil
 	}
+	
+	encodedAuth, _ := json.Marshal(map[string]string{
+		"username": application.Registry.Username,
+		"password": application.Registry.Password,
+	})
+
+	options.RegistryAuth = base64.StdEncoding.EncodeToString(encodedAuth)
 
 	events, err := core.Docker.ImagePull(context.Background(), application.Image, options)
 
