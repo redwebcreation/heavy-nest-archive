@@ -58,6 +58,10 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 			return err
 		}
 
+		if len(releases) == 0 {
+			return errors.New("no releases found using the given filters")
+		}
+
 		latestRelease = releases[0]
 
 		if !force && latestRelease.TagName == globals.Version {
