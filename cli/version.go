@@ -2,8 +2,8 @@ package cli
 
 import (
 	"fmt"
-	"github.com/redwebcreation/hez/core"
 	"github.com/redwebcreation/hez/globals"
+	"github.com/redwebcreation/hez/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func RunVersionCommand(_ *cobra.Command, _ []string) error {
 }
 
 func VersionCommand() *cobra.Command {
-	return core.CreateCommand(&cobra.Command{
+	return internal.CreateCommand(&cobra.Command{
 		Use:   "version",
 		Short: "Print the version number of Hez",
 		Long:  `All software has versions. This is Hez's.`,

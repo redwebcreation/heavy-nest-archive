@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/internal"
 	"github.com/spf13/cobra"
 	"os/exec"
 )
 
 func runStatusCommand(_ *cobra.Command, _ []string) error {
-	if !core.IsProxyEnabled() {
+	if !internal.IsProxyEnabled() {
 		return errors.New("proxy is disabled")
 	}
 
@@ -30,7 +30,7 @@ func runStatusCommand(_ *cobra.Command, _ []string) error {
 }
 
 func StatusCommand() *cobra.Command {
-	return core.CreateCommand(&cobra.Command{
+	return internal.CreateCommand(&cobra.Command{
 		Use:   "status",
 		Short: "Returns the status of the reverse proxy",
 		Long:  `Returns the status of the reverse proxy`,

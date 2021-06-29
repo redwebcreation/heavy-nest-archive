@@ -3,22 +3,22 @@ package proxy
 import (
 	"errors"
 	"fmt"
-	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/internal"
 	"github.com/spf13/cobra"
 )
 
 func runDisableCommand(_ *cobra.Command, _ []string) error {
-	err := core.ElevateProcess()
+	err := internal.ElevateProcess()
 
 	if err != nil {
 		return err
 	}
 
-	if !core.IsProxyEnabled() {
+	if !internal.IsProxyEnabled() {
 		return errors.New("proxy is already disabled")
 	}
 
-	err = core.DisableProxy()
+	err = internal.DisableProxy()
 
 	if err != nil {
 		return err
@@ -30,7 +30,7 @@ func runDisableCommand(_ *cobra.Command, _ []string) error {
 }
 
 func DisableCommand() *cobra.Command {
-	return core.CreateCommand(&cobra.Command{
+	return internal.CreateCommand(&cobra.Command{
 		Use:   "disable",
 		Short: "Disables the reverse proxy.",
 		Long:  `Disables the reverse proxy configuration file in systemd`,

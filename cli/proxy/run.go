@@ -1,8 +1,8 @@
 package proxy
 
 import (
-	"github.com/redwebcreation/hez/core"
-	"github.com/redwebcreation/hez/ntee"
+	"github.com/redwebcreation/hez/internal"
+	"github.com/redwebcreation/hez/internal/proxy"
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 	"net/http"
@@ -12,21 +12,21 @@ import (
 )
 
 func RunRunCommand(_ *cobra.Command, _ []string) error {
-	proxy := ntee.Proxy{
-		Paths: ntee.PathsConfig{
-			CertificatesDirectory: core.CertificatesDirectory,
-			KeyFile:               core.DataDirectory + "/key.pem",
-			CertFile:              core.DataDirectory + "/cert.pem",
+	proxy := proxy.Proxy{
+		Paths: proxy.PathsConfig{
+			CertificatesDirectory: internal.CertificatesDirectory,
+			KeyFile:               internal.DataDirectory + "/key.pem",
+			CertFile:              internal.DataDirectory + "/cert.pem",
 		},
-		Http: ntee.HttpConfig{
-			Port: core.Config.Proxy.Http.Port,
+		Http: proxy.HttpConfig{
+			Port: internal.Config.Proxy.Http.Port,
 		},
-		Https: ntee.HttpsConfig{
-			Port:       core.Config.Proxy.Https.Port,
-			SelfSigned: *core.Config.Proxy.Https.SelfSigned,
+		Https: proxy.HttpsConfig{
+			Port:       internal.Config.Proxy.Https.Port,
+			SelfSigned: *internal.Config.Proxy.Https.SelfSigned,
 		},
 		Handler: func(writer http.ResponseWriter, request *http.Request) {
-			application := core.Config.Applications["madeinfranz.fr"]
+			application := internal.Config.Applications[request.Host]
 
 			if application == nil {
 				logWithRequestContext("no such host", request)
@@ -35,13 +35,13 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 				return
 			}
 
-			container, err := application.GetContainer(core.AnyType)
+			container, err := application.GetContainer(internal.AnyType)
 
 			if err != nil {
 				logWithRequestContext(
 					"container missing",
 					request,
-					zap.String("container_name", application.Name(core.ApplicationContainer)),
+					zap.String("container_name", application.Name(internal.ApplicationContainer)),
 				)
 				return
 			}
@@ -70,7 +70,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 				ErrorHandler: func(writer http.ResponseWriter, request *http.Request, err error) {
 					writer.WriteHeader(http.StatusBadGateway)
 					_, _ = writer.Write([]byte(http.StatusText(http.StatusBadGateway)))
-					core.Logger.Fatal(err.Error())
+					internal.Logger.Fatal(err.Error())
 				},
 			}
 
@@ -86,7 +86,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 }
 
 func RunCommand() *cobra.Command {
-	command := core.CreateCommand(&cobra.Command{
+	command := internal.CreateCommand(&cobra.Command{
 		Use:   "run",
 		Short: "Starts the proxy server.",
 		Long:  `Starts the proxy server on the configured ports.`,
@@ -105,7 +105,7 @@ func logWithRequestContext(message string, request *http.Request, fields ...zap.
 	fields = append(fields, zap.String("referer", request.Referer()))
 	fields = append(fields, zap.String("ua", request.UserAgent()))
 
-	core.Logger.Info(
+	internal.Logger.Info(
 		message,
 		fields...,
 	)

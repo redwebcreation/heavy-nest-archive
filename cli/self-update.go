@@ -3,9 +3,9 @@ package cli
 import (
 	"errors"
 	"fmt"
-	"github.com/redwebcreation/hez/ansi"
-	"github.com/redwebcreation/hez/core"
 	"github.com/redwebcreation/hez/globals"
+	"github.com/redwebcreation/hez/internal"
+	ansi2 "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
@@ -18,7 +18,7 @@ var edge bool
 var prerelease bool
 
 func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
-	err := core.ElevateProcess()
+	err := internal.ElevateProcess()
 
 	if err != nil {
 		return err
@@ -34,13 +34,13 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	}
 
 	if usingGoRun {
-		ansi.Warning("You're running this command using go run, you won't see any effects.")
-		ansi.Warning("Please build the binary and then run it.")
+		ansi2.Warning("You're running this command using go run, you won't see any effects.")
+		ansi2.Warning("Please build the binary and then run it.")
 		return nil
 	}
 
 	var response *http.Response
-	var latestRelease core.Release
+	var latestRelease internal.Release
 
 	if edge {
 		response, err = UpdateToEdge()
@@ -49,7 +49,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 			return err
 		}
 	} else {
-		releases, err := core.Repository.Releases(core.ReleaseFilter{
+		releases, err := internal.Repository.Releases(internal.ReleaseFilter{
 			Prerelease: prerelease,
 			Version:    version,
 		})
@@ -113,13 +113,13 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 		updatedVersion = "version " + latestRelease.TagName
 	}
 
-	ansi.Success("Successfully updated Hez to the " + updatedVersion)
+	ansi2.Success("Successfully updated Hez to the " + updatedVersion)
 
 	return nil
 }
 
 func UpdateToEdge() (*http.Response, error) {
-	url := "https://raw.githubusercontent.com/" + string(core.Repository) + "/master/hez"
+	url := "https://raw.githubusercontent.com/" + string(internal.Repository) + "/master/hez"
 
 	fmt.Printf("Downloading %s.\n", url)
 
@@ -127,7 +127,7 @@ func UpdateToEdge() (*http.Response, error) {
 }
 
 func SelfUpdateCommand() *cobra.Command {
-	command := core.CreateCommand(&cobra.Command{
+	command := internal.CreateCommand(&cobra.Command{
 		Aliases: []string{"selfupdate", "update"},
 		Use:     "self-update [version]",
 		Short:   "Updates Hez to the latest version.",

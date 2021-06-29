@@ -8,8 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/docker/docker/api/types"
-	"github.com/redwebcreation/hez/ansi"
-	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/globals"
+	"github.com/redwebcreation/hez/internal"
+	ansi2 "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 	"io"
 	"net/http"
@@ -32,7 +33,7 @@ type Event struct {
 var skipHealthchecks bool
 
 func RunApplyCommand(_ *cobra.Command, _ []string) error {
-	applications := core.Config.Applications
+	applications := internal.Config.Applications
 
 	//var pool sync.WaitGroup
 	//pool.Add(len(applications))
@@ -48,57 +49,57 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			return err
 		}
 
-		_, _ = application.StopContainer(core.TemporaryContainer)
+		_, _ = application.StopContainer(internal.TemporaryContainer)
 
-		_, err = application.CreateContainer(core.TemporaryContainer)
-
-		if err != nil {
-			//fatalErrors <- err
-			return err
-		}
-
-		err = ExecuteContainerDeployedHooks(application, core.TemporaryContainer)
+		_, err = application.CreateContainer(internal.TemporaryContainer)
 
 		if err != nil {
 			//fatalErrors <- err
 			return err
 		}
 
-		fmt.Printf("%s: container %s created\n", host, application.Name(core.TemporaryContainer))
-
-		err = WaitForContainerToBeHealthy(application, core.TemporaryContainer)
-
-		if err != nil {
-			return err
-		}
-
-		_, _ = application.StopContainer(core.ApplicationContainer)
-
-		_, err = application.CreateContainer(core.ApplicationContainer)
+		err = ExecuteContainerDeployedHooks(application, internal.TemporaryContainer)
 
 		if err != nil {
 			//fatalErrors <- err
 			return err
 		}
 
-		fmt.Printf("%s: new container %s created\n", host, application.Name(core.ApplicationContainer))
+		fmt.Printf("%s: container %s created\n", host, application.Name(internal.TemporaryContainer))
 
-		err = ExecuteContainerDeployedHooks(application, core.ApplicationContainer)
+		err = WaitForContainerToBeHealthy(application, internal.TemporaryContainer)
 
 		if err != nil {
 			return err
 		}
 
-		err = WaitForContainerToBeHealthy(application, core.ApplicationContainer)
+		_, _ = application.StopContainer(internal.ApplicationContainer)
+
+		_, err = application.CreateContainer(internal.ApplicationContainer)
 
 		if err != nil {
 			//fatalErrors <- err
 			return err
 		}
 
-		_, err = application.StopContainer(core.TemporaryContainer)
+		fmt.Printf("%s: new container %s created\n", host, application.Name(internal.ApplicationContainer))
 
-		fmt.Printf("%s: stopped temporary container %s\n", host, application.Name(core.TemporaryContainer))
+		err = ExecuteContainerDeployedHooks(application, internal.ApplicationContainer)
+
+		if err != nil {
+			return err
+		}
+
+		err = WaitForContainerToBeHealthy(application, internal.ApplicationContainer)
+
+		if err != nil {
+			//fatalErrors <- err
+			return err
+		}
+
+		_, err = application.StopContainer(internal.TemporaryContainer)
+
+		fmt.Printf("%s: stopped temporary container %s\n", host, application.Name(internal.TemporaryContainer))
 
 		if err != nil {
 			//fatalErrors <- err
@@ -106,7 +107,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 		}
 
 		if *application.Warm {
-			err := WarmContainer(application, core.ApplicationContainer)
+			err := WarmContainer(application, internal.ApplicationContainer)
 
 			if err != nil {
 				return err
@@ -117,7 +118,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			fmt.Printf("%s: container warmed up\n", host)
 		}
 
-		ansi.Success(host + ": application is live")
+		ansi2.Success(host + ": application is live")
 		//pool.Done()
 	}
 
@@ -137,7 +138,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
-func ExecuteContainerDeployedHooks(application *core.Application, containerType int) error {
+func ExecuteContainerDeployedHooks(application *internal.Application, containerType int) error {
 	if len(application.Hooks.ContainerDeployed) == 0 {
 		return nil
 	}
@@ -185,7 +186,7 @@ func ExecuteContainerDeployedHooks(application *core.Application, containerType 
 	return nil
 }
 
-func WarmContainer(application *core.Application, containerType int) error {
+func WarmContainer(application *internal.Application, containerType int) error {
 	container, err := application.GetContainer(containerType)
 
 	if err != nil {
@@ -201,7 +202,7 @@ func WarmContainer(application *core.Application, containerType int) error {
 
 	return nil
 }
-func WaitForContainerToBeHealthy(application *core.Application, containerType int) error {
+func WaitForContainerToBeHealthy(application *internal.Application, containerType int) error {
 	if skipHealthchecks {
 		return nil
 	}
@@ -239,7 +240,7 @@ func WaitForContainerToBeHealthy(application *core.Application, containerType in
 }
 
 func inspectContainer(containerId string) (types.ContainerJSON, error) {
-	inspection, err := core.Docker.ContainerInspect(context.Background(), containerId)
+	inspection, err := globals.Docker.ContainerInspect(context.Background(), containerId)
 
 	if err != nil {
 		return inspection, err
@@ -257,7 +258,7 @@ func isContainerStarting(container types.ContainerJSON) bool {
 }
 
 func ApplyCommand() *cobra.Command {
-	return core.CreateCommand(&cobra.Command{
+	return internal.CreateCommand(&cobra.Command{
 		Use:   "apply",
 		Short: "Applies your configuration to the server",
 		Long:  `Applies your configuration to the server`,
@@ -266,7 +267,7 @@ func ApplyCommand() *cobra.Command {
 	}, RunApplyCommand)
 }
 
-func pullLatestImage(application *core.Application) error {
+func pullLatestImage(application *internal.Application) error {
 	options := types.ImagePullOptions{}
 
 	if !application.HasRegistry() {
@@ -280,7 +281,7 @@ func pullLatestImage(application *core.Application) error {
 
 	options.RegistryAuth = base64.StdEncoding.EncodeToString(encodedAuth)
 
-	events, err := core.Docker.ImagePull(context.Background(), application.Image, options)
+	events, err := globals.Docker.ImagePull(context.Background(), application.Image, options)
 
 	if err != nil {
 		return err

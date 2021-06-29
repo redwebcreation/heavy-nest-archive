@@ -2,9 +2,9 @@ package cli
 
 import (
 	"fmt"
-	"github.com/redwebcreation/hez/ansi"
 	"github.com/redwebcreation/hez/cli/proxy"
 	"github.com/redwebcreation/hez/globals"
+	ansi2 "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -37,7 +37,7 @@ func Execute() {
 	err := cli.Execute()
 
 	if err != nil {
-		ansi.Error(err.Error())
+		ansi2.Error(err.Error())
 		os.Exit(1)
 	}
 }

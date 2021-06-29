@@ -2,31 +2,31 @@ package cli
 
 import (
 	"fmt"
-	"github.com/redwebcreation/hez/ansi"
-	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/internal"
+	ansi2 "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 func runStopCommand(_ *cobra.Command, _ []string) error {
-	for host, application := range core.Config.Applications {
-		current, _ := application.StopContainer(core.ApplicationContainer)
-		temporary, _ := application.StopContainer(core.TemporaryContainer)
+	for host, application := range internal.Config.Applications {
+		current, _ := application.StopContainer(internal.ApplicationContainer)
+		temporary, _ := application.StopContainer(internal.TemporaryContainer)
 
 		if current.Ref != nil {
-			fmt.Printf("Stopped %s (%s).\n", application.Name(core.ApplicationContainer), host)
+			fmt.Printf("Stopped %s (%s).\n", application.Name(internal.ApplicationContainer), host)
 		}
 
 		if temporary.Ref != nil {
-			fmt.Printf("Stopped %s (%s).\n", application.Name(core.TemporaryContainer), host)
+			fmt.Printf("Stopped %s (%s).\n", application.Name(internal.TemporaryContainer), host)
 		}
 	}
-	ansi.Success("All container have been stopped successfully.")
+	ansi2.Success("All container have been stopped successfully.")
 
 	return nil
 }
 
 func StopCommand() *cobra.Command {
-	return core.CreateCommand(
+	return internal.CreateCommand(
 		&cobra.Command{
 			Use:   "stop",
 			Short: "Stops all running containers.",

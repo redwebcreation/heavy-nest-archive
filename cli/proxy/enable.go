@@ -2,34 +2,34 @@ package proxy
 
 import (
 	"errors"
-	"github.com/redwebcreation/hez/ansi"
-	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/internal"
+	ansi2 "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 )
 
 func runEnableCommand(_ *cobra.Command, _ []string) error {
-	err := core.ElevateProcess()
+	err := internal.ElevateProcess()
 
 	if err != nil {
 		return err
 	}
 
-	if core.IsProxyEnabled() {
+	if internal.IsProxyEnabled() {
 		return errors.New("proxy is already enabled")
 	}
 
-	err = core.EnableProxy()
+	err = internal.EnableProxy()
 
 	if err != nil {
 		return err
 	}
 
-	ansi.Success("Proxy has been successfully enabled.")
+	ansi2.Success("Proxy has been successfully enabled.")
 	return nil
 }
 
 func EnableCommand() *cobra.Command {
-	return core.CreateCommand(&cobra.Command{
+	return internal.CreateCommand(&cobra.Command{
 		Use:   "enable",
 		Short: "Enables the reverse proxy.",
 		Long:  `Registers the reverse proxy in systemd`,

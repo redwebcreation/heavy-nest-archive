@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/redwebcreation/hez/ansi"
 	"github.com/redwebcreation/hez/cli"
-	"github.com/redwebcreation/hez/core"
+	"github.com/redwebcreation/hez/internal"
+	ansi2 "github.com/redwebcreation/hez/internal/ui"
 	"os"
 	"runtime"
 )
@@ -21,15 +21,15 @@ func main() {
 	}
 
 	if runtime.GOOS != "linux" && !allowsUntestedOs {
-		ansi.Warning("Hez is not meant to be used on [" + runtime.GOOS + "].")
-		ansi.Warning("Please run the command again with the flag --i-will-break-my-computer.")
+		ansi2.Warning("Hez is not meant to be used on [" + runtime.GOOS + "].")
+		ansi2.Warning("Please run the command again with the flag --i-will-break-my-computer.")
 		os.Exit(1)
 	}
 
-	_, err := os.Stat(core.ConfigFile)
+	_, err := os.Stat(internal.ConfigFile)
 
 	if os.IsNotExist(err) {
-		ansi.Error("Configuration file not found at " + core.ConfigFile)
+		ansi2.Error("Configuration file not found at " + internal.ConfigFile)
 		os.Exit(1)
 	}
 
