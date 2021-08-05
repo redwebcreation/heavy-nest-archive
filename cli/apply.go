@@ -10,7 +10,7 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/redwebcreation/hez/globals"
 	"github.com/redwebcreation/hez/internal"
-	ansi2 "github.com/redwebcreation/hez/internal/ui"
+	"github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 	"io"
 	"net/http"
@@ -118,7 +118,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 			fmt.Printf("%s: container warmed up\n", host)
 		}
 
-		ansi2.Success(host + ": application is live")
+		ui.Success(host + ": application is live")
 		//pool.Done()
 	}
 

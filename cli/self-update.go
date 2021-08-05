@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/redwebcreation/hez/globals"
 	"github.com/redwebcreation/hez/internal"
-	ansi2 "github.com/redwebcreation/hez/internal/ui"
+	ui "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 	"io/ioutil"
 	"net/http"
@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-var force bool
+var forceUpdate bool
 var edge bool
 var prerelease bool
 
@@ -34,8 +34,8 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	}
 
 	if usingGoRun {
-		ansi2.Warning("You're running this command using go run, you won't see any effects.")
-		ansi2.Warning("Please build the binary and then run it.")
+		ui.Warning("You're running this command using go run, you won't see any effects.")
+		ui.Warning("Please build the binary and then run it.")
 		return nil
 	}
 
@@ -64,7 +64,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 		latestRelease = releases[0]
 
-		if !force && latestRelease.TagName == globals.Version {
+		if !forceUpdate && latestRelease.TagName == globals.Version {
 			fmt.Println("You're already using the latest version.")
 			return nil
 		}
@@ -113,7 +113,7 @@ func RunSelfUpdateCommand(_ *cobra.Command, args []string) error {
 		updatedVersion = "version " + latestRelease.TagName
 	}
 
-	ansi2.Success("Successfully updated Hez to the " + updatedVersion)
+	ui.Success("Successfully updated Hez to the " + updatedVersion)
 
 	return nil
 }
@@ -133,7 +133,7 @@ func SelfUpdateCommand() *cobra.Command {
 		Short:   "Updates Hez to the latest version.",
 		Long:    `Updates Hez to the latest version or the one given as the first argument.`,
 	}, func(command *cobra.Command) {
-		command.Flags().BoolVarP(&force, "force", "f", false, "Force the update.")
+		command.Flags().BoolVarP(&forceUpdate, "forceUpdate", "f", false, "Force the update.")
 		command.Flags().BoolVarP(&edge, "edge", "e", false, "Updates to the main branch build.")
 		command.Flags().BoolVarP(&prerelease, "prerelease", "p", false, "Updates to the latest prerelease.")
 	}, RunSelfUpdateCommand)

@@ -74,7 +74,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 				},
 			}
 
-			// Note that ServeHttp is non blocking and uses a go routine under the hood
+			// Note that ServeHttp is non-blocking and uses a go routine under the hood
 			proxy.ServeHTTP(writer, request)
 
 			logWithRequestContext("request served", request)

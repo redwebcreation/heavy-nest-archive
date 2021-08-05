@@ -27,7 +27,8 @@ type Hez struct {
 }
 
 var Config *Hez
-var ConfigFile = "/etc/hez/hez.yml"
+var ConfigDirectory = "/etc/hez/"
+var ConfigFile = ConfigDirectory + "hez.yml"
 
 func init() {
 	data := Hez{}

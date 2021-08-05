@@ -3,7 +3,7 @@ package proxy
 import (
 	"errors"
 	"github.com/redwebcreation/hez/internal"
-	ansi2 "github.com/redwebcreation/hez/internal/ui"
+	ui "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ func runEnableCommand(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	ansi2.Success("Proxy has been successfully enabled.")
+	ui.Success("Proxy has been successfully enabled.")
 	return nil
 }
 

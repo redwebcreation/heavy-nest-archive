@@ -3,7 +3,7 @@ package cli
 import (
 	"fmt"
 	"github.com/redwebcreation/hez/internal"
-	ansi2 "github.com/redwebcreation/hez/internal/ui"
+	ui "github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func runStopCommand(_ *cobra.Command, _ []string) error {
 			fmt.Printf("Stopped %s (%s).\n", application.Name(internal.TemporaryContainer), host)
 		}
 	}
-	ansi2.Success("All container have been stopped successfully.")
+	ui.Success("All container have been stopped successfully.")
 
 	return nil
 }

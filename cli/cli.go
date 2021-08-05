@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/redwebcreation/hez/cli/proxy"
 	"github.com/redwebcreation/hez/globals"
-	ansi2 "github.com/redwebcreation/hez/internal/ui"
+	"github.com/redwebcreation/hez/internal/ui"
 	"github.com/spf13/cobra"
 	"os"
 )
@@ -31,13 +31,14 @@ func Execute() {
 	cli.AddCommand(StopCommand())
 	cli.AddCommand(InfoCommand())
 	cli.AddCommand(VersionCommand())
+	cli.AddCommand(InitCommand())
 
 	cli.SilenceErrors = true
 
 	err := cli.Execute()
 
 	if err != nil {
-		ansi2.Error(err.Error())
+		ui.Error(err.Error())
 		os.Exit(1)
 	}
 }
