@@ -35,11 +35,10 @@ var skipHealthchecks bool
 func RunApplyCommand(_ *cobra.Command, _ []string) error {
 	applications := internal.Config.Applications
 
-	//var pool sync.WaitGroup
-	//pool.Add(len(applications))
-
-	//fatalErrors := make(chan error)
-	//done := make(chan bool)
+	if len(applications) == 0 {
+		ui.Warning("Your config files does not contain any application.")
+		return nil
+	}
 
 	for host, application := range applications {
 		err := pullLatestImage(application)
@@ -119,21 +118,7 @@ func RunApplyCommand(_ *cobra.Command, _ []string) error {
 		}
 
 		ui.Success(host + ": application is live")
-		//pool.Done()
 	}
-
-	//go func() {
-	//	pool.Wait()
-	//	close(done)
-	//}()
-	//
-	//select {
-	//case <-done:
-	//	break
-	//case err := <-fatalErrors:
-	//	close(fatalErrors)
-	//	return err
-	//}
 
 	return nil
 }
