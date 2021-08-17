@@ -2,8 +2,6 @@ package internal
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	systemUser "os/user"
@@ -58,45 +56,34 @@ func EnableProxy() error {
 		return err
 	}
 
-	var commands = [][]string{
-		{"systemctl", "daemon-reload"},
-		{"systemctl", "enable", "hezproxy"},
-		{"service", "hezproxy", "start"},
+	err = RunCommand("systemctl", "daemon-reload")
+	if err != nil {
+		return err
 	}
-
-	for _, command := range commands {
-		err := RunCommand(command...)
-		fmt.Println("Running [" + strings.Join(command, " ") + "]")
-
-		if err != nil {
-			return err
-		}
+	err = RunCommand("systemctl", "enable", "hezproxy")
+	if err != nil {
+		return err
 	}
-
-	return nil
+	return RunCommand("service", "hezproxy", "start")
 }
 
 func DisableProxy() error {
 	configName := "/etc/systemd/system/hezproxy.service"
 
-	var commands = []string{
-		"systemctl stop hezproxy",
-		"systemctl disable hezproxy",
-		"systemctl daemon-reload",
+	err := RunCommand("systemctl", "stop", "hezproxy")
+	if err != nil {
+		return err
+	}
+	err = RunCommand("systemctl", "disable", "hezproxy")
+	if err != nil {
+		return err
+	}
+	err = RunCommand("systemctl", "daemon-reload")
+	if err != nil {
+		return err
 	}
 
-	for _, command := range commands {
-		err := RunCommand(command)
-		fmt.Println("Running [" + command + "]")
-
-		if err != nil {
-			return err
-		}
-	}
-
-	err := os.Remove(configName)
-
-	return err
+	return os.Remove(configName)
 }
 
 func GetSupervisordConfig() (string, error) {
@@ -133,21 +120,8 @@ WantedBy=multi-user.target`
 	return stub, nil
 }
 
-func RunCommand(command ...string) error {
-	name := command[0]
-	args := command[1:]
-
-	var stderr bytes.Buffer
-
+func RunCommand(name string, args ...string) error {
 	cmd := exec.Command(name, args...)
 
-	cmd.Stderr = &stderr
-
-	err := cmd.Run()
-
-	if stderr.Len() > 0 {
-		return errors.New(stderr.String())
-	}
-
-	return err
+	return cmd.Run()
 }
