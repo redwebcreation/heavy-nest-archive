@@ -64,7 +64,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 				},
 				ModifyResponse: func(response *http.Response) error {
 					response.Header.Set("X-Dim", "none")
-
+					response.Header.Set("X-Powered-By", "PHP/8.0.9")
 					return nil
 				},
 				ErrorHandler: func(writer http.ResponseWriter, request *http.Request, err error) {
