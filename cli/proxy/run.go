@@ -79,7 +79,15 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 
 			logWithRequestContext("request served", request)
 		},
-		IsAllowedHost: nil,
+		IsAllowedHost: func(host string) bool {
+			for appHost := range internal.Config.Applications {
+				if appHost == host {
+					return true
+				}
+			}
+
+			return false
+		},
 	}
 
 	return proxy.Serve()

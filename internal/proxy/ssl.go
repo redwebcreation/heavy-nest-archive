@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func (p Proxy) getCertificateManager() autocert.Manager {
+func (p *Proxy) getCertificateManager() autocert.Manager {
 	return autocert.Manager{
 		Prompt: autocert.AcceptTOS,
 		HostPolicy: func(ctx context.Context, host string) error {
@@ -25,7 +25,7 @@ func (p Proxy) getCertificateManager() autocert.Manager {
 	}
 
 }
-func (p Proxy) createSelfSignedCertificates() error {
+func (p *Proxy) createSelfSignedCertificates() error {
 	keyFile := p.Paths.KeyFile
 	certFile := p.Paths.CertFile
 
