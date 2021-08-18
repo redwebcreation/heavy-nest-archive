@@ -63,7 +63,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 					req.Host = application.Host
 				},
 				ModifyResponse: func(response *http.Response) error {
-					response.Header.Del("Server")
+					response.Header.Set("X-Dim", "none")
 
 					return nil
 				},
@@ -80,13 +80,7 @@ func RunRunCommand(_ *cobra.Command, _ []string) error {
 			logWithRequestContext("request served", request)
 		},
 		IsAllowedHost: func(host string) bool {
-			for appHost := range internal.Config.Applications {
-				if appHost == host {
-					return true
-				}
-			}
-
-			return false
+			return internal.Config.Applications[host] != nil
 		},
 	}
 

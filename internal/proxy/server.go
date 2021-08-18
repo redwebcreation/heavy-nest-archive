@@ -78,12 +78,7 @@ func (p Proxy) Serve() error {
 		},
 	}
 
-	err := server.ListenAndServeTLS("", "")
-
-	if err != nil {
-		log.Fatal(err)
-	}
-	return nil
+	return server.ListenAndServeTLS("", "")
 }
 
 func (p Proxy) getSecureUrl(request *http.Request) string {
