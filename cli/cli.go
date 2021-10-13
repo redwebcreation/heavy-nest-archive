@@ -1,44 +1,24 @@
 package cli
 
-import (
-	"fmt"
-	"github.com/redwebcreation/hez/cli/proxy"
-	"github.com/redwebcreation/hez/globals"
-	"github.com/redwebcreation/hez/internal/ui"
-	"github.com/spf13/cobra"
-	"os"
-)
+import "github.com/redwebcreation/hez/internal"
 
 func Execute() {
-	for _, arg := range os.Args {
-		if arg == "--version" || arg == "-v" {
-			fmt.Println("Hez " + globals.Version)
-			return
-		}
-	}
+	internal.Log("dfdfdsfklsm")
 
-	cli := &cobra.Command{
-		Use:   "hez",
-		Short: "Hez makes orchestrating containers easy",
-		Long:  `Hez is a tool to orchestrate containers and manage the environment around it`,
-	}
+	//deployment := client.DeploymentConfiguration{
+	//	Image: "rg.fr-par.scw.cloud/rwsapps/factutool:main",
+	//}
+	//deployment.Deploy()
+	//return
+	/*
+	   cli := &cobra.Command{
+	   		Use:   "hez",
+	   		Short: "Hez makes orchestrating containers easy.",
+	   		Long:  "Hez is to tool to orchestrate containers and manage the environment around them.",
+	   	}
 
-	cli.PersistentFlags().BoolP("version", "v", false, "Prints Hez's version")
-
-	cli.AddCommand(proxy.RootCommand())
-	cli.AddCommand(ApplyCommand())
-	cli.AddCommand(SelfUpdateCommand())
-	cli.AddCommand(StopCommand())
-	cli.AddCommand(InfoCommand())
-	cli.AddCommand(VersionCommand())
-	cli.AddCommand(InitCommand())
-
-	cli.SilenceErrors = true
-
-	err := cli.Execute()
-
-	if err != nil {
-		ui.Error(err.Error())
-		os.Exit(1)
-	}
+	   	cli.SilenceErrors = true
+	   	err := cli.Execute()
+	   	check(err)
+	*/
 }
