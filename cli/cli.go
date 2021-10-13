@@ -1,14 +1,18 @@
 package cli
 
-import "github.com/redwebcreation/hez/internal"
+import "github.com/redwebcreation/hez/client"
 
 func Execute() {
-	internal.Log("dfdfdsfklsm")
+	deployment := client.DeploymentConfiguration{
+		Name: "factures_redwebcreation_fr_80",
+		Registry: &client.RegistryAuth{
+			Username: "nologin",
+			Password: "6fe186fd-edc2-485e-8f5d-93c357add27c",
+		},
+		Image: "rg.fr-par.scw.cloud/rwsapps/aaa:b",
+	}
 
-	//deployment := client.DeploymentConfiguration{
-	//	Image: "rg.fr-par.scw.cloud/rwsapps/factutool:main",
-	//}
-	//deployment.Deploy()
+	deployment.Deploy()
 	//return
 	/*
 	   cli := &cobra.Command{
@@ -18,7 +22,7 @@ func Execute() {
 	   	}
 
 	   	cli.SilenceErrors = true
-	   	err := cli.Execute()
+	   	err := cli.Execute()new
 	   	check(err)
 	*/
 }

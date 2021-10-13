@@ -39,37 +39,35 @@ type DeploymentConfiguration struct {
 }
 
 func (deployment DeploymentConfiguration) Deploy() {
-	if !deployment.hasLatestImage() {
-		deployment.pullImage()
-	}
+	internal.Title("[" + deployment.Name + "]")
+	internal.NewLog("pulling %s", deployment.Image).Print()
+	deployment.pullImage()
+	internal.NewLog("successfully downloaded %s", deployment.Image).Print()
 
+	internal.NewLog("stopping container %s", deployment.Name).Print()
 	deployment.stopContainer()
+	internal.NewLog("stopped container %s", deployment.Name).Top(1).Print()
+	internal.NewLog("creating container %s", deployment.Name).Print()
 	deployment.createContainer()
+	internal.NewLog("created container %s", deployment.Name).Top(1).Print()
 
 	if deployment.Healthchecks {
+		internal.NewLog("checking the container healthyness").Print()
 		deployment.waitForContainerToBeHealthy()
+	} else {
+		internal.NewLog("skipping healthchecks").Arrow(internal.Gray).Color(internal.Gray).ArrowString(" - ").Print()
 	}
 
 	if deployment.Warm {
+		internal.NewLog("warming up server").Print()
 		deployment.warmServer()
+		internal.NewLog("server warmed up (went down from 100ms to 10ms)").Top(1).Print()
+	} else {
+		internal.NewLog("skipping server warmup").Arrow(internal.Gray).Color(internal.Gray).ArrowString(" - ").Print()
 	}
 }
 
-func (d DeploymentConfiguration) hasLatestImage() bool {
-	images, err := globals.Docker.ImageList(context.Background(), types.ImageListOptions{
-		Filters: filters.NewArgs(filters.KeyValuePair{
-			Key:   "reference",
-			Value: d.Image,
-		},
-		),
-	})
-	internal.Check(err)
-
-	fmt.Println(images)
-	return true
-}
-
-func (d DeploymentConfiguration) pullImage() error {
+func (d DeploymentConfiguration) pullImage() {
 	pullOptions := types.ImagePullOptions{}
 
 	if d.Registry != nil {
@@ -96,7 +94,10 @@ func (d DeploymentConfiguration) pullImage() error {
 		} `json:"progressDetail"`
 	}
 
-	progress := internal.Progress{}
+	progress := internal.Progress{
+		Prefix: "    " + "    " + internal.Bold + internal.Gray.AsFg(),
+	}
+
 	progress.Render()
 
 	for {
@@ -105,14 +106,16 @@ func (d DeploymentConfiguration) pullImage() error {
 				break
 			}
 
-			return err
+			internal.Check(err)
 		}
 
-		progress.Increment(1).WithLabel(event.Status)
+		progress.
+			Increment(1).
+			WithSuffix(internal.Bold + internal.Gray.AsFg() + strings.ToLower(event.Status) + internal.Stop)
 	}
 
 	progress.Finish()
-	return nil
+	fmt.Println()
 }
 
 func (d DeploymentConfiguration) stopContainer() *types.Container {
@@ -122,8 +125,7 @@ func (d DeploymentConfiguration) stopContainer() *types.Container {
 		_ = globals.Docker.ContainerStop(context.Background(), c.ID, nil)
 	}
 
-	err := globals.Docker.ContainerRemove(context.Background(), c.ID, types.ContainerRemoveOptions{})
-	internal.Check(err)
+	_ = globals.Docker.ContainerRemove(context.Background(), d.Name, types.ContainerRemoveOptions{})
 
 	return c
 }
@@ -155,8 +157,7 @@ func (d DeploymentConfiguration) createContainer() string {
 		Image: d.Image,
 	}, &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
-			Name:              "always",
-			MaximumRetryCount: 2,
+			Name: "always",
 		},
 		Mounts: d.VolumesToDockerMounts(),
 	}, nil, nil, d.Name)
@@ -176,8 +177,12 @@ func (d DeploymentConfiguration) createContainer() string {
 }
 
 func (d DeploymentConfiguration) getNetwork() *types.NetworkResource {
+	if d.Network == "" {
+		return nil
+	}
+
 	networks, err := globals.Docker.NetworkList(context.Background(), types.NetworkListOptions{
-		filters.NewArgs(filters.KeyValuePair{
+		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "name",
 			Value: d.Network,
 		}),
@@ -191,6 +196,7 @@ func (d DeploymentConfiguration) getNetwork() *types.NetworkResource {
 		internal.Check(err)
 		return &net
 	}
+
 	return nil
 }
 
@@ -255,10 +261,13 @@ func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
 	}
 	progress.Finish()
 
+	// TODO:
 	if inspection.State.Health == nil || inspection.State.Health.Status == "healthy" {
 		fmt.Println("healthy")
 		return
 	}
+
+	fmt.Println("UNHEALTHY")
 }
 
 func (d DeploymentConfiguration) warmServer() {
