@@ -36,10 +36,12 @@ type DeploymentConfiguration struct {
 	Name         string
 	Warm         bool
 	Healthchecks bool
+	Host         string
+	Port         string
 }
 
 func (deployment DeploymentConfiguration) Deploy() {
-	internal.Title("[" + deployment.Name + "]")
+	internal.Title("    " + deployment.Host)
 	internal.NewLog("pulling %s", deployment.Image).Print()
 	deployment.pullImage()
 	internal.NewLog("successfully downloaded %s", deployment.Image).Print()

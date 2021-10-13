@@ -1,8 +1,14 @@
 package cli
 
-import "github.com/redwebcreation/hez/client"
+import (
+	"fmt"
+
+	"github.com/redwebcreation/hez/client"
+)
 
 func Execute() {
+	fmt.Println()
+	fmt.Println()
 	deployment := client.DeploymentConfiguration{
 		Name: "factures_redwebcreation_fr_80",
 		Registry: &client.RegistryAuth{
@@ -10,6 +16,8 @@ func Execute() {
 			Password: "6fe186fd-edc2-485e-8f5d-93c357add27c",
 		},
 		Image: "rg.fr-par.scw.cloud/rwsapps/aaa:b",
+		Host:  "facture.net",
+		Port:  "80",
 	}
 
 	deployment.Deploy()

@@ -98,6 +98,6 @@ func (l Log) ArrowString(shape string) Log {
 }
 
 func Title(format string, a ...interface{}) {
-	fmt.Println(Bold + White.AsFg() + fmt.Sprintf(format, a...) + Stop)
+	fmt.Println(Bold + Primary.AsFg() + fmt.Sprintf(format, a...) + Stop)
 	fmt.Println()
 }
