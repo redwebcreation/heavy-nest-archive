@@ -22,6 +22,15 @@ type RegistryAuth struct {
 	Password string
 }
 
+func (r RegistryAuth) ToBase64() string {
+	auth, err := json.Marshal(map[string]string{
+		"username": d.Registry.Username,
+		"password": d.Registry.Password,
+	})
+	internal.Check(err)
+	return base64.StdEncoding.EncodeToString(auth)
+}
+
 type Volume struct {
 	From string
 	To   string
@@ -73,12 +82,7 @@ func (d DeploymentConfiguration) pullImage() {
 	pullOptions := types.ImagePullOptions{}
 
 	if d.Registry != nil {
-		auth, err := json.Marshal(map[string]string{
-			"username": d.Registry.Username,
-			"password": d.Registry.Password,
-		})
-		internal.Check(err)
-		pullOptions.RegistryAuth = base64.StdEncoding.EncodeToString(auth)
+		pullOptions.RegistryAuth = d.Registry.ToBase64()
 	}
 
 	events, err := globals.Docker.ImagePull(context.Background(), d.Image, pullOptions)
@@ -97,9 +101,10 @@ func (d DeploymentConfiguration) pullImage() {
 	}
 
 	progress := internal.Progress{
-		Prefix: "    " + "    " + internal.Bold + internal.Gray.AsFg(),
+		Prefix: "    " + "    " + internal.Bold + internal.White.AsFg(),
 	}
 
+	fmt.Println()
 	progress.Render()
 
 	for {
@@ -113,7 +118,7 @@ func (d DeploymentConfiguration) pullImage() {
 
 		progress.
 			Increment(1).
-			WithSuffix(internal.Bold + internal.Gray.AsFg() + strings.ToLower(event.Status) + internal.Stop)
+			WithSuffix(internal.Bold + internal.Gray.AsFg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + internal.Stop)
 	}
 
 	progress.Finish()

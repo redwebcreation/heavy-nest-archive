@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 )
 
@@ -12,6 +13,7 @@ type Progress struct {
 	Current             int
 }
 
+// TODO: refactor & simplify progress bar
 var progressBarWidth = 60
 
 func (p *Progress) Render() *Progress {
@@ -27,10 +29,17 @@ func (p *Progress) Render() *Progress {
 	}
 
 	if p.RenderedAtLeastOnce {
-		bar = fmt.Sprintf("\033[1A\033[K%s%d/100 %s\033[0m", p.Prefix, (p.Current*100)/progressBarWidth, bar)
+		height := 1
 
 		if p.Suffix != "" {
-			bar += " " + p.Suffix
+			height = 2
+		}
+
+		bar = fmt.Sprintf("\033[%dA\033[K%s%d/100 %s%s", height, p.Prefix, p.current(), bar, Stop)
+
+		if p.Suffix != "" {
+			// We add 6 because of the "/100 ["
+			bar += "\n" + "    " + "    " + strings.Repeat(" ", 6+len(strconv.Itoa(p.Current))) + p.Suffix
 		}
 	}
 
@@ -66,4 +75,8 @@ func (p *Progress) Decrement(n int) {
 func (p Progress) Finish() {
 	p.Current = progressBarWidth
 	p.Render()
+}
+
+func (p Progress) current() int {
+	return (p.Current * 100) / progressBarWidth
 }

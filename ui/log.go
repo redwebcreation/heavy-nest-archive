@@ -5,26 +5,12 @@ import (
 	"os"
 )
 
-type Color [3]uint8
 type Log struct {
 	Message     string
 	arrowString string
 	arrow       *Color
 	color       *Color
-	nesting     int
 	top         int
-}
-
-var Primary Color = [3]uint8{59, 130, 246}
-var White Color = [3]uint8{255, 255, 255}
-var Gray Color = [3]uint8{147, 148, 153}
-var Red Color = [3]uint8{239, 68, 68}
-var Green Color = [3]uint8{16, 185, 129}
-var Stop = "\033[0m"
-var Bold = "\033[1m"
-
-func (c Color) AsFg() string {
-	return fmt.Sprintf("\033[38;2;%d;%d;%dm", c[0], c[1], c[2])
 }
 
 func (l Log) String() string {
@@ -40,11 +26,7 @@ func (l Log) String() string {
 		l.arrowString = "==>"
 	}
 
-	str := ""
-
-	for i := 0; i < int(l.nesting+1); i++ {
-		str += "    " // 4 spaces, 1 tab
-	}
+	str := "    "
 
 	str += fmt.Sprintf("%s%s%s", l.arrow.AsFg()+Bold, l.arrowString, Stop)
 	str += fmt.Sprintf(" %s%s%s", l.color.AsFg()+Bold, l.Message, Stop)
@@ -87,17 +69,7 @@ func (l Log) Top(n int) Log {
 	return l
 }
 
-func (l Log) Nesting(n int) Log {
-	l.nesting = n
-	return l
-}
-
 func (l Log) ArrowString(shape string) Log {
 	l.arrowString = shape
 	return l
-}
-
-func Title(format string, a ...interface{}) {
-	fmt.Println(Bold + Primary.AsFg() + fmt.Sprintf(format, a...) + Stop)
-	fmt.Println()
 }

@@ -1,0 +1,24 @@
+{
+    "default_network": "foxy",
+
+    "applications": {
+        "example.com": {
+            "image": "nginx",
+            "warm": false,
+            "env": {
+                "APP_ENV": "local"
+            },
+            "env_files": [
+                "/etc/sites/example.env"
+            ],
+            "registry": "main"
+        }
+    },
+
+    "registries": {
+        "rg.fr-par.scw.cloud/rwsapps": {
+            "username": "someone",
+            "password": "something"
+        }
+    }
+}
