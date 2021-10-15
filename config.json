@@ -1,6 +1,8 @@
 {
     "default_network": "foxy",
 
+    "backends": [],
+
     "applications": {
         "example.com": {
             "image": "nginx",
@@ -11,7 +13,8 @@
             "env_files": [
                 "/etc/sites/example.env"
             ],
-            "registry": "main"
+            "registry": "main",
+            "log_policy": "default"
         }
     },
 
@@ -20,5 +23,31 @@
             "username": "someone",
             "password": "something"
         }
+    },
+
+    "log_policies": {
+        "default": [
+            {
+                "when": "level == error || level == fatal",
+                "redirection": {
+                    "kind": "stream",
+                    "value": "stderr"
+                }
+            },
+            {
+                "when": "< error",
+                "redirection": {
+                    "kind": "stream",
+                    "value": "stdout"
+                }
+            },
+            {
+                "level": "debug",
+                "redirection":{
+                    "kind": "file",
+                    "value": "/tmp/debug.log"
+                }
+            }
+        ]
     }
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/redwebcreation/hez/globals"
-	"github.com/redwebcreation/hez/internal"
+	"github.com/redwebcreation/hez/ui"
 )
 
 type RegistryAuth struct {
@@ -24,10 +24,10 @@ type RegistryAuth struct {
 
 func (r RegistryAuth) ToBase64() string {
 	auth, err := json.Marshal(map[string]string{
-		"username": d.Registry.Username,
-		"password": d.Registry.Password,
+		"username": r.Username,
+		"password": r.Password,
 	})
-	internal.Check(err)
+	ui.Check(err)
 	return base64.StdEncoding.EncodeToString(auth)
 }
 
@@ -50,31 +50,31 @@ type DeploymentConfiguration struct {
 }
 
 func (deployment DeploymentConfiguration) Deploy() {
-	internal.Title("    " + deployment.Host)
-	internal.NewLog("pulling %s", deployment.Image).Print()
+	ui.Title("    " + deployment.Host)
+	ui.NewLog("pulling %s", deployment.Image).Print()
 	deployment.pullImage()
-	internal.NewLog("successfully downloaded %s", deployment.Image).Print()
+	ui.NewLog("successfully downloaded %s", deployment.Image).Print()
 
-	internal.NewLog("stopping container %s", deployment.Name).Print()
+	ui.NewLog("stopping container %s", deployment.Name).Print()
 	deployment.stopContainer()
-	internal.NewLog("stopped container %s", deployment.Name).Top(1).Print()
-	internal.NewLog("creating container %s", deployment.Name).Print()
+	ui.NewLog("stopped container %s", deployment.Name).Top(1).Print()
+	ui.NewLog("creating container %s", deployment.Name).Print()
 	deployment.createContainer()
-	internal.NewLog("created container %s", deployment.Name).Top(1).Print()
+	ui.NewLog("created container %s", deployment.Name).Top(1).Print()
 
 	if deployment.Healthchecks {
-		internal.NewLog("checking the container healthyness").Print()
+		ui.NewLog("checking the container healthyness").Print()
 		deployment.waitForContainerToBeHealthy()
 	} else {
-		internal.NewLog("skipping healthchecks").Arrow(internal.Gray).Color(internal.Gray).ArrowString(" - ").Print()
+		ui.NewLog("skipping healthchecks").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
 	}
 
 	if deployment.Warm {
-		internal.NewLog("warming up server").Print()
+		ui.NewLog("warming up server").Print()
 		deployment.warmServer()
-		internal.NewLog("server warmed up (went down from 100ms to 10ms)").Top(1).Print()
+		ui.NewLog("server warmed up (went down from 100ms to 10ms)").Top(1).Print()
 	} else {
-		internal.NewLog("skipping server warmup").Arrow(internal.Gray).Color(internal.Gray).ArrowString(" - ").Print()
+		ui.NewLog("skipping server warmup").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
 	}
 }
 
@@ -86,7 +86,7 @@ func (d DeploymentConfiguration) pullImage() {
 	}
 
 	events, err := globals.Docker.ImagePull(context.Background(), d.Image, pullOptions)
-	internal.Check(err)
+	ui.Check(err)
 
 	decoder := json.NewDecoder(events)
 
@@ -100,8 +100,8 @@ func (d DeploymentConfiguration) pullImage() {
 		} `json:"progressDetail"`
 	}
 
-	progress := internal.Progress{
-		Prefix: "    " + "    " + internal.Bold + internal.White.AsFg(),
+	progress := ui.Progress{
+		Prefix: "    " + "    " + ui.Bold + ui.White.AsFg(),
 	}
 
 	fmt.Println()
@@ -113,12 +113,12 @@ func (d DeploymentConfiguration) pullImage() {
 				break
 			}
 
-			internal.Check(err)
+			ui.Check(err)
 		}
 
 		progress.
 			Increment(1).
-			WithSuffix(internal.Bold + internal.Gray.AsFg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + internal.Stop)
+			WithSuffix(ui.Bold + ui.Gray.AsFg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + ui.Stop)
 	}
 
 	progress.Finish()
@@ -147,7 +147,7 @@ func (d DeploymentConfiguration) getContainer() *types.Container {
 			},
 		),
 	})
-	internal.Check(err)
+	ui.Check(err)
 
 	if len(containers) > 0 {
 		return &containers[0]
@@ -168,16 +168,16 @@ func (d DeploymentConfiguration) createContainer() string {
 		},
 		Mounts: d.VolumesToDockerMounts(),
 	}, nil, nil, d.Name)
-	internal.Check(err)
+	ui.Check(err)
 
 	err = globals.Docker.ContainerStart(context.Background(), ref.ID, types.ContainerStartOptions{})
-	internal.Check(err)
+	ui.Check(err)
 
 	if network != nil {
 		// Force (re)connect
 		_ = globals.Docker.NetworkDisconnect(context.Background(), network.ID, ref.ID, true)
 		err = globals.Docker.NetworkConnect(context.Background(), network.ID, ref.ID, nil)
-		internal.Check(err)
+		ui.Check(err)
 	}
 
 	return ref.ID
@@ -194,13 +194,13 @@ func (d DeploymentConfiguration) getNetwork() *types.NetworkResource {
 			Value: d.Network,
 		}),
 	})
-	internal.Check(err)
+	ui.Check(err)
 
 	var net types.NetworkResource
 
 	if len(networks) > 0 {
 		net, err = globals.Docker.NetworkInspect(context.Background(), networks[0].ID, types.NetworkInspectOptions{})
-		internal.Check(err)
+		ui.Check(err)
 		return &net
 	}
 
@@ -227,7 +227,7 @@ func (d DeploymentConfiguration) EnvironmentToDockerEnv() []string {
 	for k, v := range d.Environment {
 		if v == "" && !strings.Contains(k, "=") {
 			contents, err := os.ReadFile(k)
-			internal.Check(err)
+			ui.Check(err)
 
 			for _, envFileVariable := range strings.Split(string(contents), "\n") {
 				trimmed := strings.TrimSpace(envFileVariable)
@@ -252,7 +252,7 @@ func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
 	c := d.getContainer()
 
 	inspection, err := globals.Docker.ContainerInspect(context.Background(), c.ID)
-	internal.Check(err)
+	ui.Check(err)
 
 	isStarting := func(c types.ContainerJSON) bool {
 		if c.State.Health == nil {
@@ -261,7 +261,7 @@ func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
 		return c.State.Health.Status == "starting"
 	}
 
-	progress := internal.Progress{}
+	progress := ui.Progress{}
 	progress.Render()
 	for isStarting(inspection) {
 		progress.Increment(1)

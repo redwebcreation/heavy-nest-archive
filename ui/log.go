@@ -1,8 +1,7 @@
-package internal
+package ui
 
 import (
 	"fmt"
-	"os"
 )
 
 type Log struct {
@@ -39,13 +38,6 @@ func (l Log) String() string {
 
 func (l Log) Print() {
 	fmt.Println(l.String())
-}
-
-func Check(err error) {
-	if err != nil {
-		fmt.Println("\033[38;2;255;0;0" + err.Error() + "\033[0m")
-		os.Exit(1)
-	}
 }
 
 func NewLog(format string, a ...interface{}) Log {
