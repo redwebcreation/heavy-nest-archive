@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
 	"github.com/docker/docker/api/types"
@@ -222,26 +221,9 @@ func (d DeploymentConfiguration) VolumesToDockerMounts() []mount.Mount {
 }
 
 func (d DeploymentConfiguration) EnvironmentToDockerEnv() []string {
-	var variables []string
+	variables := make([]string, len(d.Environment))
 
 	for k, v := range d.Environment {
-		if v == "" && !strings.Contains(k, "=") {
-			contents, err := os.ReadFile(k)
-			ui.Check(err)
-
-			for _, envFileVariable := range strings.Split(string(contents), "\n") {
-				trimmed := strings.TrimSpace(envFileVariable)
-
-				if trimmed == "" {
-					continue
-				}
-
-				variables = append(variables, trimmed)
-			}
-
-			continue
-		}
-
 		variables = append(variables, k+"="+v)
 	}
 

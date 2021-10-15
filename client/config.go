@@ -18,14 +18,7 @@ type Configuration struct {
 	// public  ips (disallowed, non-recommended?)
 	Backends []string
 
-	Applications map[string]struct {
-		Image    string
-		Env      map[string]string
-		EnvFiles []string
-		Warm     bool
-		Backend  BackendStrategy
-		Registry string
-	}
+	Applications map[string]Application
 
 	Staging struct {
 		Enabled bool

@@ -1,7 +1,9 @@
 {
     "default_network": "foxy",
 
-    "backends": [],
+    "backends": [
+        "127.0.0.1"
+    ],
 
     "applications": {
         "example.com": {
