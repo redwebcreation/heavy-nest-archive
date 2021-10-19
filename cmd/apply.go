@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"strings"
 
 	"github.com/redwebcreation/nest/client"
 	"github.com/redwebcreation/nest/internal"
@@ -24,11 +23,16 @@ func runApplyCommand(_ *cobra.Command, _ []string) error {
 	for _, application := range client.Config.Applications {
 		ui.Title("    " + application.Host)
 
-		application.SecondaryContainer().Stop()
-		application.SecondaryContainer().Start()
+		application.SecondaryContainer().Deploy(client.DeploymentOptions{
+			Pull:         true,
+			Healthchecks: !skipHealthchecks,
+		})
+		application.PrimaryContainer().Deploy(client.DeploymentOptions{
+			Pull:         false,
+			Healthchecks: !skipHealthchecks,
+		})
 
-		application.PrimaryContainer().Stop()
-		application.PrimaryContainer().Start()
+		application.SecondaryContainer().StopContainer()
 
 		fmt.Println("\n    Application deployed!")
 	}
@@ -44,8 +48,4 @@ func ApplyCommand() *cobra.Command {
 		c.Flags().BoolVarP(&skipHealthchecks, "skip-healthchecks", "K", false, "Skip healthchecks")
 
 	}, runApplyCommand)
-}
-
-func getContainerBaseName(a client.Application, host string) string {
-	return strings.ReplaceAll(host, ".", "_") + "_" + a.Port
 }

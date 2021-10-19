@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
@@ -37,31 +38,36 @@ type Volume struct {
 }
 
 type DeploymentConfiguration struct {
-	Image        string
-	Registry     *RegistryConfiguration
-	Environment  map[string]string
-	Volumes      []Volume
-	Network      string
-	Name         string
-	Warm         bool
+	Image       string
+	Registry    *RegistryConfiguration
+	Environment map[string]string
+	Volumes     []Volume
+	Network     string
+	Name        string
+	Warm        bool
+	Host        string
+	Port        string
+}
+type DeploymentOptions struct {
+	Pull         bool
 	Healthchecks bool
-	Host         string
-	Port         string
 }
 
-func (d DeploymentConfiguration) Deploy() {
-	ui.NewLog("pulling %s", d.Image).Print()
-	d.pullImage()
-	ui.NewLog("successfully downloaded %s", d.Image).Print()
+func (d DeploymentConfiguration) Deploy(opts DeploymentOptions) {
+	if opts.Pull {
+		ui.NewLog("pulling %s", d.Image).Print()
+		d.pullImage()
+		ui.NewLog("successfully downloaded %s", d.Image).Print()
+	}
 
 	ui.NewLog("stopping container %s", d.Name).Print()
-	d.stopContainer()
+	d.StopContainer()
 	ui.NewLog("stopped container %s", d.Name).Top(1).Print()
 	ui.NewLog("creating container %s", d.Name).Print()
 	d.createContainer()
 	ui.NewLog("created container %s", d.Name).Top(1).Print()
 
-	if d.Healthchecks {
+	if opts.Healthchecks {
 		ui.NewLog("checking the container healthyness").Print()
 		d.waitForContainerToBeHealthy()
 	} else {
@@ -100,6 +106,7 @@ func (d DeploymentConfiguration) pullImage() {
 	}
 
 	progress := ui.Progress{
+		Total:  60,
 		Prefix: "    " + "    " + ui.White.Fg(),
 	}
 
@@ -124,7 +131,7 @@ func (d DeploymentConfiguration) pullImage() {
 	fmt.Println()
 }
 
-func (d DeploymentConfiguration) stopContainer() *types.Container {
+func (d DeploymentConfiguration) StopContainer() *types.Container {
 	c := d.getContainer()
 
 	if c != nil {
@@ -236,17 +243,19 @@ func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
 	inspection, err := globals.Docker.ContainerInspect(context.Background(), c.ID)
 	ui.Check(err)
 
-	isStarting := func(c types.ContainerJSON) bool {
-		if c.State.Health == nil {
-			return false
-		}
-		return c.State.Health.Status == "starting"
+	if inspection.State.Health == nil {
+		ui.NewLog("no healthchecks defined").Arrow(ui.Gray).ArrowString("    " + "- ").Color(ui.Gray).Print()
+		return
 	}
 
-	progress := ui.Progress{}
+	progress := ui.Progress{
+		Total: int(inspection.Config.Healthcheck.Interval.Seconds()),
+	}
+
 	progress.Render()
-	for isStarting(inspection) {
+	for inspection.State.Health.Status == "starting" {
 		progress.Increment(1)
+		time.Sleep(time.Second)
 	}
 	progress.Finish()
 

@@ -32,19 +32,22 @@ func (a Application) GetRegistry() *RegistryConfiguration {
 	return nil
 }
 
-func (a Application) getContainerName() string {
-	return strings.ReplaceAll(a.Host, ".", "_") + "_" + a.Port
-}
-func (a Application) PrimaryContainer() ShallowContainer {
-	return ShallowContainer{
-		Name:        a.getContainerName(),
-		Application: a,
+func (a Application) PrimaryContainer() DeploymentConfiguration {
+	return DeploymentConfiguration{
+		Image:       a.Image,
+		Registry:    a.GetRegistry(),
+		Environment: a.Env,
+		Volumes:     a.Volumes,
+		Network:     a.Network,
+		Name:        strings.ReplaceAll(a.Host, ".", "_") + "_" + a.Port,
+		Warm:        a.Warm,
+		Host:        a.Host,
+		Port:        a.Port,
 	}
 }
 
-func (a Application) SecondaryContainer() ShallowContainer {
-	return ShallowContainer{
-		Name:        a.getContainerName() + "_temporary",
-		Application: a,
-	}
+func (a Application) SecondaryContainer() DeploymentConfiguration {
+	primary := a.PrimaryContainer()
+	primary.Name += "_temporary"
+	return primary
 }

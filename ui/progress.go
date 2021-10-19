@@ -10,20 +10,18 @@ type Progress struct {
 	RenderedAtLeastOnce bool
 	Prefix              string
 	Suffix              string
+	Total               int
 	Current             int
 }
 
-// TODO: refactor & simplify progress bar
-var progressBarWidth = 60
-
 func (p *Progress) Render() *Progress {
-	empty := strings.Repeat(" ", progressBarWidth-int(p.Current))
+	empty := strings.Repeat(" ", p.Total-int(p.Current))
 
 	var bar string
 	if p.Current == 0 {
 		bar = "[" + empty + "]"
-	} else if p.Current == progressBarWidth {
-		bar = "[" + strings.Repeat("=", progressBarWidth) + "]"
+	} else if p.Current == p.Total {
+		bar = "[" + strings.Repeat("=", p.Total) + "]"
 	} else {
 		bar = fmt.Sprintf("[%s%s]", strings.Repeat("=", p.Current-1)+">", empty)
 	}
@@ -59,7 +57,7 @@ func (p *Progress) WithSuffix(suffix string) *Progress {
 }
 
 func (p *Progress) Increment(n int) *Progress {
-	if p.Current+n > progressBarWidth {
+	if p.Current+n > int(p.Total) {
 		p.Current = n
 	} else {
 		p.Current += n
@@ -73,10 +71,10 @@ func (p *Progress) Decrement(n int) {
 }
 
 func (p Progress) Finish() {
-	p.Current = progressBarWidth
+	p.Current = int(p.Total)
 	p.Render()
 }
 
 func (p Progress) current() int {
-	return (p.Current * 100) / progressBarWidth
+	return (p.Current * 100) / int(p.Total)
 }
