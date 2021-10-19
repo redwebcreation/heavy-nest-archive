@@ -17,7 +17,7 @@ import (
 )
 
 type RegistryConfiguration struct {
-	Host string
+	Host     string
 	Username string
 	Password string
 }
@@ -50,7 +50,6 @@ type DeploymentConfiguration struct {
 }
 
 func (d DeploymentConfiguration) Deploy() {
-	ui.Title("    " + d.Host)
 	ui.NewLog("pulling %s", d.Image).Print()
 	d.pullImage()
 	ui.NewLog("successfully downloaded %s", d.Image).Print()
@@ -222,7 +221,7 @@ func (d DeploymentConfiguration) VolumesToDockerMounts() []mount.Mount {
 }
 
 func (d DeploymentConfiguration) EnvironmentToDockerEnv() []string {
-	variables := make([]string, len(d.Environment))
+	variables := make([]string, len(d.Environment)-1)
 
 	for k, v := range d.Environment {
 		variables = append(variables, k+"="+v)

@@ -42,6 +42,10 @@ type Configuration struct {
 		HttpsPort string `json:"https_port,omitempty"`
 	} `json:"production"`
 
+	BackendsManager struct {
+		Host string `json:"host,omitempty"`
+	}
+
 	Registries  map[string]RegistryConfiguration `json:"registries,omitempty"`
 	LogPolicies map[string][]LogPolicy           `json:"log_policies,omitempty"`
 }
@@ -77,9 +81,19 @@ func parseJsonConfig(contents []byte) Configuration {
 	err := json.Unmarshal(contents, &config)
 	ui.Check(err)
 
-	for host, application := range config.Applications {
-		application.Host = host
+	applications := make(map[string]Application, len(config.Applications))
+
+	for host, a := range config.Applications {
+		a.Host = host
+
+		if a.Port == "" {
+			a.Port = "80"
+		}
+
+		applications[host] = a
 	}
+
+	config.Applications = applications
 
 	return config
 }

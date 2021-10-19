@@ -6,6 +6,7 @@ import (
 
 	"github.com/redwebcreation/nest/client"
 	"github.com/redwebcreation/nest/internal"
+	"github.com/redwebcreation/nest/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +22,8 @@ func runApplyCommand(_ *cobra.Command, _ []string) error {
 	}
 
 	for _, application := range client.Config.Applications {
+		ui.Title("    " + application.Host)
+
 		application.SecondaryContainer().Stop()
 		application.SecondaryContainer().Start()
 

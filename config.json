@@ -10,7 +10,6 @@
             "env": {
                 "APP_ENV": "local"
             },
-            "registry": "default",
             "log_policy": "default"
         }
     },
