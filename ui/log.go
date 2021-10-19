@@ -27,8 +27,8 @@ func (l Log) String() string {
 
 	str := "    "
 
-	str += fmt.Sprintf("%s%s%s", l.arrow.AsFg()+Bold, l.arrowString, Stop)
-	str += fmt.Sprintf(" %s%s%s", l.color.AsFg()+Bold, l.Message, Stop)
+	str += fmt.Sprintf("%s%s%s", l.arrow.Fg(), l.arrowString, Stop)
+	str += fmt.Sprintf(" %s%s%s", l.color.Fg(), l.Message, Stop)
 
 	if l.top != 0 {
 		str = fmt.Sprintf("\033[%dA\033[K", l.top+1) + str

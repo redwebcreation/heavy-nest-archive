@@ -12,16 +12,17 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/mount"
-	"github.com/redwebcreation/hez/globals"
-	"github.com/redwebcreation/hez/ui"
+	"github.com/redwebcreation/nest/globals"
+	"github.com/redwebcreation/nest/ui"
 )
 
-type RegistryAuth struct {
+type RegistryConfiguration struct {
+	Host string
 	Username string
 	Password string
 }
 
-func (r RegistryAuth) ToBase64() string {
+func (r RegistryConfiguration) ToBase64() string {
 	auth, err := json.Marshal(map[string]string{
 		"username": r.Username,
 		"password": r.Password,
@@ -37,7 +38,7 @@ type Volume struct {
 
 type DeploymentConfiguration struct {
 	Image        string
-	Registry     *RegistryAuth
+	Registry     *RegistryConfiguration
 	Environment  map[string]string
 	Volumes      []Volume
 	Network      string
@@ -48,29 +49,29 @@ type DeploymentConfiguration struct {
 	Port         string
 }
 
-func (deployment DeploymentConfiguration) Deploy() {
-	ui.Title("    " + deployment.Host)
-	ui.NewLog("pulling %s", deployment.Image).Print()
-	deployment.pullImage()
-	ui.NewLog("successfully downloaded %s", deployment.Image).Print()
+func (d DeploymentConfiguration) Deploy() {
+	ui.Title("    " + d.Host)
+	ui.NewLog("pulling %s", d.Image).Print()
+	d.pullImage()
+	ui.NewLog("successfully downloaded %s", d.Image).Print()
 
-	ui.NewLog("stopping container %s", deployment.Name).Print()
-	deployment.stopContainer()
-	ui.NewLog("stopped container %s", deployment.Name).Top(1).Print()
-	ui.NewLog("creating container %s", deployment.Name).Print()
-	deployment.createContainer()
-	ui.NewLog("created container %s", deployment.Name).Top(1).Print()
+	ui.NewLog("stopping container %s", d.Name).Print()
+	d.stopContainer()
+	ui.NewLog("stopped container %s", d.Name).Top(1).Print()
+	ui.NewLog("creating container %s", d.Name).Print()
+	d.createContainer()
+	ui.NewLog("created container %s", d.Name).Top(1).Print()
 
-	if deployment.Healthchecks {
+	if d.Healthchecks {
 		ui.NewLog("checking the container healthyness").Print()
-		deployment.waitForContainerToBeHealthy()
+		d.waitForContainerToBeHealthy()
 	} else {
 		ui.NewLog("skipping healthchecks").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
 	}
 
-	if deployment.Warm {
+	if d.Warm {
 		ui.NewLog("warming up server").Print()
-		deployment.warmServer()
+		d.warmServer()
 		ui.NewLog("server warmed up (went down from 100ms to 10ms)").Top(1).Print()
 	} else {
 		ui.NewLog("skipping server warmup").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
@@ -100,7 +101,7 @@ func (d DeploymentConfiguration) pullImage() {
 	}
 
 	progress := ui.Progress{
-		Prefix: "    " + "    " + ui.Bold + ui.White.AsFg(),
+		Prefix: "    " + "    " + ui.White.Fg(),
 	}
 
 	fmt.Println()
@@ -117,7 +118,7 @@ func (d DeploymentConfiguration) pullImage() {
 
 		progress.
 			Increment(1).
-			WithSuffix(ui.Bold + ui.Gray.AsFg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + ui.Stop)
+			WithSuffix(ui.Gray.Fg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + ui.Stop)
 	}
 
 	progress.Finish()

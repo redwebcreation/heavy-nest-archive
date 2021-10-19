@@ -1,41 +1,34 @@
 package client
 
-import (
-	"fmt"
-)
-
 type Application struct {
-	Image     string            `json:"image"`
-	Env       map[string]string `json:"env"`
-	EnvFiles  []string          `json:"env_files"`
-	Volumes   []Volume          `json:"volumes"`
-	Warm      bool              `json:"warm"`
-	Backend   BackendStrategy   `json:"backend"`
-	LogPolicy string            `json:"log_policy"`
-	Registry  string            `json:"registry"`
-	Network   string            `json:"network"`
-	Port      string            `json:"port"`
+	Image     string            `json:"image,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
+	EnvFiles  []string          `json:"env_files,omitempty"`
+	Volumes   []Volume          `json:"volumes,omitempty"`
+	Warm      bool              `json:"warm,omitempty"`
+	Backend   BackendStrategy   `json:"backend,omitempty"`
+	LogPolicy string            `json:"log_policy,omitempty"`
+	Registry  string            `json:"registry,omitempty"`
+	Network   string            `json:"network,omitempty"`
+	Port      string            `json:"port,omitempty"`
 }
 
-func (a Application) GetRegistry() (*RegistryAuth, error) {
+func (a Application) GetRegistry() *RegistryConfiguration {
 	if a.Registry == "" {
-		return nil, nil
+		return nil
 	}
 
 	for name, registry := range Config.Registries {
 		if name == a.Registry {
-			return &registry, nil
+			return &registry
 		}
 	}
 
-	return nil, fmt.Errorf("registry [%s] not found", a.Registry)
+	return nil
 }
 
-func (a Application) GetDeploymentConfigurationFor(name string) (DeploymentConfiguration, error) {
-	registry, err := a.GetRegistry()
-	if err != nil {
-		return DeploymentConfiguration{}, err
-	}
+func (a Application) GetDeploymentConfigurationFor(name string, host string) DeploymentConfiguration {
+	registry := a.GetRegistry()
 
 	conf := DeploymentConfiguration{
 		Image:       a.Image,
@@ -43,6 +36,7 @@ func (a Application) GetDeploymentConfigurationFor(name string) (DeploymentConfi
 		Volumes:     a.Volumes,
 		Network:     a.Network,
 		Name:        name,
+		Host:        host,
 		Warm:        a.Warm,
 		Port:        a.Port,
 	}
@@ -51,5 +45,5 @@ func (a Application) GetDeploymentConfigurationFor(name string) (DeploymentConfi
 		conf.Registry = registry
 	}
 
-	return conf, nil
+	return conf
 }

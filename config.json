@@ -1,6 +1,4 @@
 {
-    "default_network": "foxy",
-
     "backends": [
         "127.0.0.1"
     ],
@@ -12,18 +10,16 @@
             "env": {
                 "APP_ENV": "local"
             },
-            "env_files": [
-                "/etc/sites/example.env"
-            ],
-            "registry": "main",
+            "registry": "default",
             "log_policy": "default"
         }
     },
 
     "registries": {
-        "rg.fr-par.scw.cloud/rwsapps": {
-            "username": "someone",
-            "password": "something"
+        "default": {
+            "host": "rg.fr-par.scw.cloud/rwsapps",
+            "username": "nologin",
+            "password": "0a667433-7712-465b-9e36-7b43c52e2426"
         }
     },
 

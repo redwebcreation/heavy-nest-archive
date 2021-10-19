@@ -5,68 +5,62 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/redwebcreation/hez/ui"
+	"github.com/redwebcreation/nest/ui"
 )
 
 type BackendStrategy string
 
 type Configuration struct {
-	DefaultNetwork string
+	DefaultNetwork string `json:"default_network,omitempty"`
 
 	// an ip to a configuration
-	// self can be used to use the current server as a backend
 	// public  ips (disallowed, non-recommended?)
-	Backends []string
+	Backends []string `json:"backends,omitempty"`
 
-	Applications map[string]Application
+	Applications map[string]Application `json:"applications,omitempty"`
 
 	Staging struct {
-		Enabled bool
-		Host    string
-		Logging string
+		Enabled bool   `json:"enabled,omitempty"`
+		Host    string `json:"host,omitempty"`
+		Logging string `json:"logging,omitempty"`
 
-		MaxVersions int // -1 for every commit, n for last n commits available in stating
+		MaxVersions int `json:"max_versions,omitempty"` // -1 for every commit, n for last n commits available in stating
 
 		Database struct {
-			Internal bool
+			Internal bool `json:"internal,omitempty"`
 
-			Type string
-			DSN  string
-		}
+			Type string `json:"type,omitempty"`
+			DSN  string `json:"dsn,omitempty"`
+		} `json:"database"`
 
-		Applications []string
-	}
+		Applications []string `json:"applications,omitempty"`
+	} `json:"staging"`
 
 	Production struct {
-		Logging   string
-		HttpPort  string
-		HttpsPort string
-	}
+		Logging   string `json:"logging,omitempty"`
+		HttpPort  string `json:"http_port,omitempty"`
+		HttpsPort string `json:"https_port,omitempty"`
+	} `json:"production"`
 
-	Registries  map[string]RegistryAuth
-	LogPolicies map[string]LogPolicy
+	Registries  map[string]RegistryConfiguration `json:"registries,omitempty"`
+	LogPolicies map[string][]LogPolicy           `json:"log_policies,omitempty"`
 }
 
 var Config Configuration
 
 func init() {
-	configHome := "/etc/hez"
-	configFiles := []string{"config.yml", "config.yaml", "config.json"}
-	var configFile string
-	for _, maybeConfigFile := range configFiles {
-		_, err := os.Stat(configHome + "/" + maybeConfigFile)
+	configFile := "/etc/nest/config.json"
+	_, err := os.Stat(configFile)
 
+	if err != nil {
 		if os.IsNotExist(err) {
-			continue
-		} else if err != nil {
-			ui.Check(err)
-		} else {
-			configFile = configHome + "/" + maybeConfigFile
+			ui.Check(
+				fmt.Errorf("no config file found at %s", configFile),
+			)
+			return
 		}
-	}
 
-	if configFile == "" {
-		ui.Check(fmt.Errorf("no config file found in %s/config.{yml,yaml,json}", configHome))
+		ui.Check(err)
 	}
 
 	contents, err := os.ReadFile(configFile)
@@ -76,9 +70,12 @@ func init() {
 }
 
 func parseJsonConfig(contents []byte) Configuration {
-	var config Configuration
+	config := Configuration{
+		DefaultNetwork: "bridge",
+	}
 
 	err := json.Unmarshal(contents, &config)
 	ui.Check(err)
+
 	return config
 }

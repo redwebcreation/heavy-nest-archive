@@ -24,11 +24,11 @@ go get
 ```
 ## Test
 ```
-go test github.com/redwebcreation/hez/core
+go test github.com/redwebcreation/nest/core
 ```
 
 ## Coverage
 
 ```
-go test github.com/redwebcreation/hez/core -cover
+go test github.com/redwebcreation/nest/core -cover
 ```

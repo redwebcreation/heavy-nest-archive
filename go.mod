@@ -1,4 +1,4 @@
-module github.com/redwebcreation/hez
+module github.com/redwebcreation/nest
 
 go 1.16
 

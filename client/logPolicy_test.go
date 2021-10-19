@@ -3,7 +3,7 @@ package client_test
 import (
 	"testing"
 
-	"github.com/redwebcreation/hez/client"
+	"github.com/redwebcreation/nest/client"
 )
 
 func TestShouldLog(t *testing.T) {

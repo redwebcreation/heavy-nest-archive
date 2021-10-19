@@ -13,7 +13,12 @@ var Red Color = [3]uint8{239, 68, 68}
 var Green Color = [3]uint8{16, 185, 129}
 var Stop = "\033[0m"
 var Bold = "\033[1m"
+var Dim = "\033[2m"
 
-func (c Color) AsFg() string {
-	return fmt.Sprintf("\033[38;2;%d;%d;%dm", c[0], c[1], c[2])
+func (c Color) Fg() string {
+	return fmt.Sprintf("%s\033[38;2;%d;%d;%dm", Bold, c[0], c[1], c[2])
+}
+
+func (c Color) Bg() string {
+	return fmt.Sprintf("\033[48;2;%d;%d;%dm", c[0], c[1], c[2])
 }

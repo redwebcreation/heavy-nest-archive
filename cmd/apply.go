@@ -1,10 +1,11 @@
-package cli
+package cmd
 
 import (
 	"fmt"
+	"strings"
 
-	"github.com/redwebcreation/hez/client"
-	"github.com/redwebcreation/hez/internal"
+	"github.com/redwebcreation/nest/client"
+	"github.com/redwebcreation/nest/internal"
 	"github.com/spf13/cobra"
 )
 
@@ -20,6 +21,10 @@ func runApplyCommand(_ *cobra.Command, _ []string) error {
 	}
 
 	for host, application := range client.Config.Applications {
+		temporaryContainer := application.GetDeploymentConfigurationFor(
+			getContainerBaseName(application, host) + "_temporary",
+		)
+		temporaryContainer.Deploy()
 
 	}
 
@@ -34,4 +39,8 @@ func ApplyCommand() *cobra.Command {
 		c.Flags().BoolVarP(&skipHealthchecks, "skip-healthchecks", "K", false, "Skip healthchecks")
 
 	}, runApplyCommand)
+}
+
+func getContainerBaseName(a client.Application, host string) string {
+	return strings.ReplaceAll(host, ".", "_") + "_" + a.Port
 }
