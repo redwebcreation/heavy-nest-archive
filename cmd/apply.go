@@ -20,12 +20,14 @@ func runApplyCommand(_ *cobra.Command, _ []string) error {
 		return fmt.Errorf("no applications found")
 	}
 
-	for host, application := range client.Config.Applications {
-		temporaryContainer := application.GetDeploymentConfigurationFor(
-			getContainerBaseName(application, host) + "_temporary",
-		)
-		temporaryContainer.Deploy()
+	for _, application := range client.Config.Applications {
+		application.SecondaryContainer().Stop()
+		application.SecondaryContainer().Start()
 
+		application.PrimaryContainer().Stop()
+		application.PrimaryContainer().Start()
+
+		fmt.Println("\n    Application deployed!")
 	}
 
 	return nil

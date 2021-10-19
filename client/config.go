@@ -77,5 +77,9 @@ func parseJsonConfig(contents []byte) Configuration {
 	err := json.Unmarshal(contents, &config)
 	ui.Check(err)
 
+	for host, application := range config.Applications {
+		application.Host = host
+	}
+
 	return config
 }
