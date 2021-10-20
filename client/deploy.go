@@ -38,15 +38,15 @@ type Volume struct {
 }
 
 type DeploymentConfiguration struct {
-	Image       string
-	Registry    *RegistryConfiguration
-	Environment map[string]string
-	Volumes     []Volume
-	Network     string
-	Name        string
-	Warm        bool
-	Host        string
-	Port        string
+	Image         string
+	Registry      *RegistryConfiguration
+	Environment   map[string]string
+	Volumes       []Volume
+	Network       string
+	Name          string
+	Warm          bool
+	Host          string
+	Port          string
 }
 type DeploymentOptions struct {
 	Pull         bool
@@ -61,8 +61,14 @@ func (d DeploymentConfiguration) Deploy(opts DeploymentOptions) {
 	}
 
 	ui.NewLog("stopping container %s", d.Name).Print()
-	d.StopContainer()
-	ui.NewLog("stopped container %s", d.Name).Top(1).Print()
+	stopped := d.StopContainer()
+
+	if stopped {
+		ui.NewLog("stopped container %s", d.Name).Top(1).Print()
+	} else {
+		fmt.Println("\033[3A\033[K") // We erase the "stopping container" log
+	}
+
 	ui.NewLog("creating container %s", d.Name).Print()
 	d.createContainer()
 	ui.NewLog("created container %s", d.Name).Top(1).Print()
@@ -131,32 +137,36 @@ func (d DeploymentConfiguration) pullImage() {
 	fmt.Println()
 }
 
-func (d DeploymentConfiguration) StopContainer() *types.Container {
+func (d DeploymentConfiguration) StopContainer() bool {
 	c := d.getContainer()
 
-	if c != nil {
-		_ = globals.Docker.ContainerStop(context.Background(), c.ID, nil)
+	if c == nil {
+		return false
 	}
 
-	_ = globals.Docker.ContainerRemove(context.Background(), d.Name, types.ContainerRemoveOptions{})
+	err := globals.Docker.ContainerStop(context.Background(), c.ID, nil)
+	ui.Check(err)
 
-	return c
+	err = globals.Docker.ContainerRemove(context.Background(), d.Name, types.ContainerRemoveOptions{})
+	ui.Check(err)
+
+	return true
 }
 
 func (d DeploymentConfiguration) getContainer() *types.Container {
 	containers, err := globals.Docker.ContainerList(context.Background(), types.ContainerListOptions{
-		Limit: 1,
 		Filters: filters.NewArgs(
-			filters.KeyValuePair{
-				Key:   "name",
-				Value: d.Name,
-			},
-		),
+			filters.KeyValuePair{Key: "name", Value: d.Name}),
+		All: true,
 	})
 	ui.Check(err)
 
-	if len(containers) > 0 {
-		return &containers[0]
+	for _, c := range containers {
+		// Filters return non-exact matches so {Key: name, Value: example_com_80}
+		// could return example_com_80,example_com_80_temporary...qqq
+		if c.Names[0] == "/"+d.Name {
+			return &c
+		}
 	}
 
 	return nil
@@ -179,7 +189,7 @@ func (d DeploymentConfiguration) createContainer() string {
 	err = globals.Docker.ContainerStart(context.Background(), ref.ID, types.ContainerStartOptions{})
 	ui.Check(err)
 
-	if network != nil {
+	if d.Network != "" {
 		// Force (re)connect
 		_ = globals.Docker.NetworkDisconnect(context.Background(), network.ID, ref.ID, true)
 		err = globals.Docker.NetworkConnect(context.Background(), network.ID, ref.ID, nil)
@@ -189,11 +199,7 @@ func (d DeploymentConfiguration) createContainer() string {
 	return ref.ID
 }
 
-func (d DeploymentConfiguration) getNetwork() *types.NetworkResource {
-	if d.Network == "" {
-		return nil
-	}
-
+func (d DeploymentConfiguration) getNetwork() types.NetworkResource {
 	networks, err := globals.Docker.NetworkList(context.Background(), types.NetworkListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "name",
@@ -202,15 +208,10 @@ func (d DeploymentConfiguration) getNetwork() *types.NetworkResource {
 	})
 	ui.Check(err)
 
-	var net types.NetworkResource
-
-	if len(networks) > 0 {
-		net, err = globals.Docker.NetworkInspect(context.Background(), networks[0].ID, types.NetworkInspectOptions{})
-		ui.Check(err)
-		return &net
-	}
-
-	return nil
+	// We don't have to check if the network exists, it does, we check for it before we even run the command.
+	net, err := globals.Docker.NetworkInspect(context.Background(), networks[0].ID, types.NetworkInspectOptions{})
+	ui.Check(err)
+	return net
 }
 
 func (d DeploymentConfiguration) VolumesToDockerMounts() []mount.Mount {
@@ -269,5 +270,7 @@ func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
 }
 
 func (d DeploymentConfiguration) warmServer() {
-	// TODO: Server warmup
+	if d.Network == "" {
+		d.getNetwork()
+	}
 }

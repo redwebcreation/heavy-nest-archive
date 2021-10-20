@@ -6,7 +6,7 @@
     "applications": {
         "example.com": {
             "image": "nginx",
-            "warm": false,
+            "warm": true,
             "env": {
                 "APP_ENV": "local"
             },

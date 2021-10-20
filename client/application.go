@@ -16,6 +16,9 @@ type Application struct {
 	Registry  string            `json:"registry,omitempty"`
 	Network   string            `json:"network,omitempty"`
 	Port      string            `json:"port,omitempty"`
+	// property added when ready the configuration
+	// true if Network isn't a host network
+	CustomNetwork bool
 }
 
 func (a Application) GetRegistry() *RegistryConfiguration {

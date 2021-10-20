@@ -25,7 +25,7 @@ func (l Log) String() string {
 		l.arrowString = "==>"
 	}
 
-	str := "    "
+	str := "  "
 
 	str += fmt.Sprintf("%s%s%s", l.arrow.Fg(), l.arrowString, Stop)
 	str += fmt.Sprintf(" %s%s%s", l.color.Fg(), l.Message, Stop)
