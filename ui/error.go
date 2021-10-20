@@ -11,3 +11,6 @@ func Check(err error) {
 		os.Exit(1)
 	}
 }
+func Exit(err string) {
+	Check(fmt.Errorf(err))
+}

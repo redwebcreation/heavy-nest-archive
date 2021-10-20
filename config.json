@@ -10,7 +10,8 @@
             "env": {
                 "APP_ENV": "local"
             },
-            "log_policy": "default"
+            "log_policy": "default",
+            "volumes":  []
         }
     },
 

@@ -39,7 +39,7 @@ func runApplyCommand(_ *cobra.Command, args []string) error {
 
 		application.SecondaryContainer().StopContainer()
 
-		fmt.Printf("\n  %s%s deployed!%s\n", ui.Green.Fg(), application.Host, ui.Stop)
+		fmt.Printf("  %s%s deployed!%s\n", ui.Green.Fg(), application.Host, ui.Stop)
 	}
 
 	return nil

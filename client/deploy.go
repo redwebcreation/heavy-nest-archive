@@ -6,13 +6,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/mount"
 	"github.com/redwebcreation/nest/globals"
 	"github.com/redwebcreation/nest/ui"
 )
@@ -32,21 +32,16 @@ func (r RegistryConfiguration) ToBase64() string {
 	return base64.StdEncoding.EncodeToString(auth)
 }
 
-type Volume struct {
-	From string
-	To   string
-}
-
 type DeploymentConfiguration struct {
-	Image         string
-	Registry      *RegistryConfiguration
-	Environment   map[string]string
-	Volumes       []Volume
-	Network       string
-	Name          string
-	Warm          bool
-	Host          string
-	Port          string
+	Image       string
+	Registry    *RegistryConfiguration
+	Environment map[string]string
+	Volumes     []string
+	Network     string
+	Name        string
+	Warm        bool
+	Host        string
+	Port        string
 }
 type DeploymentOptions struct {
 	Pull         bool
@@ -83,9 +78,7 @@ func (d DeploymentConfiguration) Deploy(opts DeploymentOptions) {
 	if d.Warm {
 		ui.NewLog("warming up server").Print()
 		d.warmServer()
-		ui.NewLog("server warmed up (went down from 100ms to 10ms)").Top(1).Print()
-	} else {
-		ui.NewLog("skipping server warmup").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
+		ui.NewLog("server warmed up").Print()
 	}
 }
 
@@ -173,28 +166,33 @@ func (d DeploymentConfiguration) getContainer() *types.Container {
 }
 
 func (d DeploymentConfiguration) createContainer() string {
-	network := d.getNetwork()
+	net := d.getNetwork()
 
+	// TODO: Quotas
+	// TODO: Better volumes
 	ref, err := globals.Docker.ContainerCreate(context.Background(), &container.Config{
 		Env:   d.EnvironmentToDockerEnv(),
 		Image: d.Image,
+		Labels: map[string]string{
+			"nest-id":   d.Host + d.Port,
+			"nest-host": d.Host,
+			"nest-port": d.Port,
+		},
 	}, &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
 			Name: "always",
 		},
-		Mounts: d.VolumesToDockerMounts(),
+		Binds: d.Volumes,
 	}, nil, nil, d.Name)
 	ui.Check(err)
 
 	err = globals.Docker.ContainerStart(context.Background(), ref.ID, types.ContainerStartOptions{})
 	ui.Check(err)
 
-	if d.Network != "" {
-		// Force (re)connect
-		_ = globals.Docker.NetworkDisconnect(context.Background(), network.ID, ref.ID, true)
-		err = globals.Docker.NetworkConnect(context.Background(), network.ID, ref.ID, nil)
-		ui.Check(err)
-	}
+	// Docker's default network
+	_ = globals.Docker.NetworkDisconnect(context.Background(), net.ID, ref.ID, true)
+	err = globals.Docker.NetworkConnect(context.Background(), net.ID, ref.ID, nil)
+	ui.Check(err)
 
 	return ref.ID
 }
@@ -212,20 +210,6 @@ func (d DeploymentConfiguration) getNetwork() types.NetworkResource {
 	net, err := globals.Docker.NetworkInspect(context.Background(), networks[0].ID, types.NetworkInspectOptions{})
 	ui.Check(err)
 	return net
-}
-
-func (d DeploymentConfiguration) VolumesToDockerMounts() []mount.Mount {
-	var mounts []mount.Mount
-
-	for _, volume := range d.Volumes {
-		mounts = append(mounts, mount.Mount{
-			Type:   mount.TypeBind,
-			Source: volume.From,
-			Target: volume.To,
-		})
-	}
-
-	return mounts
 }
 
 func (d DeploymentConfiguration) EnvironmentToDockerEnv() []string {
@@ -270,7 +254,58 @@ func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
 }
 
 func (d DeploymentConfiguration) warmServer() {
-	if d.Network == "" {
-		d.getNetwork()
+	_ = d.getContainer().NetworkSettings.Networks[d.Network]
+
+	var responseTimes [10]float64
+
+	for i := 0; i < 10; i++ {
+		start := time.Now()
+		_, err := http.Get("http://172.17.0.3")
+		end := time.Now()
+		ui.Check(err)
+
+		responseTime := end.Add(time.Duration(-start.Nanosecond()))
+
+		responseTimes[i] = float64(responseTime.Nanosecond()) / float64(time.Millisecond)
+		responseTimeString := fmt.Sprintf("%.2fms", responseTimes[i])
+
+		fmt.Printf(
+			"      %sGET / in%s %s\n",
+			ui.Gray.Fg(),
+			ui.Stop,
+			ui.Primary.Fg()+responseTimeString+ui.Stop,
+		)
 	}
+
+	var max float64
+	var min *float64
+	var sum float64
+	var correction float64
+	diff := responseTimes[0] - responseTimes[9]
+
+	for _, responseTime := range responseTimes {
+		if responseTime > max {
+			max = responseTime
+		}
+
+		if min == nil || responseTime < *min {
+			min = &responseTime
+		}
+
+		sum += responseTime
+
+		correction += (diff) - (responseTimes[0] - responseTime)
+	}
+
+	diff -= correction / 10.0
+
+	fmt.Println()
+	if diff <= 0.02 {
+		fmt.Print(ui.Yellow.Fg())
+		fmt.Println("      It seems like your server does not need to warmup.")
+		fmt.Println("      Consider removing this option in your config to speed up the process.")
+		fmt.Print(ui.Stop)
+	}
+
+	fmt.Printf("      %sGain: %.2fms%s Diff: %.2fms Max: %.2fms Min: %.2fms Avg: %.2fms\n\n", ui.White.Fg(), diff, ui.Stop, responseTimes[0]-responseTimes[9], max, *min, sum/10.0)
 }

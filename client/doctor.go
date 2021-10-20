@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/redwebcreation/nest/globals"
 	"os"
+	"strings"
 )
 
 type Warning struct {
@@ -21,7 +22,7 @@ type Error struct {
 
 type Diagnosis struct {
 	Config       Configuration
-	Checks []func (*Diagnosis)
+	Checks       []func(*Diagnosis)
 	WarningCount int
 	ErrorCount   int
 	Warnings     []Warning
@@ -116,10 +117,11 @@ func ValidateApplicationsConfigurations(d *Diagnosis) {
 		}
 
 		for _, volume := range application.Volumes {
-			_, err := os.Stat(volume.From)
+			fromAndTo := strings.Split(volume, ":")
+			_, err := os.Stat(fromAndTo[0])
 			if err != nil {
 				d.NewError(Error{
-					Title: fmt.Sprintf("invalid volume source [%s]", volume.From),
+					Title: fmt.Sprintf("invalid volume source [%s]", fromAndTo[0]),
 					Error: err,
 				})
 			}

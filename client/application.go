@@ -9,16 +9,13 @@ type Application struct {
 	Host      string            `json:"host,omitempty"`
 	Env       map[string]string `json:"env,omitempty"`
 	EnvFiles  []string          `json:"env_files,omitempty"`
-	Volumes   []Volume          `json:"volumes,omitempty"`
+	Volumes   []string          `json:"volumes,omitempty"`
 	Warm      bool              `json:"warm,omitempty"`
 	Backend   BackendStrategy   `json:"backend,omitempty"`
 	LogPolicy string            `json:"log_policy,omitempty"`
 	Registry  string            `json:"registry,omitempty"`
 	Network   string            `json:"network,omitempty"`
 	Port      string            `json:"port,omitempty"`
-	// property added when ready the configuration
-	// true if Network isn't a host network
-	CustomNetwork bool
 }
 
 func (a Application) GetRegistry() *RegistryConfiguration {

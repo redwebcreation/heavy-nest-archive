@@ -90,6 +90,10 @@ func parseJsonConfig(contents []byte) Configuration {
 			a.Port = "80"
 		}
 
+		if a.Network == "" {
+			a.Network = config.DefaultNetwork
+		}
+
 		applications[host] = a
 	}
 
