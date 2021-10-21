@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/redwebcreation/nest/client"
 	"github.com/redwebcreation/nest/cmd"
 	"github.com/redwebcreation/nest/ui"
@@ -18,6 +19,7 @@ func main() {
 	cli.AddCommand(
 		wrap(cmd.ApplyCommand()),
 		wrap(cmd.DiagnoseCommand()),
+		wrap(cmd.StopCommand()),
 	)
 	cli.SilenceErrors = true
 	err := cli.Execute()
