@@ -16,10 +16,12 @@ func main() {
 		Long:  "nest is to tool to orchestrate containers and manage the environment around them.",
 	}
 
+	// TODO: Move wrap to create command
 	cli.AddCommand(
 		wrap(cmd.ApplyCommand()),
 		wrap(cmd.DiagnoseCommand()),
 		wrap(cmd.StopCommand()),
+		wrap(cmd.SelfUpdateCommand()),
 	)
 	cli.SilenceErrors = true
 	err := cli.Execute()
