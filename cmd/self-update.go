@@ -30,6 +30,9 @@ const nestRepository = githubRepository("wormable/nest")
 
 func (g githubRepository) newRequest(url string, data interface{}) error {
 	response, err := http.Get("https://api.github.com/" + url)
+	if err != nil {
+		return err
+	}
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
@@ -42,7 +45,7 @@ func (g githubRepository) newRequest(url string, data interface{}) error {
 	if err != nil {
 		var c interface{}
 		_ = json.Unmarshal(body, &c)
-		pp, _ := json.MarshalIndent(c, "", "\t")
+		pp, _ := json.MarshalIndent(c, "", "  ")
 		fmt.Println(string(pp))
 	}
 
@@ -72,6 +75,8 @@ func (g githubRepository) String() string {
 }
 
 func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
+	internal.ElevateProcess()
+
 	executable, err := os.Executable()
 	ui.Check(err)
 
@@ -117,12 +122,15 @@ func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	body, err := io.ReadAll(response.Body)
 	ui.Check(err)
 
-	err = os.WriteFile(executable, body, os.FileMode(0777))
+	err = os.WriteFile(executable+"_updated", body, os.FileMode(0777))
+	ui.Check(err)
+
+	err = os.Rename(executable+"_updated", executable)
 	ui.Check(err)
 
 	_ = os.Chmod(executable, os.FileMode(0777))
 
-	fmt.Printf("%sSuccessfully updated nest to %s%s", ui.Green.Fg(), latestRelease.TagName, ui.Stop)
+	fmt.Printf("%sSuccessfully updated nest to %s%s\n", ui.Green.Fg(), latestRelease.TagName, ui.Stop)
 
 	return nil
 }
