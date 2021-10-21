@@ -2,47 +2,42 @@ package internal
 
 import (
 	"fmt"
-	"github.com/redwebcreation/hez/globals"
-	"github.com/spf13/cobra"
 	"os"
 	"os/exec"
+
+	"github.com/redwebcreation/nest/client"
+	"github.com/spf13/cobra"
 )
 
-func ElevateProcess() error {
-	cmd := exec.Command("sudo", "touch", "/tmp/upgrade-process")
+type CommandConfigurationHandler func(*cobra.Command)
+type CommandHandler func(*cobra.Command, []string) error
 
-	cmd.Stdout = os.Stdout
-	cmd.Stdin = os.Stdin
-	cmd.Stderr = os.Stderr
-
-	return cmd.Run()
-}
-
-type CommandConfigurationHandler func(command *cobra.Command)
-type CommandHandler func(_ *cobra.Command, _ []string) error
-
-func CreateCommand(command *cobra.Command, commandConfigurationHandler CommandConfigurationHandler, Handler CommandHandler) *cobra.Command {
-	if commandConfigurationHandler != nil {
-		commandConfigurationHandler(command)
+func CreateCommand(command *cobra.Command, configurationHandler CommandConfigurationHandler, commandHandler CommandHandler) *cobra.Command {
+	if configurationHandler != nil {
+		configurationHandler(command)
 	}
 
-	command.RunE = func(cmd *cobra.Command, args []string) error {
-		showVersion, _ := cmd.Flags().GetBool("version")
-
-		if showVersion {
-			fmt.Println("Hez " + globals.Version)
+	command.PreRunE = func(cmd *cobra.Command, args []string) error {
+		if cmd.Name() == "diagnose" {
 			return nil
 		}
 
-		if Handler == nil {
-			return nil
+		diagnosis := client.Analyse(client.Config)
+
+		if diagnosis.ErrorCount > 0 {
+			return fmt.Errorf("your configuration file is invalid, please run `nest diagnose` for details")
 		}
 
-		err := Handler(cmd, args)
-
-		return err
+		return nil
 	}
+	command.RunE = commandHandler
 	command.SilenceErrors = true
 	command.SilenceUsage = true
 	return command
+}
+
+func ElevateProcess() {
+	cmd := exec.Command("sudo", "ls")
+	cmd.Stdin = os.Stdin
+	cmd.Run()
 }
