@@ -1,11 +1,11 @@
-package client
+package common
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
 
-	"github.com/redwebcreation/nest/ui"
+	"github.com/redwebcreation/nest/cmd/ui"
 )
 
 type BackendStrategy string

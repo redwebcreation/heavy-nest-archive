@@ -1,8 +1,7 @@
-package client
+package common
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,83 +12,86 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/redwebcreation/nest/cmd/ui"
 	"github.com/redwebcreation/nest/globals"
-	"github.com/redwebcreation/nest/ui"
 )
 
-type RegistryConfiguration struct {
-	Host     string
-	Username string
-	Password string
+type Application struct {
+	Image     string            `json:"image,omitempty"`
+	Host      string            `json:"host,omitempty"`
+	Env       map[string]string `json:"env,omitempty"`
+	EnvFiles  []string          `json:"env_files,omitempty"`
+	Volumes   []string          `json:"volumes,omitempty"`
+	Warm      bool              `json:"warm,omitempty"`
+	Backend   BackendStrategy   `json:"backend,omitempty"`
+	LogPolicy string            `json:"log_policy,omitempty"`
+	Registry  string            `json:"registry,omitempty"`
+	Network   string            `json:"network,omitempty"`
+	Port      string            `json:"port,omitempty"`
 }
 
-func (r RegistryConfiguration) ToBase64() string {
-	auth, err := json.Marshal(map[string]string{
-		"username": r.Username,
-		"password": r.Password,
-	})
-	ui.Check(err)
-	return base64.StdEncoding.EncodeToString(auth)
+func (a Application) GetRegistry() *RegistryConfiguration {
+	if a.Registry == "" {
+		return nil
+	}
+
+	for name, registry := range Config.Registries {
+		if name == a.Registry {
+			return &registry
+		}
+	}
+
+	return nil
 }
 
-type DeploymentConfiguration struct {
-	Image       string
-	Registry    *RegistryConfiguration
-	Environment map[string]string
-	Volumes     []string
-	Network     string
-	Name        string
-	Warm        bool
-	Host        string
-	Port        string
-}
 type DeploymentOptions struct {
 	Pull         bool
 	Healthchecks bool
+	Name         string
 }
 
-func (d DeploymentConfiguration) Deploy(opts DeploymentOptions) {
+func (a Application) Deploy(opts DeploymentOptions) {
 	if opts.Pull {
-		ui.NewLog("pulling %s", d.Image).Print()
-		d.pullImage()
-		ui.NewLog("successfully downloaded %s", d.Image).Print()
+		ui.NewLog("pulling %s", a.Image).Print()
+		a.pullImage()
+		ui.NewLog("successfully downloaded %s", a.Image).Print()
 	}
 
-	ui.NewLog("stopping container %s", d.Name).Print()
-	stopped := d.StopContainer()
+	ui.NewLog("stopping container %s", opts.Name).Print()
+	stopped := a.StopContainer(opts.Name)
 
 	if stopped {
-		ui.NewLog("stopped container %s", d.Name).Top(1).Print()
+		ui.NewLog("stopped container %s", opts.Name).Top(1).Print()
 	} else {
 		fmt.Println("\033[3A\033[K") // We erase the "stopping container" log
 	}
 
-	ui.NewLog("creating container %s", d.Name).Print()
-	d.createContainer()
-	ui.NewLog("created container %s", d.Name).Top(1).Print()
+	ui.NewLog("creating container %s", opts.Name).Print()
+	a.createContainer(opts.Name)
+	ui.NewLog("created container %s", opts.Name).Top(1).Print()
 
 	if opts.Healthchecks {
 		ui.NewLog("checking the container healthyness").Print()
-		d.waitForContainerToBeHealthy()
+		a.waitForContainerToBeHealthy(opts.Name)
 	} else {
 		ui.NewLog("skipping healthchecks").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
 	}
 
-	if d.Warm {
+	if a.Warm {
 		ui.NewLog("warming up server").Print()
-		d.warmServer()
+		a.warmServer(opts.Name)
 		ui.NewLog("server warmed up").Print()
 	}
 }
 
-func (d DeploymentConfiguration) pullImage() {
+func (a *Application) pullImage() {
 	pullOptions := types.ImagePullOptions{}
 
-	if d.Registry != nil {
-		pullOptions.RegistryAuth = d.Registry.ToBase64()
+	if a.Registry != "" {
+		pullOptions.RegistryAuth = a.GetRegistry().ToBase64()
 	}
 
-	events, err := globals.Docker.ImagePull(context.Background(), d.Image, pullOptions)
+	events, err := globals.Docker.ImagePull(context.Background(), a.Image, pullOptions)
 	ui.Check(err)
 
 	decoder := json.NewDecoder(events)
@@ -130,8 +132,8 @@ func (d DeploymentConfiguration) pullImage() {
 	fmt.Println()
 }
 
-func (d DeploymentConfiguration) StopContainer() bool {
-	c := d.getContainer()
+func (a *Application) StopContainer(name string) bool {
+	c := a.getContainer(name)
 
 	if c == nil {
 		return false
@@ -140,16 +142,16 @@ func (d DeploymentConfiguration) StopContainer() bool {
 	err := globals.Docker.ContainerStop(context.Background(), c.ID, nil)
 	ui.Check(err)
 
-	err = globals.Docker.ContainerRemove(context.Background(), d.Name, types.ContainerRemoveOptions{})
+	err = globals.Docker.ContainerRemove(context.Background(), name, types.ContainerRemoveOptions{})
 	ui.Check(err)
 
 	return true
 }
 
-func (d DeploymentConfiguration) getContainer() *types.Container {
+func (a *Application) getContainer(name string) *types.Container {
 	containers, err := globals.Docker.ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: filters.NewArgs(
-			filters.KeyValuePair{Key: "name", Value: d.Name}),
+			filters.KeyValuePair{Key: "name", Value: name}),
 		All: true,
 	})
 	ui.Check(err)
@@ -157,7 +159,7 @@ func (d DeploymentConfiguration) getContainer() *types.Container {
 	for _, c := range containers {
 		// Filters return non-exact matches so {Key: name, Value: example_com_80}
 		// could return example_com_80,example_com_80_temporary...qqq
-		if c.Names[0] == "/"+d.Name {
+		if c.Names[0] == "/"+name {
 			return &c
 		}
 	}
@@ -165,25 +167,25 @@ func (d DeploymentConfiguration) getContainer() *types.Container {
 	return nil
 }
 
-func (d DeploymentConfiguration) createContainer() string {
-	net := d.getNetwork()
+func (a *Application) createContainer(name string) string {
+	net := a.getNetwork()
 
 	// TODO: Quotas
 	// TODO: Better volumes
 	ref, err := globals.Docker.ContainerCreate(context.Background(), &container.Config{
-		Env:   d.EnvironmentToDockerEnv(),
-		Image: d.Image,
+		Env:   a.EnvironmentToDockerEnv(),
+		Image: a.Image,
 		Labels: map[string]string{
-			"nest-id":   d.Host + d.Port,
-			"nest-host": d.Host,
-			"nest-port": d.Port,
+			"nest-id":   a.Host + a.Port,
+			"nest-host": a.Host,
+			"nest-port": a.Port,
 		},
 	}, &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
 			Name: "always",
 		},
-		Binds: d.Volumes,
-	}, nil, nil, d.Name)
+		Binds: a.Volumes,
+	}, nil, nil, name)
 	ui.Check(err)
 
 	err = globals.Docker.ContainerStart(context.Background(), ref.ID, types.ContainerStartOptions{})
@@ -197,33 +199,33 @@ func (d DeploymentConfiguration) createContainer() string {
 	return ref.ID
 }
 
-func (d DeploymentConfiguration) getNetwork() types.NetworkResource {
+func (a *Application) getNetwork() types.NetworkResource {
 	networks, err := globals.Docker.NetworkList(context.Background(), types.NetworkListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "name",
-			Value: d.Network,
+			Value: a.Network,
 		}),
 	})
 	ui.Check(err)
 
-	// We don't have to check if the network exists, it does, we check for it before we even run the command.
+	// We don't have to check if the network exists, it does, we check for it before we even run the commana.
 	net, err := globals.Docker.NetworkInspect(context.Background(), networks[0].ID, types.NetworkInspectOptions{})
 	ui.Check(err)
 	return net
 }
 
-func (d DeploymentConfiguration) EnvironmentToDockerEnv() []string {
-	variables := make([]string, len(d.Environment)-1)
+func (a *Application) EnvironmentToDockerEnv() []string {
+	variables := make([]string, len(a.Env)-1)
 
-	for k, v := range d.Environment {
+	for k, v := range a.Env {
 		variables = append(variables, k+"="+v)
 	}
 
 	return variables
 }
 
-func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
-	c := d.getContainer()
+func (a *Application) waitForContainerToBeHealthy(name string) {
+	c := a.getContainer(name)
 
 	inspection, err := globals.Docker.ContainerInspect(context.Background(), c.ID)
 	ui.Check(err)
@@ -253,8 +255,8 @@ func (d DeploymentConfiguration) waitForContainerToBeHealthy() {
 	fmt.Println("UNHEALTHY")
 }
 
-func (d DeploymentConfiguration) warmServer() {
-	_ = d.getContainer().NetworkSettings.Networks[d.Network]
+func (a *Application) warmServer(name string) {
+	_ = a.getContainer(name).NetworkSettings.Networks[a.Network]
 
 	var responseTimes [10]float64
 
@@ -308,4 +310,12 @@ func (d DeploymentConfiguration) warmServer() {
 	}
 
 	fmt.Printf("      %sGain: %.2fms%s Diff: %.2fms Max: %.2fms Min: %.2fms Avg: %.2fms\n\n", ui.White.Fg(), diff, ui.Stop, responseTimes[0]-responseTimes[9], max, *min, sum/10.0)
+}
+
+func (a Application) ContainerName() string {
+	return strings.ReplaceAll(a.Host, ".", "_") + "_" + a.Port
+}
+
+func (a Application) TemporaryContainerName() string {
+	return a.ContainerName() + "_temporary"
 }

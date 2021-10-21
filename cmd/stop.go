@@ -3,18 +3,17 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/redwebcreation/nest/client"
-	"github.com/redwebcreation/nest/internal"
-	"github.com/redwebcreation/nest/ui"
+	"github.com/redwebcreation/nest/cmd/ui"
+	"github.com/redwebcreation/nest/common"
 	"github.com/spf13/cobra"
 )
 
 func runStopCommand(_ *cobra.Command, _ []string) error {
 	fmt.Println()
 	total := 0
-	for _, application := range client.Config.Applications {
-		stoppedPrimary := application.PrimaryContainer().StopContainer()
-		stoppedSecondary := application.SecondaryContainer().StopContainer()
+	for _, application := range common.Config.Applications {
+		stoppedPrimary := application.StopContainer(application.ContainerName())
+		stoppedSecondary := application.StopContainer(application.TemporaryContainerName())
 
 		count := 0
 
@@ -37,7 +36,7 @@ func runStopCommand(_ *cobra.Command, _ []string) error {
 }
 
 func StopCommand() *cobra.Command {
-	return internal.CreateCommand(&cobra.Command{
+	return CreateCommand(&cobra.Command{
 		Use:   "stop",
 		Short: "Stops all containers.",
 	}, nil, runStopCommand)

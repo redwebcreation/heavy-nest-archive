@@ -1,11 +1,11 @@
-package internal
+package cmd
 
 import (
 	"fmt"
 	"os"
 	"os/exec"
 
-	"github.com/redwebcreation/nest/client"
+	"github.com/redwebcreation/nest/common"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +22,7 @@ func CreateCommand(command *cobra.Command, configurationHandler CommandConfigura
 			return nil
 		}
 
-		diagnosis := client.Analyse(client.Config)
+		diagnosis := common.Analyse(common.Config)
 
 		if diagnosis.ErrorCount > 0 {
 			return fmt.Errorf("your configuration file is invalid, please run `nest diagnose` for details")

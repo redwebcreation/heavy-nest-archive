@@ -8,9 +8,8 @@ import (
 	"os"
 	"strings"
 
+	"github.com/redwebcreation/nest/cmd/ui"
 	"github.com/redwebcreation/nest/globals"
-	"github.com/redwebcreation/nest/internal"
-	"github.com/redwebcreation/nest/ui"
 	"github.com/spf13/cobra"
 )
 
@@ -75,7 +74,7 @@ func (g githubRepository) String() string {
 }
 
 func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
-	internal.ElevateProcess()
+	ElevateProcess()
 
 	executable, err := os.Executable()
 	ui.Check(err)
@@ -136,7 +135,7 @@ func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
 }
 
 func SelfUpdateCommand() *cobra.Command {
-	return internal.CreateCommand(&cobra.Command{
+	return CreateCommand(&cobra.Command{
 		Use:   "self-update [version]",
 		Args:  cobra.RangeArgs(0, 1),
 		Short: "Update nest to the latest version",

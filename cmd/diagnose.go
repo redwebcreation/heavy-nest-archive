@@ -2,14 +2,14 @@ package cmd
 
 import (
 	"fmt"
-	"github.com/redwebcreation/nest/client"
-	"github.com/redwebcreation/nest/internal"
-	"github.com/redwebcreation/nest/ui"
+
+	"github.com/redwebcreation/nest/cmd/ui"
+	"github.com/redwebcreation/nest/common"
 	"github.com/spf13/cobra"
 )
 
 func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
-	diagnosis := client.Analyse(client.Config)
+	diagnosis := common.Analyse(common.Config)
 
 	if diagnosis.ErrorCount == 0 {
 		fmt.Println()
@@ -31,7 +31,7 @@ func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
 }
 
 func DiagnoseCommand() *cobra.Command {
-	return internal.CreateCommand(&cobra.Command{
+	return CreateCommand(&cobra.Command{
 		Use:   "diagnose",
 		Short: "Display diagnostic information that helps you fix your config",
 	}, nil, runDiagnoseCommand)
