@@ -8,9 +8,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/redwebcreation/nest/cmd/ui"
-	"github.com/redwebcreation/nest/globals"
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/cmd/ui"
+	"github.com/wormable/nest/globals"
 )
 
 var forceUpdate bool

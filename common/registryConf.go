@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 
-	"github.com/redwebcreation/nest/cmd/ui"
+	"github.com/wormable/nest/cmd/ui"
 )
 
 type RegistryConfiguration struct {

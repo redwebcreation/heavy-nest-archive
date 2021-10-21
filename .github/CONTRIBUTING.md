@@ -24,11 +24,11 @@ go get
 ```
 ## Test
 ```
-go test github.com/redwebcreation/nest/core
+go test github.com/wormable/nest/core
 ```
 
 ## Coverage
 
 ```
-go test github.com/redwebcreation/nest/core -cover
+go test github.com/wormable/nest/core -cover
 ```

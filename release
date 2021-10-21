@@ -18,7 +18,7 @@ read -r
 
 echo "Releasing version: $1"
 
-GOOS=linux go build -ldflags="-w -s -X github.com/redwebcreation/nest/globals.Version=$1" -gcflags=all="-l"
+GOOS=linux go build -ldflags="-w -s -X github.com/wormable/nest/globals.Version=$1" -gcflags=all="-l"
 
 git log --pretty="* %H - %s" "$(git describe --tags --abbrev=0)"..HEAD --no-merges >releases-notes.txt
 

@@ -3,9 +3,9 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/redwebcreation/nest/cmd/ui"
-	"github.com/redwebcreation/nest/common"
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/cmd/ui"
+	"github.com/wormable/nest/common"
 )
 
 func runStopCommand(_ *cobra.Command, _ []string) error {

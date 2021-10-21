@@ -5,8 +5,8 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/redwebcreation/nest/common"
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/common"
 )
 
 type CommandConfigurationHandler func(*cobra.Command)

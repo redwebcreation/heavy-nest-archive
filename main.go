@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/redwebcreation/nest/cmd"
-	"github.com/redwebcreation/nest/cmd/ui"
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/cmd"
+	"github.com/wormable/nest/cmd/ui"
 )
 
 func main() {

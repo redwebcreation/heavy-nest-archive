@@ -1,4 +1,4 @@
-module github.com/redwebcreation/nest
+module github.com/wormable/nest
 
 go 1.16
 
@@ -7,6 +7,7 @@ require (
 	github.com/containerd/containerd v1.5.7 // indirect
 	github.com/docker/docker v20.10.9+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/gin-gonic/gin v1.7.4 // indirect
 	github.com/gorilla/mux v1.8.0 // indirect
 	github.com/moby/term v0.0.0-20201216013528-df9cb8a40635 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect

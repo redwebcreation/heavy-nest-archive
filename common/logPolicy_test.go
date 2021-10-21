@@ -3,7 +3,7 @@ package common_test
 import (
 	"testing"
 
-	"github.com/redwebcreation/nest/common"
+	"github.com/wormable/nest/common"
 )
 
 func TestShouldLog(t *testing.T) {
