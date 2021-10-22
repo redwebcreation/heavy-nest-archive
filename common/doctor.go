@@ -3,6 +3,8 @@ package common
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 
@@ -83,8 +85,43 @@ func DefaultNetworkIsValid(d *Diagnosis) {
 }
 
 func BackendsAreConnected(d *Diagnosis) {
-	for range Config.Backends {
+	for _, backend := range Config.Backends {
 		// TODO: Check if the backend joined the network
+		response, err := http.Get("http://" + backend + "/version")
+
+		if err != nil {
+			d.NewError(Error{
+				Title: fmt.Sprintf("Cound not connect to backend %s", backend),
+				Error: err,
+			})
+			continue
+		}
+
+		defer response.Body.Close()
+
+		body, err := io.ReadAll(response.Body)
+		if err != nil {
+			d.NewError(Error{
+				Title: fmt.Sprintf("could not read backend %s response", backend),
+				Error: err,
+			})
+			continue
+		}
+
+		nameAndVersion := strings.Split(string(body), "@")
+
+		if len(nameAndVersion) != 2 && nameAndVersion[0] == "nest" {
+			d.NewError(Error{
+				Title: fmt.Sprintf("backend %s returned an invalid response, are you sure it's a node?", backend),
+			})
+		}
+
+		if nameAndVersion[1] != globals.Version {
+			// TODO: Maybe it should only be a warning
+			d.NewError(Error{
+				Title: fmt.Sprintf("Mismatch between current version %s and backend's version %s", globals.Version, nameAndVersion[1]),
+			})
+		}
 	}
 }
 

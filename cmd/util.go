@@ -18,7 +18,7 @@ func CreateCommand(command *cobra.Command, configurationHandler CommandConfigura
 	}
 
 	command.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if cmd.Name() == "diagnose" {
+		if cmd.Name() == "diagnose" || cmd.Name() == "node" || cmd.Name() == "listen" {
 			return nil
 		}
 

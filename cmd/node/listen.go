@@ -4,18 +4,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/cmd"
+	"github.com/wormable/nest/globals"
 )
 
 func runListenCommand(_ *cobra.Command, _ []string) error {
 	r := gin.Default()
 
-	r.GET("/join", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "I'm a node!",
-		})
+	r.GET("/version", func(c *gin.Context) {
+		c.String(200, "nest@%s", globals.Version)
 	})
 
-	r.Run()
+	return r.Run(":80")
 }
 
 func ListenCommand() *cobra.Command {

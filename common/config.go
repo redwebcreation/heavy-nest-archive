@@ -2,7 +2,6 @@ package common
 
 import (
 	"encoding/json"
-	"fmt"
 	"os"
 
 	"github.com/wormable/nest/cmd/ui"
@@ -58,9 +57,10 @@ func init() {
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			ui.Check(
-				fmt.Errorf("no config file found at %s", configFile),
-			)
+			// TODO: Add it back once nestd is in a separate project
+			//ui.Check(
+			//	fmt.Errorf("no config file found at %s", configFile),
+			//)
 			return
 		}
 
