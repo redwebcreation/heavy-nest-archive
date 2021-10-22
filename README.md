@@ -1,5 +1,5 @@
 Here's a high level overview of how nest works.
-
+```
                        ┌────────────┐  ┌───────┐
                        │ Containers │  │ nestd │
                        └─────┬──────┘  └───┬───┘
@@ -22,3 +22,4 @@ Here's a high level overview of how nest works.
                             ┌─────────┴──────────┐
                             │        Node        │
                             └────────────────────┘
+```
