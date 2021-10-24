@@ -13,6 +13,7 @@ require (
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/spf13/cobra v1.2.1
 	github.com/stretchr/testify v1.7.0 // indirect
+	github.com/wormable/ui v0.0.0-20211024114916-6049d923fa05 // indirect
 	golang.org/x/net v0.0.0-20211020060615-d418f374d309 // indirect
 	golang.org/x/sys v0.0.0-20211020174200-9d6173849985 // indirect
 	golang.org/x/tools v0.1.5 // indirect

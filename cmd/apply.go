@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wormable/nest/cmd/ui"
+	"github.com/wormable/ui"
 	"github.com/wormable/nest/common"
 )
 

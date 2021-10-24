@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/wormable/nest/cmd/ui"
+	"github.com/wormable/ui"
 )
 
 type BackendStrategy string
