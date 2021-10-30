@@ -18,8 +18,8 @@ import (
 )
 
 type Warning struct {
-	Title string
-	Link  string
+	Title  string
+	Advice string
 }
 
 type Error struct {
@@ -216,10 +216,9 @@ func PrivateCertificateAuthorityIsValid(d *Diagnosis) {
 		bytes, err := os.ReadFile(cert)
 
 		if err != nil {
-			d.NewError(Error{
+			d.NewWarning(Warning{
 				Title:     fmt.Sprintf("could not read certificate %s", cert),
-				Error:     err,
-				Solutions: []string{"certificates init"},
+				Advice: "run `nest certificates init` to generate needed certificates",
 			})
 			continue
 		}
@@ -228,10 +227,9 @@ func PrivateCertificateAuthorityIsValid(d *Diagnosis) {
 		certificate, err := x509.ParseCertificate(block.Bytes)
 
 		if err != nil {
-			d.NewError(Error{
+			d.NewWarning(Warning{
 				Title:     fmt.Sprintf("cound not parse certificate %s", cert),
-				Error:     err,
-				Solutions: []string{"certificates init"},
+				Advice: "run `nest certificates init` to generate needed certificates",
 			})
 			continue
 		}
@@ -254,8 +252,8 @@ func PrivateCertificateAuthorityIsValid(d *Diagnosis) {
 				})
 			} else {
 				d.NewWarning(Warning{
-					Title: fmt.Sprintf("certificate %s expiring in %s", cert, expiresInFormatted),
-					Link:  "<link to the docs>", // todo
+					Title:  fmt.Sprintf("certificate %s expiring in %s", cert, expiresInFormatted),
+					Advice: "<link to the docs>", // todo
 				})
 			}
 

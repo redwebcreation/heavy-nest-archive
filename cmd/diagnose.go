@@ -28,7 +28,7 @@ func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
 	}
 	for _, report := range diagnosis.Warnings {
 		fmt.Printf("  - %s%s%s\n", ui.White.Fg(), report.Title, ui.Stop)
-		fmt.Printf("  %s%s%s\n", ui.White.Fg()+ui.Dim, report.Link, ui.Stop)
+		fmt.Printf("  %s%s%s\n", ui.White.Fg()+ui.Dim, report.Advice, ui.Stop)
 	}
 
 	fmt.Printf(
