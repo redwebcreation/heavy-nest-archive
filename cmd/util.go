@@ -12,20 +12,24 @@ import (
 type CommandConfigurationHandler func(*cobra.Command)
 type CommandHandler func(*cobra.Command, []string) error
 
-func CreateCommand(command *cobra.Command, configurationHandler CommandConfigurationHandler, commandHandler CommandHandler) *cobra.Command {
+func Decorate(command *cobra.Command, configurationHandler CommandConfigurationHandler, commandHandler CommandHandler) *cobra.Command {
 	if configurationHandler != nil {
 		configurationHandler(command)
 	}
 
 	command.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if cmd.Name() == "diagnose" || cmd.Name() == "node" || cmd.Name() == "listen" {
+		if cmd.Name() == "diagnose" {
 			return nil
 		}
 
-		diagnosis := common.Analyse(common.Config)
+		diagnosis := common.AnalyseConfig()
+
+		if diagnosis.CommandIsSolution(cmd) {
+			return nil
+		}
 
 		if diagnosis.ErrorCount > 0 {
-			return fmt.Errorf("your configuration file is invalid, please run `nest diagnose` for details")
+			return fmt.Errorf("your configuration is invalid, please run `nest diagnose` for details")
 		}
 
 		return nil
@@ -37,7 +41,7 @@ func CreateCommand(command *cobra.Command, configurationHandler CommandConfigura
 }
 
 func ElevateProcess() {
-	cmd := exec.Command("sudo", "ls")
+	cmd := exec.Command("sudo", "-S", "sudo")
 	cmd.Stdin = os.Stdin
-	cmd.Run()
+	_ = cmd.Run()
 }

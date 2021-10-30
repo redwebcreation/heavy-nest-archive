@@ -47,7 +47,7 @@ func runApplyCommand(_ *cobra.Command, args []string) error {
 }
 
 func ApplyCommand() *cobra.Command {
-	return CreateCommand(&cobra.Command{
+	return Decorate(&cobra.Command{
 		Use:   "apply [host]",
 		Args:  cobra.RangeArgs(0, 1),
 		Short: "Syncs the servers' state with your configuration",

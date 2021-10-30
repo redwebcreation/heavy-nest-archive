@@ -4,35 +4,59 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wormable/ui"
 	"github.com/wormable/nest/common"
+	"github.com/wormable/ui"
 )
 
 func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
-	diagnosis := common.Analyse(common.Config)
+	diagnosis := common.AnalyseConfig()
 
+	fmt.Printf("\n  %sErrors:%s\n", ui.Red.Fg(), ui.Stop)
 	if diagnosis.ErrorCount == 0 {
-		fmt.Println()
-		fmt.Printf("    %sRan %d checks.%s\n", ui.White.Fg(), len(diagnosis.Checks), ui.Stop)
-		fmt.Printf("    %sNo errors found. Great job!%s\n", ui.Green.Fg(), ui.Stop)
-		return nil
+		fmt.Printf("  %s- no errors%s\n", ui.Gray.Fg(), ui.Stop)
 	}
-
-	for _, diagnosis := range diagnosis.Errors {
-		fmt.Printf("\n    - %s%s%s\n", ui.White.Fg(), diagnosis.Title, ui.Stop)
-		if diagnosis.Error != nil {
-			fmt.Printf("    %s%s%s\n ", ui.White.Fg()+ui.Dim, diagnosis.Error.Error(), ui.Stop)
+	for _, report := range diagnosis.Errors {
+		fmt.Printf("  - %s%s%s\n", ui.White.Fg(), report.Title, ui.Stop)
+		if report.Error != nil {
+			fmt.Printf("  %s%s%s\n", ui.White.Fg()+ui.Dim, report.Error.Error(), ui.Stop)
 		}
 	}
 
-	fmt.Printf("\n    %sFound %s %d %s errors in the configuration.%s\n", ui.White.Fg(), ui.Red.Bg(), diagnosis.ErrorCount, ui.Stop+ui.White.Fg(), ui.Stop)
+	fmt.Printf("\n  %sWarnings:%s\n", ui.Yellow.Fg(), ui.Stop)
+	if diagnosis.WarningCount == 0 {
+		fmt.Printf("  %s- no warnings%s\n", ui.Gray.Fg(), ui.Stop)
+	}
+	for _, report := range diagnosis.Warnings {
+		fmt.Printf("  - %s%s%s\n", ui.White.Fg(), report.Title, ui.Stop)
+		fmt.Printf("  %s%s%s\n", ui.White.Fg()+ui.Dim, report.Link, ui.Stop)
+	}
+
+	fmt.Printf(
+		"\n  %sFound %s %d %s errors and %s%d%s warnings in the configuration.%s\n",
+		ui.White.Fg(),
+		If(diagnosis.ErrorCount > 0, ui.Red.Bg(), ui.Green.Bg()),
+		diagnosis.ErrorCount,
+		ui.Stop+ui.White.Fg(),
+		If(diagnosis.WarningCount > 0, ui.Stop+ui.Yellow.Fg(), ui.Stop+ui.Green.Fg()),
+		diagnosis.WarningCount,
+		ui.Stop+ui.White.Fg(),
+		ui.Stop,
+	)
 
 	return nil
 }
 
 func DiagnoseCommand() *cobra.Command {
-	return CreateCommand(&cobra.Command{
+	return Decorate(&cobra.Command{
 		Use:   "diagnose",
 		Short: "Display diagnostic information that helps you fix your config",
 	}, nil, runDiagnoseCommand)
+}
+
+func If(condition bool, a interface{}, b interface{}) interface{} {
+	if condition {
+		return a
+	} else {
+		return b
+	}
 }

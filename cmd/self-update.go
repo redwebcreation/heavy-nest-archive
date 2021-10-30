@@ -135,7 +135,7 @@ func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
 }
 
 func SelfUpdateCommand() *cobra.Command {
-	return CreateCommand(&cobra.Command{
+	return Decorate(&cobra.Command{
 		Use:   "self-update [version]",
 		Args:  cobra.RangeArgs(0, 1),
 		Short: "Update nest to the latest version",

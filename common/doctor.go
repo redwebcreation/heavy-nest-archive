@@ -2,11 +2,15 @@ package common
 
 import (
 	"context"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
+	"github.com/spf13/cobra"
 	"io"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
@@ -14,13 +18,14 @@ import (
 )
 
 type Warning struct {
-	Title  string
-	Advice string
+	Title string
+	Link  string
 }
 
 type Error struct {
-	Title string
-	Error error
+	Title     string
+	Error     error
+	Solutions []string // An array of command names that can resolve the problem
 }
 
 type Diagnosis struct {
@@ -43,12 +48,13 @@ func (d *Diagnosis) NewError(e Error) *Diagnosis {
 	return d
 }
 
-func Analyse(config Configuration) *Diagnosis {
+func AnalyseConfig() *Diagnosis {
 	diagnosis := &Diagnosis{
-		Config: config,
+		Config: Config,
 		Checks: []func(*Diagnosis){
 			ValidateRegistriesConfig,
 			DefaultNetworkIsValid,
+			PrivateCertificateAuthorityIsValid,
 			BackendsAreConnected,
 			ValidateApplicationsConfigurations,
 			ValidateLogPolicies,
@@ -204,6 +210,59 @@ func ValidateLogPolicies(d *Diagnosis) {
 	}
 }
 
+func PrivateCertificateAuthorityIsValid(d *Diagnosis) {
+	now := time.Now()
+	for _, cert := range []string{globals.CACertificate, globals.ServerCertificate} {
+		bytes, err := os.ReadFile(cert)
+
+		if err != nil {
+			d.NewError(Error{
+				Title:     fmt.Sprintf("could not read certificate %s", cert),
+				Error:     err,
+				Solutions: []string{"certificates init"},
+			})
+			continue
+		}
+
+		block, _ := pem.Decode(bytes)
+		certificate, err := x509.ParseCertificate(block.Bytes)
+
+		if err != nil {
+			d.NewError(Error{
+				Title:     fmt.Sprintf("cound not parse certificate %s", cert),
+				Error:     err,
+				Solutions: []string{"certificates init"},
+			})
+			continue
+		}
+
+		if now.AddDate(0, 6, 0).After(certificate.NotAfter) {
+			expiresIn := certificate.NotAfter.Sub(now).Hours()
+			var expiresInFormatted string
+
+			if expiresIn > 24 {
+				expiresInFormatted = fmt.Sprintf("%.1f days", expiresIn/24.0)
+			} else {
+				expiresInFormatted = fmt.Sprintf("%.1f hours", expiresIn)
+			}
+
+			if expiresIn < 0 {
+				d.NewError(Error{
+					Title:     fmt.Sprintf("certificate %s expired", cert),
+					Error:     fmt.Errorf("certificate expired at %s", certificate.NotAfter.UTC().String()),
+					Solutions: []string{"certificates init"},
+				})
+			} else {
+				d.NewWarning(Warning{
+					Title: fmt.Sprintf("certificate %s expiring in %s", cert, expiresInFormatted),
+					Link:  "<link to the docs>", // todo
+				})
+			}
+
+		}
+	}
+}
+
 func networkIsValid(name string) *Error {
 	networks, err := globals.Docker.NetworkList(context.Background(), types.NetworkListOptions{
 		Filters: filters.NewArgs(
@@ -227,4 +286,27 @@ func networkIsValid(name string) *Error {
 	}
 
 	return nil
+}
+
+func (d *Diagnosis) CommandIsSolution(cmd *cobra.Command) bool {
+	for _, err := range d.Errors {
+		for _, name := range err.Solutions {
+			cmp := cmd.Name()
+			current := cmd.Parent()
+			for {
+				if current.Name() == "nest" {
+					break
+				}
+
+				cmp = current.Name() + " " + cmp
+				current = current.Parent()
+			}
+
+			if name == cmp {
+				return true
+			}
+		}
+	}
+
+	return false
 }

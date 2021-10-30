@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/cmd"
+	"github.com/wormable/nest/cmd/certificates"
 	"github.com/wormable/ui"
 )
 
@@ -18,6 +19,7 @@ func main() {
 		cmd.DiagnoseCommand(),
 		cmd.StopCommand(),
 		cmd.SelfUpdateCommand(),
+		certificates.RootCommand(),
 	)
 
 	err := cli.Execute()

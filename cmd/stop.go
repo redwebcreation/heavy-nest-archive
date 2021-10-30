@@ -36,7 +36,7 @@ func runStopCommand(_ *cobra.Command, _ []string) error {
 }
 
 func StopCommand() *cobra.Command {
-	return CreateCommand(&cobra.Command{
+	return Decorate(&cobra.Command{
 		Use:   "stop",
 		Short: "Stops all containers.",
 	}, nil, runStopCommand)
