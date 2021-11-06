@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -147,6 +148,25 @@ func (a *Application) StopContainer(name string) bool {
 	return true
 }
 
+func (a Application) getRunningContainer() *types.Container {
+	containers, err := globals.Docker.ContainerList(context.Background(), types.ContainerListOptions{
+		Filters: filters.NewArgs(
+			filters.KeyValuePair{
+				Key:   "name",
+				Value: a.ContainerName(), // returns all containers starting with ContainerName() including TemporaryContainerName()
+			}),
+	})
+	ui.Check(err)
+
+	for _, c := range containers {
+		if c.Names[0] == "/"+a.ContainerName() || c.Names[0] == "/"+a.TemporaryContainerName() {
+			return &c
+		}
+	}
+
+	return nil
+}
+
 func (a *Application) getContainer(name string) *types.Container {
 	containers, err := globals.Docker.ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: filters.NewArgs(
@@ -157,7 +177,7 @@ func (a *Application) getContainer(name string) *types.Container {
 
 	for _, c := range containers {
 		// Filters return non-exact matches so {Key: name, Value: example_com_80}
-		// could return example_com_80,example_com_80_temporary...qqq
+		// could return example_com_80,example_com_80_temporary...
 		if c.Names[0] == "/"+name {
 			return &c
 		}
@@ -254,14 +274,34 @@ func (a *Application) waitForContainerToBeHealthy(name string) {
 	fmt.Println("UNHEALTHY")
 }
 
+func (a *Application) Ip() (string, error) {
+	c := a.getRunningContainer()
+
+	if c == nil {
+		return "", fmt.Errorf("dead proxy")
+	}
+
+	return c.NetworkSettings.Networks[a.Network].IPAddress + ":" + a.Port, nil
+}
+
+func (a *Application) Url() (*url.URL, error) {
+	ip, err := a.Ip()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return url.Parse("http://" + ip)
+}
+
 func (a *Application) warmServer(name string) {
-	_ = a.getContainer(name).NetworkSettings.Networks[a.Network]
+	ip := a.getContainer(name).NetworkSettings.Networks[a.Network].IPAddress
 
 	var responseTimes [10]float64
 
 	for i := 0; i < 10; i++ {
 		start := time.Now()
-		_, err := http.Get("http://172.17.0.3")
+		_, err := http.Get("http://" + ip + ":" + a.Port)
 		end := time.Now()
 		ui.Check(err)
 
@@ -301,7 +341,7 @@ func (a *Application) warmServer(name string) {
 	diff -= correction / 10.0
 
 	fmt.Println()
-	if diff <= 0.02 {
+	if responseTimes[0]-responseTimes[9] <= 0.02 {
 		fmt.Print(ui.Yellow.Fg())
 		fmt.Println("      It seems like your server does not need to warmup.")
 		fmt.Println("      Consider removing this option in your config to speed up the process.")

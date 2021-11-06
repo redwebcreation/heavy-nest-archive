@@ -4,17 +4,13 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wormable/ui"
 	"github.com/wormable/nest/common"
+	"github.com/wormable/ui"
 )
 
 var skipHealthchecks bool
 
 func runApplyCommand(_ *cobra.Command, args []string) error {
-	if len(common.Config.Backends) == 0 {
-		return fmt.Errorf("no backends configured")
-	}
-
 	if len(common.Config.Applications) == 0 {
 		return fmt.Errorf("no applications found")
 	}
