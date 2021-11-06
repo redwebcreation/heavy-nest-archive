@@ -19,7 +19,6 @@ func main() {
 		cmd.DiagnoseCommand(),
 		cmd.StopCommand(),
 		cmd.SelfUpdateCommand(),
-		certificates.RootCommand(),
 	)
 
 	err := cli.Execute()

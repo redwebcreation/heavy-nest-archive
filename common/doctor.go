@@ -2,19 +2,13 @@ package common
 
 import (
 	"context"
-	"crypto/x509"
-	"encoding/pem"
 	"fmt"
-	"github.com/spf13/cobra"
-	"io"
-	"net/http"
-	"os"
-	"strings"
-	"time"
-
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/spf13/cobra"
 	"github.com/wormable/nest/globals"
+	"os"
+	"strings"
 )
 
 type Warning struct {
@@ -54,8 +48,6 @@ func AnalyseConfig() *Diagnosis {
 		Checks: []func(*Diagnosis){
 			ValidateRegistriesConfig,
 			DefaultNetworkIsValid,
-			PrivateCertificateAuthorityIsValid,
-			BackendsAreConnected,
 			ValidateApplicationsConfigurations,
 			ValidateLogPolicies,
 		},
@@ -87,47 +79,6 @@ func DefaultNetworkIsValid(d *Diagnosis) {
 	err := networkIsValid(Config.DefaultNetwork)
 	if err != nil {
 		d.NewError(*err)
-	}
-}
-
-func BackendsAreConnected(d *Diagnosis) {
-	for _, backend := range Config.Backends {
-		// TODO: Check if the backend joined the network
-		response, err := http.Get("http://" + backend + "/version")
-
-		if err != nil {
-			d.NewError(Error{
-				Title: fmt.Sprintf("Cound not connect to backend %s", backend),
-				Error: err,
-			})
-			continue
-		}
-
-		defer response.Body.Close()
-
-		body, err := io.ReadAll(response.Body)
-		if err != nil {
-			d.NewError(Error{
-				Title: fmt.Sprintf("could not read backend %s response", backend),
-				Error: err,
-			})
-			continue
-		}
-
-		nameAndVersion := strings.Split(string(body), "@")
-
-		if len(nameAndVersion) != 2 && nameAndVersion[0] == "nest" {
-			d.NewError(Error{
-				Title: fmt.Sprintf("backend %s returned an invalid response, are you sure it's a node?", backend),
-			})
-		}
-
-		if nameAndVersion[1] != globals.Version {
-			// TODO: Maybe it should only be a warning
-			d.NewError(Error{
-				Title: fmt.Sprintf("Mismatch between current version %s and backend's version %s", globals.Version, nameAndVersion[1]),
-			})
-		}
 	}
 }
 
@@ -209,58 +160,6 @@ func ValidateLogPolicies(d *Diagnosis) {
 		}
 	}
 }
-
-func PrivateCertificateAuthorityIsValid(d *Diagnosis) {
-	now := time.Now()
-	for _, cert := range []string{globals.CACertificate, globals.ServerCertificate} {
-		bytes, err := os.ReadFile(cert)
-
-		if err != nil {
-			d.NewWarning(Warning{
-				Title:     fmt.Sprintf("could not read certificate %s", cert),
-				Advice: "run `nest certificates init` to generate needed certificates",
-			})
-			continue
-		}
-
-		block, _ := pem.Decode(bytes)
-		certificate, err := x509.ParseCertificate(block.Bytes)
-
-		if err != nil {
-			d.NewWarning(Warning{
-				Title:     fmt.Sprintf("cound not parse certificate %s", cert),
-				Advice: "run `nest certificates init` to generate needed certificates",
-			})
-			continue
-		}
-
-		if now.AddDate(0, 6, 0).After(certificate.NotAfter) {
-			expiresIn := certificate.NotAfter.Sub(now).Hours()
-			var expiresInFormatted string
-
-			if expiresIn > 24 {
-				expiresInFormatted = fmt.Sprintf("%.1f days", expiresIn/24.0)
-			} else {
-				expiresInFormatted = fmt.Sprintf("%.1f hours", expiresIn)
-			}
-
-			if expiresIn < 0 {
-				d.NewError(Error{
-					Title:     fmt.Sprintf("certificate %s expired", cert),
-					Error:     fmt.Errorf("certificate expired at %s", certificate.NotAfter.UTC().String()),
-					Solutions: []string{"certificates init"},
-				})
-			} else {
-				d.NewWarning(Warning{
-					Title:  fmt.Sprintf("certificate %s expiring in %s", cert, expiresInFormatted),
-					Advice: "<link to the docs>", // todo
-				})
-			}
-
-		}
-	}
-}
-
 func networkIsValid(name string) *Error {
 	networks, err := globals.Docker.NetworkList(context.Background(), types.NetworkListOptions{
 		Filters: filters.NewArgs(

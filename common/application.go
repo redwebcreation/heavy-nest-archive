@@ -12,8 +12,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
-	"github.com/wormable/ui"
 	"github.com/wormable/nest/globals"
+	"github.com/wormable/ui"
 )
 
 type Application struct {
@@ -23,7 +23,6 @@ type Application struct {
 	EnvFiles  []string          `json:"env_files,omitempty"`
 	Volumes   []string          `json:"volumes,omitempty"`
 	Warm      bool              `json:"warm,omitempty"`
-	Backend   BackendStrategy   `json:"backend,omitempty"`
 	LogPolicy string            `json:"log_policy,omitempty"`
 	Registry  string            `json:"registry,omitempty"`
 	Network   string            `json:"network,omitempty"`

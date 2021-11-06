@@ -12,10 +12,6 @@ type BackendStrategy string
 type Configuration struct {
 	DefaultNetwork string `json:"default_network,omitempty"`
 
-	// an ip to a configuration
-	// public  ips (disallowed, non-recommended?)
-	Backends []string `json:"backends,omitempty"`
-
 	Applications map[string]Application `json:"applications,omitempty"`
 
 	Staging struct {
@@ -40,10 +36,6 @@ type Configuration struct {
 		HttpPort  string `json:"http_port,omitempty"`
 		HttpsPort string `json:"https_port,omitempty"`
 	} `json:"production"`
-
-	BackendsManager struct {
-		Host string `json:"host,omitempty"`
-	}
 
 	Registries  map[string]RegistryConfiguration `json:"registries,omitempty"`
 	LogPolicies map[string][]LogPolicy           `json:"log_policies,omitempty"`
