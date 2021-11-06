@@ -8,6 +8,7 @@ func RootCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(InitCommand())
+	cmd.AddCommand(CreateCommand())
 
 	return cmd
 }

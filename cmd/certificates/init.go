@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/cmd"
+	"github.com/wormable/nest/common"
 	"github.com/wormable/nest/globals"
 	"github.com/wormable/ui"
 	"math/big"
@@ -38,36 +39,20 @@ func runInitCommand(_ *cobra.Command, _ []string) error {
 		time.Sleep(10 * time.Second)
 	}
 
-	validity := 0 // in years
 	cACertificate := &x509.Certificate{
 		SerialNumber: big.NewInt(1),
 		Subject: pkix.Name{
 			CommonName: "Nest Root CA",
 		},
 		NotBefore:             time.Now(),
-		NotAfter:              time.Now().AddDate(validity, 0, 0),
+		NotAfter:              time.Now().AddDate(10, 0, 0),
 		IsCA:                  true,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		BasicConstraintsValid: true,
 	}
-	serverCertificate := &x509.Certificate{
-		SerialNumber: big.NewInt(1),
-		IPAddresses:  []net.IP{net.IPv4(127, 0, 0, 1), net.IPv6loopback},
-		NotBefore:    time.Now(),
-		NotAfter:     time.Now().AddDate(validity, 0, 0),
-		SubjectKeyId: []byte{1, 2, 3, 4, 6},
-		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:     x509.KeyUsageDigitalSignature,
-	}
 
-	ui.NewLog("Generating a new private key for the CA").Print()
-	pkey := generateRsaKey(globals.CAPrivateKey)
-	ui.NewLog("Generated a private key for the CA").Top(1).Print()
-
-	ui.NewLog("Generating a new certificate for the CA").Print()
-	generateCertificate(globals.CACertificate, cACertificate, cACertificate, &pkey.PublicKey, pkey)
-	ui.NewLog("Generated a certificate for the CA").Top(1).Print()
+	common.CreateCertificate(net.IPv4(127, 0, 0, 1))
 
 	ui.NewLog("Generating a new private key for the Master").Print()
 	certPrivateKey := generateRsaKey(globals.ServerPrivateKey)
@@ -88,29 +73,3 @@ func InitCommand() *cobra.Command {
 	}, runInitCommand)
 }
 
-func generateRsaKey(name string) *rsa.PrivateKey {
-	key, err := rsa.GenerateKey(rand.Reader, 4096)
-	ui.Check(err)
-
-	save(name, &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
-	})
-
-	return key
-}
-
-func generateCertificate(name string, template, parent *x509.Certificate, publicKey *rsa.PublicKey, privateKey *rsa.PrivateKey) {
-	certBytes, err := x509.CreateCertificate(rand.Reader, template, parent, publicKey, privateKey)
-	ui.Check(err)
-
-	save(name, &pem.Block{Type: "CERTIFICATE", Bytes: certBytes})
-}
-
-func save(name string, block *pem.Block) {
-	pkeyFile, err := os.OpenFile(name, os.O_CREATE|os.O_WRONLY, 0600)
-	ui.Check(err)
-
-	err = pem.Encode(pkeyFile, block)
-	ui.Check(err)
-}
