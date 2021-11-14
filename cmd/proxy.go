@@ -13,12 +13,6 @@ func runProxyCommand(_ *cobra.Command, _ []string) error {
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			host := r.Host
 
-			if host == common.Config.Staging.Host {
-				w.WriteHeader(http.StatusNotImplemented)
-				_, _ = w.Write([]byte("Not implemented"))
-				return
-			}
-
 			application := common.Config.Applications[host]
 
 			// application is not its null version

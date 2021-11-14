@@ -5,9 +5,14 @@ import (
 	"strings"
 )
 
+type LogRule struct {
+	When  string `json:"when"`
+	Level string `json:"level"`
+}
+
 type LogPolicy struct {
-	When  string
-	Level string
+	Name  string    `json:"name"`
+	Rules []LogRule `json:"rules"`
 }
 
 const (
@@ -33,7 +38,7 @@ func getLevelValue(level string) int {
 	return -1
 }
 
-func (l LogPolicy) MustCompile(level int) (bool, error) {
+func (l LogRule) MustCompile(level int) (bool, error) {
 	if 0 > level || level > len(Levels) {
 		return false, fmt.Errorf("log level must be between 0 and %d, given %d", len(Levels), level)
 	}
@@ -76,13 +81,15 @@ func (l LogPolicy) MustCompile(level int) (bool, error) {
 	return false, nil
 }
 
-func (l LogPolicy) ShouldLog(level int) bool {
+func (l LogRule) ShouldLog(level int) bool {
 	log, _ := l.MustCompile(level)
 	return log
 }
 
 func (l LogPolicy) Log(level int, message string, context ...string) {
-	if !l.ShouldLog(level) {
-		return
+	for _, rule := range l.Rules {
+		if rule.ShouldLog(level) {
+			// TODO: log message
+		}
 	}
 }

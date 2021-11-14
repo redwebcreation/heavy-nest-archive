@@ -123,8 +123,8 @@ func ValidateApplicationsConfigurations(d *Diagnosis) {
 		if application.Registry != "" {
 			validRegistry := false
 
-			for name := range Config.Registries {
-				if application.Registry == name {
+			for _, registry := range Config.Registries {
+				if application.Registry == registry.Name {
 					validRegistry = true
 				}
 			}
@@ -160,8 +160,8 @@ func ValidateApplicationsConfigurations(d *Diagnosis) {
 
 		if application.LogPolicy != "" {
 			validLogPolicy := false
-			for name := range Config.LogPolicies {
-				if application.LogPolicy == name {
+			for _, policy := range Config.LogPolicies {
+				if application.LogPolicy == policy.Name {
 					validLogPolicy = true
 				}
 			}
@@ -183,13 +183,13 @@ func ValidateApplicationsConfigurations(d *Diagnosis) {
 }
 
 func ValidateLogPolicies(d *Diagnosis) {
-	for name, rules := range Config.LogPolicies {
-		for _, rule := range rules {
+	for _, policy:= range Config.LogPolicies {
+		for _, rule := range policy.Rules {
 			_, err := rule.MustCompile(ErrorLevel)
 
 			if err != nil {
 				d.NewError(Error{
-					Title: fmt.Sprintf("invalid log policy %s [%s]", name, rule),
+					Title: fmt.Sprintf("invalid log policy %s [%s]", policy.Name, rule),
 					Error: err,
 				})
 			}

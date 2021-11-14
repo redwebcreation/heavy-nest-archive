@@ -35,8 +35,8 @@ func (a Application) GetRegistry() *RegistryConfiguration {
 		return nil
 	}
 
-	for name, registry := range Config.Registries {
-		if name == a.Registry {
+	for _, registry := range Config.Registries {
+		if registry.Name == a.Registry {
 			return &registry
 		}
 	}

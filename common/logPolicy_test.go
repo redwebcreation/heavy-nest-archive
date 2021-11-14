@@ -7,18 +7,18 @@ import (
 )
 
 func TestShouldLog(t *testing.T) {
-	defaultPolicy := common.LogPolicy{}
+	defaultPolicy := common.LogRule{}
 
 	if !(defaultPolicy.ShouldLog(common.DebugLevel) && defaultPolicy.ShouldLog(common.FatalLevel) && defaultPolicy.ShouldLog(common.ErrorLevel)) {
-		t.Errorf("an empty policy should always log everything")
+		t.Errorf("an empty rule should always log everything")
 	}
 
-	simplePolicy := common.LogPolicy{
+	simplePolicy := common.LogRule{
 		Level: "error",
 	}
 
 	if !(simplePolicy.ShouldLog(common.DebugLevel) == false && simplePolicy.ShouldLog(common.ErrorLevel) == true && simplePolicy.ShouldLog(common.FatalLevel) == true) {
-		t.Errorf("error in simple policy (weird)")
+		t.Errorf("error in simple rule (weird)")
 	}
 
 	matrix := []struct {
@@ -71,11 +71,11 @@ func TestShouldLog(t *testing.T) {
 		{"level <= info", common.FatalLevel, false},
 	}
 
-	var policy common.LogPolicy
+	var rule common.LogRule
 	for _, child := range matrix {
-		policy.When = child.code
+		rule.When = child.code
 
-		if policy.ShouldLog(child.input) == !child.output {
+		if rule.ShouldLog(child.input) == !child.output {
 			t.Errorf("%s should return %t with ( %s ), returned %t", child.code, child.output, common.Levels[child.input], !child.output)
 		}
 	}

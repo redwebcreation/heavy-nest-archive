@@ -7,29 +7,10 @@ import (
 	"github.com/wormable/ui"
 )
 
-type BackendStrategy string
-
 type Configuration struct {
 	DefaultNetwork string `json:"default_network,omitempty"`
 
 	Applications map[string]Application `json:"applications,omitempty"`
-
-	Staging struct {
-		Enabled bool   `json:"enabled,omitempty"`
-		Host    string `json:"host,omitempty"`
-		Logging string `json:"logging,omitempty"`
-
-		MaxVersions int `json:"max_versions,omitempty"` // -1 for every commit, n for last n commits available in stating
-
-		Database struct {
-			Internal bool `json:"internal,omitempty"`
-
-			Type string `json:"type,omitempty"`
-			DSN  string `json:"dsn,omitempty"`
-		} `json:"database"`
-
-		Applications []string `json:"applications,omitempty"`
-	} `json:"staging"`
 
 	Production struct {
 		Logging   string `json:"logging,omitempty"`
@@ -37,8 +18,8 @@ type Configuration struct {
 		HttpsPort string `json:"https_port,omitempty"`
 	} `json:"production"`
 
-	Registries  map[string]RegistryConfiguration `json:"registries,omitempty"`
-	LogPolicies map[string][]LogPolicy           `json:"log_policies,omitempty"`
+	Registries  []RegistryConfiguration `json:"registries,omitempty"`
+	LogPolicies []LogPolicy           `json:"log_policies,omitempty"`
 }
 
 var Config Configuration

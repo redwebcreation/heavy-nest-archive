@@ -3,14 +3,14 @@ package common
 import (
 	"encoding/base64"
 	"encoding/json"
-
 	"github.com/wormable/ui"
 )
 
 type RegistryConfiguration struct {
-	Host     string
-	Username string
-	Password string
+	Name string `json:"name"`
+	Host     string `json:"host"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 func (r RegistryConfiguration) ToBase64() string {
