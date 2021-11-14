@@ -19,6 +19,7 @@ func main() {
 		cmd.StopCommand(),
 		cmd.SelfUpdateCommand(),
 		cmd.ProxyCommand(),
+		cmd.InitCommand(),
 	)
 
 	err := cli.Execute()

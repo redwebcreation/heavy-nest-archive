@@ -2,6 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "Nest config",
   "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "The Nest config schema"
+    },
     "default_network": {
       "type": "string",
       "description": "The default docker network to use when creating a container",
@@ -97,6 +101,7 @@
     },
     "log_policies": {
       "type": "array",
+      "description": "A list of log policies that your applications may use",
       "items": {
         "type": "object",
         "properties": {
@@ -115,7 +120,7 @@
                   "description": "The conditions that the log level must match to get logged."
                 },
                 "level": {
-                  "description": "The level that the log must be to get logged",
+                  "description": "The minimum level that the log must be to get logged",
                   "enum": [
                     "debug",
                     "info",
@@ -175,5 +180,9 @@
         "additionalProperties": false
       }
     }
-  }
+  },
+  "required": [
+    "applications"
+  ],
+  "additionalProperties": false
 }

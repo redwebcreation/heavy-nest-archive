@@ -1,0 +1,48 @@
+{
+  "$schema": "_schema.json",
+
+  "applications": {},
+
+  "log_policies": [
+    {
+      "name": "default",
+      "rules": [
+        {
+          "level": "info",
+          "redirections": [
+            {
+              "type": "file",
+              "path": "logs/info.log"
+            },
+            {
+              "type": "syslog",
+              "facility": "local0",
+              "severity": "info",
+              "host": "localhost",
+              "port": 514,
+              "protocol": "tcp",
+              "timeout": 3,
+              "retry": 3,
+              "max_size": 10485760,
+              "max_backups": 10,
+              "max_age": "7d",
+              "max_delay": "1m",
+              "compress": true,
+              "encoding": "utf8",
+              "format": "json"
+            },
+            {
+              "type": "stdout"
+            },
+            {
+              "type": "stderr"
+            },
+            {
+              "type": "stdout-stderr"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
