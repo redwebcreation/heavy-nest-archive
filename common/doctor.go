@@ -7,6 +7,10 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/globals"
+	"github.com/wormable/ui"
+	"io/ioutil"
+	"net"
+	"net/http"
 	"os"
 	"strings"
 )
@@ -50,6 +54,7 @@ func AnalyseConfig() *Diagnosis {
 			DefaultNetworkIsValid,
 			ValidateApplicationsConfigurations,
 			ValidateLogPolicies,
+			EnsureDnsRecordPointsToHost,
 		},
 	}
 	for _, check := range diagnosis.Checks {
@@ -57,6 +62,37 @@ func AnalyseConfig() *Diagnosis {
 	}
 
 	return diagnosis
+}
+
+func EnsureDnsRecordPointsToHost(diagnosis *Diagnosis) {
+	response, err := http.Get("http://checkip.amazonaws.com")
+	ui.Check(err)
+	defer response.Body.Close()
+
+	rawPublicIp, err := ioutil.ReadAll(response.Body)
+	ui.Check(err)
+
+	publicIp := strings.TrimSpace(string(rawPublicIp))
+
+	for _, application := range Config.Applications {
+		ips, err := net.LookupIP(application.Host)
+		ui.Check(err)
+
+		hasMatchingIp := false
+
+		for _, ip := range ips {
+			if ip.String() == publicIp {
+				hasMatchingIp = true
+			}
+		}
+
+		if !hasMatchingIp {
+			diagnosis.NewWarning(Warning{
+                Title:  fmt.Sprintf("DNS record for %s does not point to %s", application.Host, publicIp),
+                Advice: fmt.Sprintf("Run `dig %s` to check if the DNS record is correct", application.Host),
+            })
+		}
+	}
 }
 
 func ValidateRegistriesConfig(d *Diagnosis) {
