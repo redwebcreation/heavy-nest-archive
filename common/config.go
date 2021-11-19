@@ -2,6 +2,7 @@ package common
 
 import (
 	"encoding/json"
+	"log/syslog"
 	"os"
 
 	"github.com/wormable/ui"
@@ -13,13 +14,15 @@ type Configuration struct {
 	Applications map[string]Application `json:"applications,omitempty"`
 
 	Production struct {
-		Logging   string `json:"logging,omitempty"`
-		HttpPort  string `json:"http_port,omitempty"`
-		HttpsPort string `json:"https_port,omitempty"`
+		Logging    string `json:"logging,omitempty"`
+		HttpPort   string `json:"http_port,omitempty"`
+		HttpsPort  string `json:"https_port,omitempty"`
+		CertificateCache string `json:"certificate_cache,omitempty"`
+		SelfSigned bool   `json:"self_signed,omitempty"`
 	} `json:"production"`
 
 	Registries  []RegistryConfiguration `json:"registries,omitempty"`
-	LogPolicies []LogPolicy           `json:"log_policies,omitempty"`
+	LogPolicies []LogPolicy             `json:"log_policies,omitempty"`
 }
 
 var Config Configuration
@@ -73,4 +76,10 @@ func parseJsonConfig(contents []byte) Configuration {
 	config.Applications = applications
 
 	return config
+}
+
+func (c Configuration) Log(level syslog.Priority, message string) {
+	for _, policy := range c.LogPolicies {
+		policy.Log(level, message)
+	}
 }

@@ -35,17 +35,6 @@ type LogPolicy struct {
 	context Fields
 }
 
-const (
-	LOG_EMERG syslog.Priority = iota
-	LOG_ALERT
-	LOG_CRIT
-	LOG_ERR
-	LOG_WARNING
-	LOG_NOTICE
-	LOG_INFO
-	LOG_DEBUG
-)
-
 var Levels = []string{"emerg", "alert", "crit", "err", "warning", "notice", "info", "debug"}
 
 // The order matters here <= must be before < and >= must be before >
@@ -61,7 +50,7 @@ func getLevelValue(level string) syslog.Priority {
 	return -1
 }
 
-func (l LogRule) MustCompile(level syslog.Priority) (bool, error) {
+func (l LogRule) ShouldLog(level syslog.Priority) (bool, error) {
 	if 0 > level || int(level) > len(Levels) {
 		return false, fmt.Errorf("log level must be between 0 and %d, given %d", len(Levels), level)
 	}
@@ -103,8 +92,8 @@ func (l LogRule) MustCompile(level syslog.Priority) (bool, error) {
 	return false, nil
 }
 
-func (l LogRule) ShouldLog(level syslog.Priority) bool {
-	compiled, _ := l.MustCompile(level)
+func (l LogRule) Match(level syslog.Priority) bool {
+	compiled, _ := l.ShouldLog(level)
 	return compiled
 }
 
@@ -151,7 +140,7 @@ func (l LogPolicy) WithContext(context Fields) LogPolicy {
 
 func (l LogPolicy) Log(level syslog.Priority, message string) {
 	for _, rule := range l.Rules {
-		if rule.ShouldLog(level) {
+		if rule.Match(level) {
 			if l.context == nil {
 				l.context = make(Fields, 3)
 			}

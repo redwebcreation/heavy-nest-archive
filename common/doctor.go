@@ -9,6 +9,7 @@ import (
 	"github.com/wormable/nest/globals"
 	"github.com/wormable/ui"
 	"io/ioutil"
+	"log/syslog"
 	"net"
 	"net/http"
 	"os"
@@ -185,7 +186,7 @@ func ValidateApplicationsConfigurations(d *Diagnosis) {
 func ValidateLogPolicies(d *Diagnosis) {
 	for _, policy := range Config.LogPolicies {
 		for _, rule := range policy.Rules {
-			_, err := rule.MustCompile(LOG_ERR)
+			_, err := rule.ShouldLog(syslog.LOG_ERR)
 
 			if err != nil {
 				d.NewError(Error{
