@@ -88,9 +88,9 @@ func EnsureDnsRecordPointsToHost(diagnosis *Diagnosis) {
 
 		if !hasMatchingIp {
 			diagnosis.NewWarning(Warning{
-                Title:  fmt.Sprintf("DNS record for %s does not point to %s", application.Host, publicIp),
-                Advice: fmt.Sprintf("Run `dig %s` to check if the DNS record is correct", application.Host),
-            })
+				Title:  fmt.Sprintf("DNS record for %s does not point to %s", application.Host, publicIp),
+				Advice: fmt.Sprintf("Run `dig %s` to check if the DNS record is correct", application.Host),
+			})
 		}
 	}
 }
@@ -183,9 +183,9 @@ func ValidateApplicationsConfigurations(d *Diagnosis) {
 }
 
 func ValidateLogPolicies(d *Diagnosis) {
-	for _, policy:= range Config.LogPolicies {
+	for _, policy := range Config.LogPolicies {
 		for _, rule := range policy.Rules {
-			_, err := rule.MustCompile(ErrorLevel)
+			_, err := rule.MustCompile(LOG_ERR)
 
 			if err != nil {
 				d.NewError(Error{
