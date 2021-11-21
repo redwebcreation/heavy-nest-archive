@@ -5,8 +5,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/common"
-	"github.com/wormable/ui"
-)
+	"github.com/wormable/nest/ansi")
 
 func runStopCommand(_ *cobra.Command, _ []string) error {
 	fmt.Println()
@@ -25,12 +24,12 @@ func runStopCommand(_ *cobra.Command, _ []string) error {
 			count++
 		}
 
-		fmt.Printf("  %s- %s: %d containers stopped.%s\n", ui.Gray.Fg(), application.Host, count, ui.Stop)
+		fmt.Printf("  %s- %s: %d containers stopped.%s\n", ansi.Gray.Fg(), application.Host, count, ansi.Reset)
 
 		total += count
 	}
 
-	fmt.Printf("\n  %sStopped %d containers.%s\n", ui.Green.Fg(), total, ui.Stop)
+	fmt.Printf("\n  %sStopped %d containers.%s\n", ansi.Green.Fg(), total, ansi.Reset)
 
 	return nil
 }

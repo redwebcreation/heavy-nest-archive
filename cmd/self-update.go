@@ -10,8 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/globals"
-	"github.com/wormable/ui"
-)
+	"github.com/wormable/nest/ansi")
 
 var forceUpdate bool
 
@@ -54,7 +53,7 @@ func (g githubRepository) newRequest(url string, data interface{}) error {
 func (g githubRepository) Releases(version string) []release {
 	var releases []release
 	err := g.newRequest("repos/"+g.String()+"/releases", &releases)
-	ui.Check(err)
+	ansi.Check(err)
 
 	var filtered []release
 
@@ -77,13 +76,13 @@ func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	ElevateProcess()
 
 	executable, err := os.Executable()
-	ui.Check(err)
+	ansi.Check(err)
 
 	usingGoRun := strings.HasPrefix(executable, "/tmp/go-build")
 
 	if usingGoRun {
-		fmt.Printf("%sYou're running this command using go run, you won't see any effects.\n%s", ui.Yellow.Fg(), ui.Stop)
-		fmt.Printf("%sPlease build nest's binary and then run it.\n\n%s", ui.Yellow.Fg(), ui.Stop)
+		fmt.Printf("%sYou're running this command using go run, you won't see any effects.\n%s", ansi.Yellow.Fg(), ansi.Reset)
+		fmt.Printf("%sPlease build nest's binary and then run it.\n\n%s", ansi.Yellow.Fg(), ansi.Reset)
 	}
 
 	var versionNeeded string
@@ -100,7 +99,7 @@ func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	}
 
 	if !forceUpdate && latestRelease.TagName == globals.Version {
-		fmt.Printf("%sNest is already up to date.%s", ui.Green.Fg(), ui.Stop)
+		fmt.Printf("%sNest is already up to date.%s", ansi.Green.Fg(), ansi.Reset)
 		return nil
 	}
 
@@ -114,22 +113,22 @@ func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
 	fmt.Printf("Downloading %s.\n", binary.BrowserDownloadUrl)
 
 	response, err := http.Get(binary.BrowserDownloadUrl)
-	ui.Check(err)
+	ansi.Check(err)
 
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
-	ui.Check(err)
+	ansi.Check(err)
 
 	err = os.WriteFile(executable+"_updated", body, os.FileMode(0777))
-	ui.Check(err)
+	ansi.Check(err)
 
 	err = os.Rename(executable+"_updated", executable)
-	ui.Check(err)
+	ansi.Check(err)
 
 	_ = os.Chmod(executable, os.FileMode(0777))
 
-	fmt.Printf("%sSuccessfully updated nest to %s\n", ui.Green.Fg(), latestRelease.TagName+ui.Stop)
+	fmt.Printf("%sSuccessfully updated nest to %s\n", ansi.Green.Fg(), latestRelease.TagName+ansi.Reset)
 
 	return nil
 }

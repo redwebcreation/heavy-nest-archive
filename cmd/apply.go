@@ -4,8 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/common"
-	"github.com/wormable/ui"
-)
+	"github.com/wormable/nest/ansi")
 
 var skipHealthchecks bool
 
@@ -25,7 +24,7 @@ func runApplyCommand(_ *cobra.Command, args []string) error {
 		if i != 0 {
 			fmt.Println()
 		}
-		fmt.Printf("  Deploying %s.\n", ui.Primary.Fg()+application.Host+ui.Stop)
+		fmt.Printf("  Deploying %s.\n", ansi.Blue.Fg()+application.Host+ansi.Reset)
 
 		application.Deploy(common.DeploymentOptions{
 			Pull:         true,
@@ -40,7 +39,7 @@ func runApplyCommand(_ *cobra.Command, args []string) error {
 
 		application.StopContainer(application.TemporaryContainerName())
 
-		fmt.Printf("  %s is live!%s\n", ui.Green.Fg()+application.Host, ui.Stop)
+		fmt.Printf("  %s is live!%s\n", ansi.Green.Fg()+application.Host, ansi.Reset)
 		i++
 	}
 

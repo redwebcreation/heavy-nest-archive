@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/wormable/ui"
+	"github.com/wormable/nest/ansi"
 	"log/syslog"
 	"os"
 	"strings"
@@ -38,17 +38,17 @@ func LoadConfig() {
 
 	if err != nil {
 		if os.IsNotExist(err) {
-			ui.Check(
+			ansi.Check(
 				fmt.Errorf("no config file found at %s", configFile),
 			)
 			return
 		}
 
-		ui.Check(err)
+		ansi.Check(err)
 	}
 
 	contents, err := os.ReadFile(configFile)
-	ui.Check(err)
+	ansi.Check(err)
 
 	Config = parseJsonConfig(contents)
 }
@@ -59,7 +59,7 @@ func parseJsonConfig(contents []byte) Configuration {
 	}
 
 	err := json.Unmarshal(contents, &config)
-	ui.Check(err)
+	ansi.Check(err)
 
 	applications := make(map[string]Application)
 

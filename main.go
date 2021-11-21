@@ -2,11 +2,9 @@ package main
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/ansi"
 	"github.com/wormable/nest/cmd"
-	"github.com/wormable/ui"
 )
-
-var noAnsi bool
 
 func main() {
 	cli := &cobra.Command{
@@ -25,6 +23,8 @@ func main() {
 		cmd.PublicIpCommand(),
 	)
 
+	cli.PersistentFlags().Bool("no-ansi", false, "Disable ANSI output")
+
 	err := cli.Execute()
-	ui.Check(err)
+	ansi.Check(err)
 }

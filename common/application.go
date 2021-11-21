@@ -15,8 +15,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
+	"github.com/wormable/nest/ansi"
 	"github.com/wormable/nest/globals"
-	"github.com/wormable/ui"
 )
 
 type Application struct {
@@ -58,39 +58,44 @@ type DeploymentOptions struct {
 
 func (a Application) Deploy(opts DeploymentOptions) {
 	if opts.Pull {
-		ui.NewLog("pulling %s", a.Image).Print()
+		ansi.NewLog("pulling %s", a.Image).Render()
 		a.pullImage()
-		ui.NewLog("successfully downloaded %s", a.Image).Print()
+		ansi.NewLog("successfully downloaded %s", a.Image).Render()
 	}
 
-	ui.NewLog("stopping container %s", opts.Name).Print()
+	ansi.NewLog("stopping container %s", opts.Name).Render()
 	stopped := a.StopContainer(opts.Name)
 
 	if stopped {
-		ui.NewLog("stopped container %s", opts.Name).Top(1).Print()
+		ansi.CursorUp(1)
+		ansi.ClearLine()
+		ansi.NewLog("stopped container %s", opts.Name).Render()
 	} else {
-		fmt.Println("\033[3A\033[K") // We erase the "stopping container" log
+		ansi.CursorUp(3)
+		ansi.ClearLine()
 	}
 
-	ui.NewLog("creating container %s", opts.Name).Print()
+	ansi.NewLog("creating container %s", opts.Name).Render()
 	id := a.createContainer(opts.Name)
 	if len(a.Hooks.PreStart) > 0 {
 		a.RunPostStartHook(id)
-		ui.NewLog("created container %s", opts.Name).Print()
+		ansi.NewLog("created container %s", opts.Name).Render()
 	} else {
-		ui.NewLog("created container %s", opts.Name).Top(1).Print()
+		ansi.CursorUp(1)
+		ansi.ClearLine()
+		ansi.NewLog("created container %s", opts.Name).Render()
 	}
 
 	if opts.Healthchecks {
 		a.waitForContainerToBeHealthy(opts.Name)
 	} else {
-		ui.NewLog("skipping healthchecks").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
+		ansi.NewLog("skipping healthchecks").SetColor(ansi.Gray).SetPrefix(ansi.Gray.Fg() + " - " + ansi.Reset).Render()
 	}
 
 	if a.Warm {
-		ui.NewLog("warming up server").Print()
+		ansi.NewLog("warming up server").Render()
 		a.warmServer(opts.Name)
-		ui.NewLog("server warmed up").Print()
+		ansi.NewLog("server warmed up").Render()
 	}
 }
 
@@ -102,7 +107,7 @@ func (a *Application) pullImage() {
 	}
 
 	events, err := globals.Docker.ImagePull(context.Background(), a.Image, pullOptions)
-	ui.Check(err)
+	ansi.Check(err)
 
 	decoder := json.NewDecoder(events)
 
@@ -116,10 +121,7 @@ func (a *Application) pullImage() {
 		} `json:"progressDetail"`
 	}
 
-	progress := ui.Progress{
-		Total:  60,
-		Prefix: "    " + "    " + ui.White.Fg(),
-	}
+	progress := ansi.NewProgress(60, 50).SetPrefix("    " + "    " + ansi.White.Fg() + "[")
 
 	fmt.Println()
 	progress.Render()
@@ -130,12 +132,10 @@ func (a *Application) pullImage() {
 				break
 			}
 
-			ui.Check(err)
+			ansi.Check(err)
 		}
 
-		progress.
-			Increment(1).
-			WithSuffix(ui.Gray.Fg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + ui.Stop)
+		progress.WithLabel(ansi.Gray.Fg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + ansi.Reset).Increment()
 	}
 
 	progress.Finish()
@@ -150,10 +150,10 @@ func (a *Application) StopContainer(name string) bool {
 	}
 
 	err := globals.Docker.ContainerStop(context.Background(), c.ID, nil)
-	ui.Check(err)
+	ansi.Check(err)
 
 	err = globals.Docker.ContainerRemove(context.Background(), name, types.ContainerRemoveOptions{})
-	ui.Check(err)
+	ansi.Check(err)
 
 	return true
 }
@@ -166,7 +166,7 @@ func (a Application) getRunningContainer() *types.Container {
 				Value: a.ContainerName(), // returns all containers starting with ContainerName() including TemporaryContainerName()
 			}),
 	})
-	ui.Check(err)
+	ansi.Check(err)
 
 	for _, c := range containers {
 		if c.Names[0] == "/"+a.ContainerName() || c.Names[0] == "/"+a.TemporaryContainerName() {
@@ -183,7 +183,7 @@ func (a *Application) getContainer(name string) *types.Container {
 			filters.KeyValuePair{Key: "name", Value: name}),
 		All: true,
 	})
-	ui.Check(err)
+	ansi.Check(err)
 
 	for _, c := range containers {
 		// Filters return non-exact matches so {Key: name, Value: example_com_80}
@@ -215,23 +215,23 @@ func (a *Application) createContainer(name string) string {
 		},
 		Binds: a.Volumes,
 	}, nil, nil, name)
-	ui.Check(err)
+	ansi.Check(err)
 
 	err = globals.Docker.ContainerStart(context.Background(), ref.ID, types.ContainerStartOptions{})
-	ui.Check(err)
+	ansi.Check(err)
 
 	_ = globals.Docker.NetworkDisconnect(context.Background(), net.ID, ref.ID, true)
 	err = globals.Docker.NetworkConnect(context.Background(), net.ID, ref.ID, nil)
-	ui.Check(err)
+	ansi.Check(err)
 
 	return ref.ID
 }
 
 func (a *Application) RunPostStartHook(id string) {
-	ui.NewLog("running post_start hooks").Print()
+	ansi.NewLog("running post_start hooks").Render()
 
 	for _, hook := range a.Hooks.PreStart {
-		ui.NewLog("%s", hook).Color(ui.White).ArrowString("  - ").Print()
+		ansi.NewLog("%s", hook).SetColor(ansi.White).SetPrefix("  - ").Render()
 		out, err := a.executeHook(hook, id)
 
 		lines := strings.Split(string(out), "\n")
@@ -241,12 +241,12 @@ func (a *Application) RunPostStartHook(id string) {
 				continue
 			}
 
-			fmt.Printf("%s       | %s\n", ui.Gray.Fg(), line+ui.Stop)
+			fmt.Printf("%s       | %s\n", ansi.Gray.Fg(), line+ansi.Reset)
 		}
 		fmt.Println()
 
 		if err != nil {
-			ui.Check(fmt.Errorf("error running %s", hook))
+			ansi.Check(fmt.Errorf("error running %s", hook))
 		}
 	}
 }
@@ -258,11 +258,11 @@ func (a *Application) getNetwork() types.NetworkResource {
 			Value: a.Network,
 		}),
 	})
-	ui.Check(err)
+	ansi.Check(err)
 
 	// We don't have to check if the network exists, it does, we check for it before we even run the commana.
 	net, err := globals.Docker.NetworkInspect(context.Background(), networks[0].ID, types.NetworkInspectOptions{})
-	ui.Check(err)
+	ansi.Check(err)
 	return net
 }
 
@@ -284,33 +284,29 @@ func (a *Application) waitForContainerToBeHealthy(name string) {
 	c := a.getContainer(name)
 
 	inspection, err := globals.Docker.ContainerInspect(context.Background(), c.ID)
-	ui.Check(err)
+	ansi.Check(err)
 
 	if inspection.Config.Healthcheck == nil {
 		return
 	}
 
-	ui.NewLog("checking the container healthiness").Print()
+	ansi.NewLog("checking the container healthiness").Render()
 
 	maxWaitingTime := inspection.Config.Healthcheck.Interval.Seconds()*math.Max(1.0, float64(inspection.Config.Healthcheck.Retries)) + inspection.Config.Healthcheck.Timeout.Seconds()*math.Max(1.0, float64(inspection.Config.Healthcheck.Retries))
 
-	fmt.Printf(ui.Gray.Fg()+"      max waiting time: %ds\n\n"+ui.Stop, int(maxWaitingTime))
+	fmt.Printf(ansi.Gray.Fg()+"      max waiting time: %ds\n\n"+ansi.Reset, int(maxWaitingTime))
 
-	progress := ui.Progress{
-		Prefix: "      ",
-		Total:  int(maxWaitingTime),
-	}
+	progress := ansi.NewProgress(int(maxWaitingTime), 50)
 
 	for i := maxWaitingTime; i >= 0; i-- {
 		if inspection.State.Health.Status == "healthy" {
-			progress.Finish()
 			break
 		}
 
 		time.Sleep(time.Second)
-		progress.Increment(1).WithSuffix(
+		progress.WithLabel(
 			fmt.Sprintf("state: %s, failing streak: %d", inspection.State.Health.Status, inspection.State.Health.FailingStreak),
-		)
+		).Increment()
 		inspection, _ = globals.Docker.ContainerInspect(context.Background(), c.ID)
 	}
 
@@ -354,7 +350,7 @@ func (a *Application) warmServer(name string) {
 		start := time.Now()
 		_, err := http.Get("http://" + ip + ":" + a.Port)
 		end := time.Now()
-		ui.Check(err)
+		ansi.Check(err)
 
 		responseTime := end.Add(time.Duration(-start.Nanosecond()))
 
@@ -363,9 +359,9 @@ func (a *Application) warmServer(name string) {
 
 		fmt.Printf(
 			"      %sGET / in%s %s\n",
-			ui.Gray.Fg(),
-			ui.Stop,
-			ui.Primary.Fg()+responseTimeString+ui.Stop,
+			ansi.Gray.Fg(),
+			ansi.Reset,
+			ansi.Blue.Fg()+responseTimeString+ansi.Reset,
 		)
 	}
 
@@ -393,13 +389,13 @@ func (a *Application) warmServer(name string) {
 
 	fmt.Println()
 	if responseTimes[0]-responseTimes[9] <= 0.02 {
-		fmt.Print(ui.Yellow.Fg())
+		fmt.Print(ansi.Yellow.Fg())
 		fmt.Println("      It seems like your server does not need to warmup.")
 		fmt.Println("      Consider removing this option in your config to speed up the process.")
-		fmt.Print(ui.Stop)
+		fmt.Print(ansi.Reset)
 	}
 
-	fmt.Printf("      %sGain: %.2fms%s Diff: %.2fms Max: %.2fms Min: %.2fms Avg: %.2fms\n\n", ui.White.Fg(), diff, ui.Stop, responseTimes[0]-responseTimes[9], max, *min, sum/10.0)
+	fmt.Printf("      %sGain: %.2fms%s Diff: %.2fms Max: %.2fms Min: %.2fms Avg: %.2fms\n\n", ansi.White.Fg(), diff, ansi.Reset, responseTimes[0]-responseTimes[9], max, *min, sum/10.0)
 }
 
 func (a Application) ContainerName() string {

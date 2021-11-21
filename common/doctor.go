@@ -7,7 +7,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/globals"
-	"github.com/wormable/ui"
+	"github.com/wormable/nest/ansi"
 	"io/ioutil"
 	"log/syslog"
 	"net"
@@ -67,11 +67,11 @@ func AnalyseConfig() *Diagnosis {
 
 func EnsureDnsRecordPointsToHost(diagnosis *Diagnosis) {
 	response, err := http.Get("http://checkip.amazonaws.com")
-	ui.Check(err)
+	ansi.Check(err)
 	defer response.Body.Close()
 
 	rawPublicIp, err := ioutil.ReadAll(response.Body)
-	ui.Check(err)
+	ansi.Check(err)
 
 	publicIp := strings.TrimSpace(string(rawPublicIp))
 

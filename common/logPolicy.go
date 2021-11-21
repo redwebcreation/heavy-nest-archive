@@ -3,7 +3,7 @@ package common
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/wormable/ui"
+	"github.com/wormable/nest/ansi"
 	"log"
 	"log/syslog"
 	"os"
@@ -113,14 +113,14 @@ func (l LogRule) Log(format string, level syslog.Priority, message string, conte
 			log.SetOutput(os.Stderr)
 		} else if redirection.Type == "file" {
 			logFile, err := os.OpenFile(redirection.Path, os.O_APPEND|os.O_RDWR|os.O_CREATE, 0644)
-			ui.Check(err)
+			ansi.Check(err)
 
 			defer logFile.Close()
 
 			log.SetOutput(logFile)
 		} else if redirection.Type == "syslog" {
 			writer, err := syslog.New(getLevelValue(l.Level), "")
-			ui.Check(err)
+			ansi.Check(err)
 
 			log.SetOutput(writer)
 		} else {

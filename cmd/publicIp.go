@@ -3,7 +3,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
-	"github.com/wormable/ui"
+	"github.com/wormable/nest/ansi"
 	"io/ioutil"
 	"net/http"
 	"strings"
@@ -11,11 +11,11 @@ import (
 
 func runPublicIp(_ *cobra.Command, _ []string) error {
 	response, err := http.Get("http://checkip.amazonaws.com")
-	ui.Check(err)
+	ansi.Check(err)
 	defer response.Body.Close()
 
 	rawPublicIp, err := ioutil.ReadAll(response.Body)
-	ui.Check(err)
+	ansi.Check(err)
 
 	publicIp := strings.TrimSpace(string(rawPublicIp))
 	fmt.Println(publicIp)

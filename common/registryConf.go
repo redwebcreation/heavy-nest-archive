@@ -3,8 +3,7 @@ package common
 import (
 	"encoding/base64"
 	"encoding/json"
-	"github.com/wormable/ui"
-)
+	"github.com/wormable/nest/ansi")
 
 type RegistryConfiguration struct {
 	Name string `json:"name"`
@@ -18,6 +17,6 @@ func (r RegistryConfiguration) ToBase64() string {
 		"username": r.Username,
 		"password": r.Password,
 	})
-	ui.Check(err)
+	ansi.Check(err)
 	return base64.StdEncoding.EncodeToString(auth)
 }

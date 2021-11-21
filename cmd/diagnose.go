@@ -5,42 +5,41 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/common"
-	"github.com/wormable/ui"
-)
+	"github.com/wormable/nest/ansi")
 
 func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
 	diagnosis := common.AnalyseConfig()
 
-	fmt.Printf("\n  %sErrors:%s\n", ui.Red.Fg(), ui.Stop)
+	fmt.Printf("\n  %sErrors:%s\n", ansi.Red.Fg(), ansi.Reset)
 	if diagnosis.ErrorCount == 0 {
-		fmt.Printf("  %s- no errors%s\n", ui.Gray.Fg(), ui.Stop)
+		fmt.Printf("  %s- no errors%s\n", ansi.Gray.Fg(), ansi.Reset)
 	}
 	for _, report := range diagnosis.Errors {
-		fmt.Printf("  - %s\n", ui.White.Fg()+report.Title+ui.Stop)
+		fmt.Printf("  - %s\n", ansi.White.Fg()+report.Title+ansi.Reset)
 		if report.Error != nil {
-			fmt.Printf("  %s\n", ui.White.Fg()+ui.Dim+report.Error.Error()+ui.Stop)
+			fmt.Printf("  %s\n", ansi.White.Fg()+ansi.Dim+report.Error.Error()+ansi.Reset)
 		}
 	}
 
-	fmt.Printf("\n  %sWarnings:%s\n", ui.Yellow.Fg(), ui.Stop)
+	fmt.Printf("\n  %sWarnings:%s\n", ansi.Yellow.Fg(), ansi.Reset)
 	if diagnosis.WarningCount == 0 {
-		fmt.Printf("  %s- no warnings%s\n", ui.Gray.Fg(), ui.Stop)
+		fmt.Printf("  %s- no warnings%s\n", ansi.Gray.Fg(), ansi.Reset)
 	}
 	for _, report := range diagnosis.Warnings {
-		fmt.Printf("  - %s\n", ui.White.Fg()+report.Title+ui.Stop)
-		fmt.Printf("  %s\n", ui.White.Fg()+ui.Dim+report.Advice+ui.Stop)
+		fmt.Printf("  - %s\n", ansi.White.Fg()+report.Title+ansi.Reset)
+		fmt.Printf("  %s\n", ansi.White.Fg()+ansi.Dim+report.Advice+ansi.Reset)
 	}
 
 	fmt.Printf(
 		"\n  %sFound %s %d %s errors and %s%d%s warnings in the configuration.%s\n",
-		ui.White.Fg(),
-		If(diagnosis.ErrorCount > 0, ui.Red.Bg(), ui.Green.Bg()),
+		ansi.White.Fg(),
+		If(diagnosis.ErrorCount > 0, ansi.Red.Bg(), ansi.Green.Bg()),
 		diagnosis.ErrorCount,
-		ui.Stop+ui.White.Fg(),
-		If(diagnosis.WarningCount > 0, ui.Stop+ui.Yellow.Fg(), ui.Stop+ui.Green.Fg()),
+		ansi.Reset+ansi.White.Fg(),
+		If(diagnosis.WarningCount > 0, ansi.Reset+ansi.Yellow.Fg(), ansi.Reset+ansi.Green.Fg()),
 		diagnosis.WarningCount,
-		ui.Stop+ui.White.Fg(),
-		ui.Stop,
+		ansi.Reset+ansi.White.Fg(),
+		ansi.Reset,
 	)
 
 	return nil
