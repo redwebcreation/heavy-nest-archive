@@ -10,5 +10,5 @@ func InitCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use:   "init",
 		Short: "Initialize a new configuraiton file",
-	}, nil, runInitCommand)
+	}, runInitCommand, nil)
 }

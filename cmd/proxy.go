@@ -9,7 +9,7 @@ import (
 	"golang.org/x/crypto/acme/autocert"
 	"log/syslog"
 	"net/http"
-	"regexp"
+	"net/http/httputil"
 )
 
 func runProxyCommand(_ *cobra.Command, _ []string) error {
@@ -20,14 +20,24 @@ func runProxyCommand(_ *cobra.Command, _ []string) error {
 				return nil
 			}
 
-			// TODO: Here actualize the config and check again
+			// retry in case the config has been updated
+			common.LoadConfig()
+
+			if common.Config.Applications[host].Host != "" {
+				return nil
+			}
+
 			return fmt.Errorf("host is not allowed")
 		},
 		Cache: autocert.DirCache(common.Config.Production.CertificateCache),
 	}
 
 	go func() {
-		err := http.ListenAndServe(":"+common.Config.Production.HttpPort, certificateManager.HTTPHandler(nil))
+		err := http.ListenAndServe(":"+common.Config.Production.HttpPort, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+			certificateManager.HTTPHandler(nil).ServeHTTP(writer, request)
+			logRequest(request, syslog.LOG_INFO, "to https")
+
+		}))
 
 		common.Config.Log(syslog.LOG_ERR, err.Error())
 	}()
@@ -40,53 +50,49 @@ func runProxyCommand(_ *cobra.Command, _ []string) error {
 		Addr: common.Config.Production.HttpsPort,
 		TLSConfig: &tls.Config{
 			GetCertificate: certificateManager.GetCertificate,
-
 		},
+		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			host := r.Host
+
+			application := common.Config.Applications[host]
+
+			// application exists
+			if application.Host != host {
+				w.WriteHeader(http.StatusNotFound)
+				logRequest(r, syslog.LOG_INFO, "not found")
+				return
+			}
+
+			url, err := application.Url()
+
+			if err != nil {
+				if err.Error() == "dead proxy" {
+					w.WriteHeader(http.StatusBadGateway)
+					_, _ = w.Write([]byte("Proxy died."))
+					logRequest(r, syslog.LOG_ERR, "bad gateway")
+				} else {
+					w.WriteHeader(http.StatusInternalServerError)
+					logRequest(r, syslog.LOG_ERR, err.Error())
+				}
+				return
+			}
+
+			httputil.NewSingleHostReverseProxy(url).ServeHTTP(w, r)
+
+			logRequest(r, syslog.LOG_INFO, "served")
+		}),
 	}
 
 	return server.ListenAndServeTLS("", "")
-	//server := http.Server{
-	//	Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-	//		host := r.Host
-	//
-	//		application := common.Config.Applications[host]
-	//
-	//		// application is not its null version
-	//		if application.Host != host {
-	//			w.WriteHeader(http.StatusNotFound)
-	//			return
-	//		}
-	//
-	//		url, err := application.Url()
-	//
-	//		if err != nil {
-	//			if err.Error() == "dead proxy" {
-	//				w.WriteHeader(http.StatusBadGateway)
-	//				_, _ = w.Write([]byte("Proxy died."))
-	//			} else {
-	//				w.WriteHeader(http.StatusInternalServerError)
-	//			}
-	//			return
-	//		}
-	//
-	//		httputil.NewSingleHostReverseProxy(url).ServeHTTP(w, r)
-	//	}),
-	//}
-	//
-	//return server.ListenAndServe()
-	return nil
 }
 func ProxyCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use: "proxy",
-	}, nil, runProxyCommand)
-}
-func getSecureUrl(r *http.Request) string {
-	return "https://" + (regexp.MustCompile("/(:[0-9]+)/").ReplaceAllString(r.Host, "")) + r.URL.Path
+	}, runProxyCommand, nil)
 }
 
 func logRequest(r *http.Request, priority syslog.Priority, message string) {
-	context := common.Fields{
+	c := common.Fields{
 		"ip":     getRequestIp(r),
 		"ua":     r.UserAgent(),
 		"scheme": r.URL.Scheme,
@@ -94,7 +100,7 @@ func logRequest(r *http.Request, priority syslog.Priority, message string) {
 		"path":   r.URL.Path,
 	}
 	for _, policy := range common.Config.LogPolicies {
-		policy.WithContext(context).Log(priority, message)
+		policy.WithContext(c).Log(priority, message)
 	}
 }
 

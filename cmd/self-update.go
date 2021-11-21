@@ -139,7 +139,7 @@ func SelfUpdateCommand() *cobra.Command {
 		Use:   "self-update [version]",
 		Args:  cobra.RangeArgs(0, 1),
 		Short: "Update nest to the latest version",
-	}, func(c *cobra.Command) {
+	}, runSelfUpdateCommand, func(c *cobra.Command) {
 		c.Flags().BoolVarP(&forceUpdate, "force", "f", false, "Force the update")
-	}, runSelfUpdateCommand)
+	})
 }

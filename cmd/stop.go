@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/wormable/ui"
 	"github.com/wormable/nest/common"
+	"github.com/wormable/ui"
 )
 
 func runStopCommand(_ *cobra.Command, _ []string) error {
@@ -39,5 +39,5 @@ func StopCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use:   "stop",
 		Short: "Stops all containers.",
-	}, nil, runStopCommand)
+	}, runStopCommand, nil)
 }

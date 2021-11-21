@@ -15,7 +15,6 @@ func main() {
 		Long:  "nest is to tool to orchestrate containers and manage the environment around them.",
 	}
 
-
 	cli.AddCommand(
 		cmd.ApplyCommand(),
 		cmd.DiagnoseCommand(),
@@ -23,6 +22,7 @@ func main() {
 		cmd.SelfUpdateCommand(),
 		cmd.ProxyCommand(),
 		cmd.InitCommand(),
+		cmd.PublicIpCommand(),
 	)
 
 	err := cli.Execute()

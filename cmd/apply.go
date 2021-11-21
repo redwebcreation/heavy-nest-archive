@@ -40,7 +40,7 @@ func runApplyCommand(_ *cobra.Command, args []string) error {
 
 		application.StopContainer(application.TemporaryContainerName())
 
-		fmt.Printf("  %s is live!%s\n", ui.Green.Fg() + application.Host, ui.Stop)
+		fmt.Printf("  %s is live!%s\n", ui.Green.Fg()+application.Host, ui.Stop)
 		i++
 	}
 
@@ -52,8 +52,7 @@ func ApplyCommand() *cobra.Command {
 		Use:   "apply [host]",
 		Args:  cobra.RangeArgs(0, 1),
 		Short: "Syncs the servers' state with your configuration",
-	}, func(c *cobra.Command) {
+	}, runApplyCommand, func(c *cobra.Command) {
 		c.Flags().BoolVarP(&skipHealthchecks, "skip-healthchecks", "K", false, "Skip healthchecks")
-
-	}, runApplyCommand)
+	})
 }

@@ -12,7 +12,7 @@ import (
 type CommandConfigurationHandler func(*cobra.Command)
 type CommandHandler func(*cobra.Command, []string) error
 
-func Decorate(command *cobra.Command, configurationHandler CommandConfigurationHandler, commandHandler CommandHandler) *cobra.Command {
+func Decorate(command *cobra.Command, commandHandler CommandHandler, configurationHandler CommandConfigurationHandler) *cobra.Command {
 	if configurationHandler != nil {
 		configurationHandler(command)
 	}

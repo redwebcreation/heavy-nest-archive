@@ -2,10 +2,9 @@ package common
 
 import (
 	"encoding/json"
+	"github.com/wormable/ui"
 	"log/syslog"
 	"os"
-
-	"github.com/wormable/ui"
 )
 
 type Configuration struct {
@@ -28,6 +27,10 @@ type Configuration struct {
 var Config Configuration
 
 func init() {
+	LoadConfig()
+}
+
+func LoadConfig() {
 	configFile := "/etc/nest/config.json"
 	_, err := os.Stat(configFile)
 

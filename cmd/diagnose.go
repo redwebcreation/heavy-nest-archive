@@ -50,7 +50,7 @@ func DiagnoseCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use:   "diagnose",
 		Short: "Display diagnostic information that helps you fix your config",
-	}, nil, runDiagnoseCommand)
+	}, runDiagnoseCommand, nil)
 }
 
 func If(condition bool, a interface{}, b interface{}) interface{} {
