@@ -77,7 +77,13 @@ func EnsureDnsRecordPointsToHost(diagnosis *Diagnosis) {
 
 	for _, application := range Config.Applications {
 		ips, err := net.LookupIP(application.Host)
-		ui.Check(err)
+		if err != nil {
+			diagnosis.NewWarning(Warning{
+				Title:  fmt.Sprintf("DNS record for %s does not exist", application.Host),
+				Advice: fmt.Sprintf("Create a DNS record for %s pointing to %s", application.Host, publicIp),
+			})
+			continue
+		}
 
 		hasMatchingIp := false
 

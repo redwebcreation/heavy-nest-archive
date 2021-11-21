@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/wormable/ui"
 	"github.com/wormable/nest/globals"
+	"github.com/wormable/ui"
 )
 
 var forceUpdate bool
@@ -129,7 +129,7 @@ func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
 
 	_ = os.Chmod(executable, os.FileMode(0777))
 
-	fmt.Printf("%sSuccessfully updated nest to %s%s\n", ui.Green.Fg(), latestRelease.TagName, ui.Stop)
+	fmt.Printf("%sSuccessfully updated nest to %s\n", ui.Green.Fg(), latestRelease.TagName+ui.Stop)
 
 	return nil
 }

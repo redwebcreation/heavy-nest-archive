@@ -16,9 +16,9 @@ func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
 		fmt.Printf("  %s- no errors%s\n", ui.Gray.Fg(), ui.Stop)
 	}
 	for _, report := range diagnosis.Errors {
-		fmt.Printf("  - %s%s%s\n", ui.White.Fg(), report.Title, ui.Stop)
+		fmt.Printf("  - %s\n", ui.White.Fg()+report.Title+ui.Stop)
 		if report.Error != nil {
-			fmt.Printf("  %s%s%s\n", ui.White.Fg()+ui.Dim, report.Error.Error(), ui.Stop)
+			fmt.Printf("  %s\n", ui.White.Fg()+ui.Dim+report.Error.Error()+ui.Stop)
 		}
 	}
 
@@ -27,8 +27,8 @@ func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
 		fmt.Printf("  %s- no warnings%s\n", ui.Gray.Fg(), ui.Stop)
 	}
 	for _, report := range diagnosis.Warnings {
-		fmt.Printf("  - %s%s%s\n", ui.White.Fg(), report.Title, ui.Stop)
-		fmt.Printf("  %s%s%s\n", ui.White.Fg()+ui.Dim, report.Advice, ui.Stop)
+		fmt.Printf("  - %s\n", ui.White.Fg()+report.Title+ui.Stop)
+		fmt.Printf("  %s\n", ui.White.Fg()+ui.Dim+report.Advice+ui.Stop)
 	}
 
 	fmt.Printf(

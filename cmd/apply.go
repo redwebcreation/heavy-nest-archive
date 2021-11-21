@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/common"
 	"github.com/wormable/ui"
@@ -15,13 +14,18 @@ func runApplyCommand(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("no applications found")
 	}
 
+	i := 0
 	for _, application := range common.Config.Applications {
 		if len(args) > 0 && application.Host != args[0] {
 			fmt.Printf("- skipping %s\n", application.Host)
+			i++
 			continue
 		}
 
-		fmt.Printf("- %s\n", application.Host)
+		if i != 0 {
+			fmt.Println()
+		}
+		fmt.Printf("  Deploying %s.\n", ui.Primary.Fg()+application.Host+ui.Stop)
 
 		application.Deploy(common.DeploymentOptions{
 			Pull:         true,
@@ -36,7 +40,8 @@ func runApplyCommand(_ *cobra.Command, args []string) error {
 
 		application.StopContainer(application.TemporaryContainerName())
 
-		fmt.Printf("  %s%s deployed!%s\n", ui.Green.Fg(), application.Host, ui.Stop)
+		fmt.Printf("  %s is live!%s\n", ui.Green.Fg() + application.Host, ui.Stop)
+		i++
 	}
 
 	return nil

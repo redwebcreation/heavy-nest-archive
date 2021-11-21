@@ -34,6 +34,7 @@ func Decorate(command *cobra.Command, configurationHandler CommandConfigurationH
 
 		return nil
 	}
+
 	command.RunE = commandHandler
 	command.SilenceErrors = true
 	command.SilenceUsage = true

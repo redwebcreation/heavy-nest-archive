@@ -15,7 +15,7 @@
       "type": "object",
       "description": "A list of applications that nest will deploy",
       "patternProperties": {
-        "^[a-z][a-z.\\-0-9]+[a-z0-9]\\.[a-z0-9\\-]{2,}$": {
+        "^[a-z][a-z.\\-0-9]*[a-z0-9]*\\.[a-z0-9\\-]{2,}$": {
           "type": "object",
           "properties": {
             "image": {
@@ -47,6 +47,14 @@
               "items": {
                 "pattern": "^.+:.+$",
                 "description": "A volume to mount in the container"
+              }
+            },
+            "aliases": {
+              "type": "array",
+              "description": "Domain names that the application should be available under",
+              "items": {
+                "pattern": "^[a-z][a-z.\\-0-9]*[a-z0-9]*\\.[a-z0-9\\-]{2,}$",
+                "description": "A domain name that the application should be available under"
               }
             },
             "warm": {

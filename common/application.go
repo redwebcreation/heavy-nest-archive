@@ -23,6 +23,7 @@ type Application struct {
 	Env       map[string]string `json:"env,omitempty"`
 	EnvFiles  []string          `json:"env_files,omitempty"`
 	Volumes   []string          `json:"volumes,omitempty"`
+	Aliases   []string          `json:"aliases,omitempty"`
 	Warm      bool              `json:"warm,omitempty"`
 	LogPolicy string            `json:"log_policy,omitempty"`
 	Registry  string            `json:"registry,omitempty"`
@@ -71,7 +72,6 @@ func (a Application) Deploy(opts DeploymentOptions) {
 	ui.NewLog("created container %s", opts.Name).Top(1).Print()
 
 	if opts.Healthchecks {
-		ui.NewLog("checking the container healthyness").Print()
 		a.waitForContainerToBeHealthy(opts.Name)
 	} else {
 		ui.NewLog("skipping healthchecks").Arrow(ui.Gray).Color(ui.Gray).ArrowString(" - ").Print()
@@ -250,9 +250,10 @@ func (a *Application) waitForContainerToBeHealthy(name string) {
 	ui.Check(err)
 
 	if inspection.State.Health == nil {
-		ui.NewLog("no healthchecks defined").Arrow(ui.Gray).ArrowString("    " + "- ").Color(ui.Gray).Print()
 		return
 	}
+
+	ui.NewLog("checking the container healthyness").Print()
 
 	progress := ui.Progress{
 		Total: int(inspection.Config.Healthcheck.Interval.Seconds()),

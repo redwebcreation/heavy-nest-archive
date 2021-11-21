@@ -14,11 +14,11 @@ type Configuration struct {
 	Applications map[string]Application `json:"applications,omitempty"`
 
 	Production struct {
-		Logging    string `json:"logging,omitempty"`
-		HttpPort   string `json:"http_port,omitempty"`
-		HttpsPort  string `json:"https_port,omitempty"`
+		Logging          string `json:"logging,omitempty"`
+		HttpPort         string `json:"http_port,omitempty"`
+		HttpsPort        string `json:"https_port,omitempty"`
 		CertificateCache string `json:"certificate_cache,omitempty"`
-		SelfSigned bool   `json:"self_signed,omitempty"`
+		SelfSigned       bool   `json:"self_signed,omitempty"`
 	} `json:"production"`
 
 	Registries  []RegistryConfiguration `json:"registries,omitempty"`
@@ -57,7 +57,7 @@ func parseJsonConfig(contents []byte) Configuration {
 	err := json.Unmarshal(contents, &config)
 	ui.Check(err)
 
-	applications := make(map[string]Application, len(config.Applications))
+	applications := make(map[string]Application)
 
 	for host, a := range config.Applications {
 		a.Host = host
@@ -71,6 +71,10 @@ func parseJsonConfig(contents []byte) Configuration {
 		}
 
 		applications[host] = a
+
+		for _, alias := range a.Aliases {
+			applications[alias] = a
+		}
 	}
 
 	config.Applications = applications
