@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -29,6 +31,9 @@ type Application struct {
 	Registry  string            `json:"registry,omitempty"`
 	Network   string            `json:"network,omitempty"`
 	Port      string            `json:"port,omitempty"`
+	Hooks     struct {
+		PreStart []string `json:"pre_start,omitempty"`
+	} `json:"hooks,omitempty"`
 }
 
 func (a Application) GetRegistry() *RegistryConfiguration {
@@ -68,8 +73,13 @@ func (a Application) Deploy(opts DeploymentOptions) {
 	}
 
 	ui.NewLog("creating container %s", opts.Name).Print()
-	a.createContainer(opts.Name)
-	ui.NewLog("created container %s", opts.Name).Top(1).Print()
+	id := a.createContainer(opts.Name)
+	if len(a.Hooks.PreStart) > 0 {
+		a.RunPostStartHook(id)
+		ui.NewLog("created container %s", opts.Name).Print()
+	} else {
+		ui.NewLog("created container %s", opts.Name).Top(1).Print()
+	}
 
 	if opts.Healthchecks {
 		a.waitForContainerToBeHealthy(opts.Name)
@@ -210,12 +220,35 @@ func (a *Application) createContainer(name string) string {
 	err = globals.Docker.ContainerStart(context.Background(), ref.ID, types.ContainerStartOptions{})
 	ui.Check(err)
 
-	// Docker's default network
 	_ = globals.Docker.NetworkDisconnect(context.Background(), net.ID, ref.ID, true)
 	err = globals.Docker.NetworkConnect(context.Background(), net.ID, ref.ID, nil)
 	ui.Check(err)
 
 	return ref.ID
+}
+
+func (a *Application) RunPostStartHook(id string) {
+	ui.NewLog("running post_start hooks").Print()
+
+	for _, hook := range a.Hooks.PreStart {
+		ui.NewLog("%s", hook).Color(ui.White).ArrowString("  - ").Print()
+		out, err := a.executeHook(hook, id)
+
+		lines := strings.Split(string(out), "\n")
+
+		for _, line := range lines {
+			if line == "" {
+				continue
+			}
+
+			fmt.Printf("%s       | %s\n", ui.Gray.Fg(), line+ui.Stop)
+		}
+		fmt.Println()
+
+		if err != nil {
+			ui.Check(fmt.Errorf("error running %s", hook))
+		}
+	}
 }
 
 func (a *Application) getNetwork() types.NetworkResource {
@@ -234,6 +267,10 @@ func (a *Application) getNetwork() types.NetworkResource {
 }
 
 func (a *Application) EnvironmentToDockerEnv() []string {
+	if len(a.Env) == 0 {
+		return []string{}
+	}
+
 	variables := make([]string, len(a.Env)-1)
 
 	for k, v := range a.Env {
@@ -249,25 +286,38 @@ func (a *Application) waitForContainerToBeHealthy(name string) {
 	inspection, err := globals.Docker.ContainerInspect(context.Background(), c.ID)
 	ui.Check(err)
 
-	if inspection.State.Health == nil {
+	if inspection.Config.Healthcheck == nil {
 		return
 	}
 
-	ui.NewLog("checking the container healthyness").Print()
+	ui.NewLog("checking the container healthiness").Print()
+
+	maxWaitingTime := inspection.Config.Healthcheck.Interval.Seconds()*math.Max(1.0, float64(inspection.Config.Healthcheck.Retries)) + inspection.Config.Healthcheck.Timeout.Seconds()*math.Max(1.0, float64(inspection.Config.Healthcheck.Retries))
+
+	fmt.Printf(ui.Gray.Fg()+"      max waiting time: %ds\n\n"+ui.Stop, int(maxWaitingTime))
 
 	progress := ui.Progress{
-		Total: int(inspection.Config.Healthcheck.Interval.Seconds()),
+		Prefix: "      ",
+		Total:  int(maxWaitingTime),
 	}
 
-	progress.Render()
-	for inspection.State.Health.Status == "starting" {
-		progress.Increment(1)
+	for i := maxWaitingTime; i >= 0; i-- {
+		if inspection.State.Health.Status == "healthy" {
+			progress.Finish()
+			break
+		}
+
 		time.Sleep(time.Second)
+		progress.Increment(1).WithSuffix(
+			fmt.Sprintf("state: %s, failing streak: %d", inspection.State.Health.Status, inspection.State.Health.FailingStreak),
+		)
+		inspection, _ = globals.Docker.ContainerInspect(context.Background(), c.ID)
 	}
+
 	progress.Finish()
 
 	// TODO:
-	if inspection.State.Health == nil || inspection.State.Health.Status == "healthy" {
+	if inspection.State.Health.Status == "healthy" {
 		fmt.Println("healthy")
 		return
 	}
@@ -358,4 +408,10 @@ func (a Application) ContainerName() string {
 
 func (a Application) TemporaryContainerName() string {
 	return a.ContainerName() + "_temporary"
+}
+
+func (a Application) executeHook(command string, container string) ([]byte, error) {
+	// execute command in container
+	cmd := exec.Command("docker", "exec", container, "/bin/sh", "-c", command)
+	return cmd.CombinedOutput()
 }

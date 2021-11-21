@@ -33,6 +33,21 @@
               },
               "additionalProperties": false
             },
+            "hooks": {
+              "type": "object",
+              "description": "Hooks to run at a given point in the application lifetime",
+              "properties": {
+                "pre_start": {
+                  "type": "array",
+                  "description": "Hooks to run before the application starts",
+                  "items": {
+                    "type": "string",
+                    "description": "The command to run"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
             "env_files": {
               "type": "array",
               "description": "Environment files to add in the container environment",
@@ -88,7 +103,7 @@
       },
       "additionalProperties": false
     },
-    "production": {
+    "proxy": {
       "type": "object",
       "properties": {
         "log_policy": {

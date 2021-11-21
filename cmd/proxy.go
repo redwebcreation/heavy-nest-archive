@@ -29,11 +29,11 @@ func runProxyCommand(_ *cobra.Command, _ []string) error {
 
 			return fmt.Errorf("host is not allowed")
 		},
-		Cache: autocert.DirCache(common.Config.Production.CertificateCache),
+		Cache: autocert.DirCache(common.Config.Proxy.CertificateCache),
 	}
 
 	go func() {
-		err := http.ListenAndServe(":"+common.Config.Production.HttpPort, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		err := http.ListenAndServe(":"+common.Config.Proxy.HttpPort, http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 			certificateManager.HTTPHandler(nil).ServeHTTP(writer, request)
 			logRequest(request, syslog.LOG_INFO, "to https")
 
@@ -42,12 +42,12 @@ func runProxyCommand(_ *cobra.Command, _ []string) error {
 		common.Config.Log(syslog.LOG_ERR, err.Error())
 	}()
 
-	if common.Config.Production.SelfSigned {
+	if common.Config.Proxy.SelfSigned {
 		panic("not implemented")
 	}
 
 	server := &http.Server{
-		Addr: common.Config.Production.HttpsPort,
+		Addr: common.Config.Proxy.HttpsPort,
 		TLSConfig: &tls.Config{
 			GetCertificate: certificateManager.GetCertificate,
 		},
