@@ -17,8 +17,8 @@ func NewLog(message string, a ...interface{}) *Log {
 	return &Log{
 		Message: fmt.Sprintf(message, a...),
 		Color:   White,
-		Prefix:  "  ==>",
-		Suffix:  "",
+		Prefix:  Blue.Fg() + "  ==> ",
+		Suffix:  Reset,
 	}
 }
 
@@ -28,8 +28,8 @@ func (l *Log) SetColor(c Color) *Log {
 }
 
 func (l *Log) SetPrefix(p string) *Log {
-    l.Prefix = p
-    return l
+	l.Prefix = p
+	return l
 }
 
 func (l Log) Render() {

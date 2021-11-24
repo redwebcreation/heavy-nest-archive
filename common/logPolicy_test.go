@@ -1,15 +1,16 @@
 package common_test
 
 import (
+	"log/syslog"
 	"testing"
 
 	"github.com/wormable/nest/common"
 )
 
-func TestShouldLog(t *testing.T) {
+func TestMatch(t *testing.T) {
 	defaultPolicy := common.LogRule{}
 
-	if !(defaultPolicy.ShouldLog(common.DebugLevel) && defaultPolicy.ShouldLog(common.FatalLevel) && defaultPolicy.ShouldLog(common.ErrorLevel)) {
+	if !(defaultPolicy.Match(syslog.LOG_DEBUG) && defaultPolicy.Match(syslog.LOG_CRIT) && defaultPolicy.Match(syslog.LOG_ERR)) {
 		t.Errorf("an empty rule should always log everything")
 	}
 
@@ -17,65 +18,65 @@ func TestShouldLog(t *testing.T) {
 		Level: "error",
 	}
 
-	if !(simplePolicy.ShouldLog(common.DebugLevel) == false && simplePolicy.ShouldLog(common.ErrorLevel) == true && simplePolicy.ShouldLog(common.FatalLevel) == true) {
+	if !(simplePolicy.Match(syslog.LOG_DEBUG) == false && simplePolicy.Match(syslog.LOG_ERR) == true && simplePolicy.Match(syslog.LOG_CRIT) == true) {
 		t.Errorf("error in simple rule (weird)")
 	}
 
 	matrix := []struct {
 		code   string
-		input  int
+		input  syslog.Priority
 		output bool
 	}{
-		{"level > error", common.DebugLevel, false},
-		{"level > error", common.ErrorLevel, false},
-		{"level > error", common.FatalLevel, true},
+		{"level > error", syslog.LOG_DEBUG, false},
+		{"level > error", syslog.LOG_ERR, false},
+		{"level > error", syslog.LOG_CRIT, true},
 
-		{"error > level", common.DebugLevel, true},
-		{"error > level", common.ErrorLevel, false},
-		{"error > level", common.FatalLevel, false},
+		{"error > level", syslog.LOG_DEBUG, true},
+		{"error > level", syslog.LOG_ERR, false},
+		{"error > level", syslog.LOG_CRIT, false},
 
-		{"level == info", common.InfoLevel, true},
-		{"level == info", common.DebugLevel, false},
+		{"level == info", syslog.LOG_INFO, true},
+		{"level == info", syslog.LOG_DEBUG, false},
 
-		{"info == level", common.InfoLevel, true},
-		{"info == level", common.DebugLevel, false},
+		{"info == level", syslog.LOG_INFO, true},
+		{"info == level", syslog.LOG_DEBUG, false},
 
-		{"level != info", common.InfoLevel, false},
-		{"level != info", common.DebugLevel, true},
+		{"level != info", syslog.LOG_INFO, false},
+		{"level != info", syslog.LOG_DEBUG, true},
 
-		{"info != level", common.InfoLevel, false},
-		{"info != level", common.DebugLevel, true},
+		{"info != level", syslog.LOG_INFO, false},
+		{"info != level", syslog.LOG_DEBUG, true},
 
-		{"level < warning", common.DebugLevel, true},
-		{"level < warning", common.WarningLevel, false},
-		{"level < warning", common.FatalLevel, false},
+		{"level < warning", syslog.LOG_DEBUG, true},
+		{"level < warning", syslog.LOG_WARNING, false},
+		{"level < warning", syslog.LOG_CRIT, false},
 
-		{"warning < level", common.DebugLevel, false},
-		{"warning < level", common.WarningLevel, false},
-		{"warning < level", common.FatalLevel, true},
+		{"warning < level", syslog.LOG_DEBUG, false},
+		{"warning < level", syslog.LOG_WARNING, false},
+		{"warning < level", syslog.LOG_CRIT, true},
 
-		{"info >= level", common.DebugLevel, true},
-		{"info >= level", common.InfoLevel, true},
-		{"info >= level", common.FatalLevel, false},
+		{"info >= level", syslog.LOG_DEBUG, true},
+		{"info >= level", syslog.LOG_INFO, true},
+		{"info >= level", syslog.LOG_CRIT, false},
 
-		{"level >= info", common.DebugLevel, false},
-		{"level >= info", common.InfoLevel, true},
-		{"level >= info", common.FatalLevel, true},
+		{"level >= info", syslog.LOG_DEBUG, false},
+		{"level >= info", syslog.LOG_INFO, true},
+		{"level >= info", syslog.LOG_CRIT, true},
 
-		{"info <= level", common.DebugLevel, false},
-		{"info <= level", common.InfoLevel, true},
-		{"info <= level", common.FatalLevel, true},
+		{"info <= level", syslog.LOG_DEBUG, false},
+		{"info <= level", syslog.LOG_INFO, true},
+		{"info <= level", syslog.LOG_CRIT, true},
 
-		{"level <= info", common.DebugLevel, true},
-		{"level <= info", common.InfoLevel, true},
-		{"level <= info", common.FatalLevel, false},
+		{"level <= info", syslog.LOG_DEBUG, true},
+		{"level <= info", syslog.LOG_INFO, true},
+		{"level <= info", syslog.LOG_CRIT, false},
 	}
 
 	var rule common.LogRule
 	for _, child := range matrix {
 		rule.When = child.code
 
-		if rule.ShouldLog(child.input) == !child.output {
+		if rule.Match(child.input) == !child.output {
 			t.Errorf("%s should return %t with ( %s ), returned %t", child.code, child.output, common.Levels[child.input], !child.output)
 		}
 	}

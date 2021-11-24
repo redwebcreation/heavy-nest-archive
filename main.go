@@ -20,7 +20,7 @@ func main() {
 		cmd.SelfUpdateCommand(),
 		cmd.ProxyCommand(),
 		cmd.InitCommand(),
-		cmd.PublicIpCommand(),
+		cmd.MachineCommand(),
 	)
 
 	cli.PersistentFlags().Bool("no-ansi", false, "Disable ANSI output")

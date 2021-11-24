@@ -19,7 +19,7 @@ func Check(err error) {
 	os.Exit(1)
 }
 
-func IfErr(err error, handler func(err string, ansi bool) string) {
+func IfErr(err error, handler func(err string, printAnsi bool) string) {
 	if err == nil {
 		return
 	}
@@ -28,7 +28,7 @@ func IfErr(err error, handler func(err string, ansi bool) string) {
 	os.Exit(1)
 }
 
-func IfErrPanic(err error, handler func(err string, ansi bool) string) {
+func IfErrPanic(err error, handler func(err string, printAnsi bool) string) {
 	if err == nil {
 		return
 	}

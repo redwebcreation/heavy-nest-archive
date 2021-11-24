@@ -1,6 +1,9 @@
 package ansi
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 type Color [3]uint8
 
@@ -31,7 +34,7 @@ func (c Color) Fg() string {
 		return ""
 	}
 
-	return "\033[38;2;" + string(c[0]) + ";" + string(c[1]) + ";" + string(c[2]) + "m"
+	return fmt.Sprintf("%s\033[38;2;%d;%d;%dm", Bold, c[0], c[1], c[2])
 }
 
 func (c Color) Bg() string {
@@ -39,5 +42,5 @@ func (c Color) Bg() string {
 		return ""
 	}
 
-	return "\033[48;2;" + string(c[0]) + ";" + string(c[1]) + ";" + string(c[2]) + "m"
+	return fmt.Sprintf("%s\033[48;2;%d;%d;%dm", Bold, c[0], c[1], c[2])
 }

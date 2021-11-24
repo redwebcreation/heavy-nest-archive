@@ -10,7 +10,8 @@ import (
 )
 
 type Configuration struct {
-	DefaultNetwork string `json:"default_network,omitempty"`
+	DefaultNetwork     string `json:"default_network,omitempty"`
+	DefaultMemoryLimit string `json:"default_memory,omitempty"`
 
 	Applications map[string]Application `json:"applications,omitempty"`
 
@@ -20,8 +21,7 @@ type Configuration struct {
 		HttpsPort        string `json:"https_port,omitempty"`
 		CertificateCache string `json:"certificate_cache,omitempty"`
 		SelfSigned       bool   `json:"self_signed,omitempty"`
-	} `json:"proxy"`
-
+	} `json:"proxy,omitempty"`
 	Registries  []RegistryConfiguration `json:"registries,omitempty"`
 	LogPolicies []LogPolicy             `json:"log_policies,omitempty"`
 }
@@ -55,7 +55,8 @@ func LoadConfig() {
 
 func parseJsonConfig(contents []byte) Configuration {
 	config := Configuration{
-		DefaultNetwork: "bridge",
+		DefaultNetwork:     "bridge",
+		DefaultMemoryLimit: "-1",
 	}
 
 	err := json.Unmarshal(contents, &config)
@@ -82,6 +83,10 @@ func parseJsonConfig(contents []byte) Configuration {
 					a.Image = strings.TrimRight(registry.Host, "/") + "/" + strings.TrimLeft(a.Image, "/")
 				}
 			}
+		}
+
+		if a.Quota.Memory == "" {
+			a.Quota.Memory = config.DefaultMemoryLimit
 		}
 
 		applications[host] = a

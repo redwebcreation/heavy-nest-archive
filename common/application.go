@@ -34,6 +34,16 @@ type Application struct {
 	Hooks     struct {
 		PreStart []string `json:"pre_start,omitempty"`
 	} `json:"hooks,omitempty"`
+	Quota struct {
+		CPU    string `json:"cpu,omitempty"`
+		Memory string `json:"memory,omitempty"`
+	} `json:"quota,omitempty"`
+}
+
+type DeploymentOptions struct {
+	Pull         bool
+	Healthchecks bool
+	Name         string
 }
 
 func (a Application) GetRegistry() *RegistryConfiguration {
@@ -48,12 +58,6 @@ func (a Application) GetRegistry() *RegistryConfiguration {
 	}
 
 	return nil
-}
-
-type DeploymentOptions struct {
-	Pull         bool
-	Healthchecks bool
-	Name         string
 }
 
 func (a Application) Deploy(opts DeploymentOptions) {
@@ -99,7 +103,7 @@ func (a Application) Deploy(opts DeploymentOptions) {
 	}
 }
 
-func (a *Application) pullImage() {
+func (a Application) pullImage() {
 	pullOptions := types.ImagePullOptions{}
 
 	if a.Registry != "" {
@@ -124,6 +128,7 @@ func (a *Application) pullImage() {
 	progress := ansi.NewProgress(60, 50).SetPrefix("    " + "    " + ansi.White.Fg() + "[")
 
 	fmt.Println()
+	fmt.Println()
 	progress.Render()
 
 	for {
@@ -135,14 +140,14 @@ func (a *Application) pullImage() {
 			ansi.Check(err)
 		}
 
-		progress.WithLabel(ansi.Gray.Fg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + ansi.Reset).Increment()
+		progress.WithLabel("        " + ansi.Gray.Fg() + strings.Replace(strings.ToLower(event.Status), "status: ", "", 1) + ansi.Reset).Increment()
 	}
 
 	progress.Finish()
 	fmt.Println()
 }
 
-func (a *Application) StopContainer(name string) bool {
+func (a Application) StopContainer(name string) bool {
 	c := a.getContainer(name)
 
 	if c == nil {
@@ -177,7 +182,7 @@ func (a Application) getRunningContainer() *types.Container {
 	return nil
 }
 
-func (a *Application) getContainer(name string) *types.Container {
+func (a Application) getContainer(name string) *types.Container {
 	containers, err := globals.Docker.ContainerList(context.Background(), types.ContainerListOptions{
 		Filters: filters.NewArgs(
 			filters.KeyValuePair{Key: "name", Value: name}),
@@ -196,7 +201,7 @@ func (a *Application) getContainer(name string) *types.Container {
 	return nil
 }
 
-func (a *Application) createContainer(name string) string {
+func (a Application) createContainer(name string) string {
 	net := a.getNetwork()
 
 	// TODO: Quotas
@@ -204,16 +209,15 @@ func (a *Application) createContainer(name string) string {
 	ref, err := globals.Docker.ContainerCreate(context.Background(), &container.Config{
 		Env:   a.EnvironmentToDockerEnv(),
 		Image: a.Image,
-		Labels: map[string]string{
-			"nest-id":   a.Host + a.Port,
-			"nest-host": a.Host,
-			"nest-port": a.Port,
-		},
 	}, &container.HostConfig{
 		RestartPolicy: container.RestartPolicy{
 			Name: "always",
 		},
 		Binds: a.Volumes,
+		// set cpu quotas
+		Resources: container.Resources{
+			Memory: MustParseMemoryQuota(a.Quota.Memory),
+		},
 	}, nil, nil, name)
 	ansi.Check(err)
 
@@ -227,7 +231,7 @@ func (a *Application) createContainer(name string) string {
 	return ref.ID
 }
 
-func (a *Application) RunPostStartHook(id string) {
+func (a Application) RunPostStartHook(id string) {
 	ansi.NewLog("running post_start hooks").Render()
 
 	for _, hook := range a.Hooks.PreStart {
@@ -251,7 +255,7 @@ func (a *Application) RunPostStartHook(id string) {
 	}
 }
 
-func (a *Application) getNetwork() types.NetworkResource {
+func (a Application) getNetwork() types.NetworkResource {
 	networks, err := globals.Docker.NetworkList(context.Background(), types.NetworkListOptions{
 		Filters: filters.NewArgs(filters.KeyValuePair{
 			Key:   "name",
@@ -266,7 +270,7 @@ func (a *Application) getNetwork() types.NetworkResource {
 	return net
 }
 
-func (a *Application) EnvironmentToDockerEnv() []string {
+func (a Application) EnvironmentToDockerEnv() []string {
 	if len(a.Env) == 0 {
 		return []string{}
 	}
@@ -280,7 +284,7 @@ func (a *Application) EnvironmentToDockerEnv() []string {
 	return variables
 }
 
-func (a *Application) waitForContainerToBeHealthy(name string) {
+func (a Application) waitForContainerToBeHealthy(name string) {
 	c := a.getContainer(name)
 
 	inspection, err := globals.Docker.ContainerInspect(context.Background(), c.ID)
@@ -294,10 +298,10 @@ func (a *Application) waitForContainerToBeHealthy(name string) {
 
 	maxWaitingTime := inspection.Config.Healthcheck.Interval.Seconds()*math.Max(1.0, float64(inspection.Config.Healthcheck.Retries)) + inspection.Config.Healthcheck.Timeout.Seconds()*math.Max(1.0, float64(inspection.Config.Healthcheck.Retries))
 
-	fmt.Printf(ansi.Gray.Fg()+"      max waiting time: %ds\n\n"+ansi.Reset, int(maxWaitingTime))
+	fmt.Printf("\n"+ansi.Gray.Fg()+"      max waiting time: %ds\n\n"+ansi.Reset, int(maxWaitingTime))
 
 	progress := ansi.NewProgress(int(maxWaitingTime), 50)
-
+	progress.Prefix = "      " + progress.Prefix
 	for i := maxWaitingTime; i >= 0; i-- {
 		if inspection.State.Health.Status == "healthy" {
 			break
@@ -305,23 +309,29 @@ func (a *Application) waitForContainerToBeHealthy(name string) {
 
 		time.Sleep(time.Second)
 		progress.WithLabel(
-			fmt.Sprintf("state: %s, failing streak: %d", inspection.State.Health.Status, inspection.State.Health.FailingStreak),
+			fmt.Sprintf("      state: %s, failing streak: %d", inspection.State.Health.Status, inspection.State.Health.FailingStreak),
 		).Increment()
 		inspection, _ = globals.Docker.ContainerInspect(context.Background(), c.ID)
 	}
 
 	progress.Finish()
 
-	// TODO:
 	if inspection.State.Health.Status == "healthy" {
-		fmt.Println("healthy")
+		fmt.Printf("\n      %s is healthy%s\n", ansi.Green.Fg()+name, ansi.Reset)
 		return
 	}
 
-	fmt.Println("UNHEALTHY")
+	fmt.Printf("\n      %s is not healthy%s\n", ansi.Red.Fg()+name, ansi.Reset)
+	ansi.IfErr(fmt.Errorf("aborting."), func(err string, printAnsi bool) string {
+		if !printAnsi {
+			return "      " + err + "\n"
+		}
+
+		return ansi.Red.Fg() + "      " + err + ansi.Reset + "\n"
+	})
 }
 
-func (a *Application) Ip() (string, error) {
+func (a Application) Ip() (string, error) {
 	c := a.getRunningContainer()
 
 	if c == nil {
@@ -331,7 +341,7 @@ func (a *Application) Ip() (string, error) {
 	return c.NetworkSettings.Networks[a.Network].IPAddress + ":" + a.Port, nil
 }
 
-func (a *Application) Url() (*url.URL, error) {
+func (a Application) Url() (*url.URL, error) {
 	ip, err := a.Ip()
 
 	if err != nil {
@@ -341,7 +351,7 @@ func (a *Application) Url() (*url.URL, error) {
 	return url.Parse("http://" + ip)
 }
 
-func (a *Application) warmServer(name string) {
+func (a Application) warmServer(name string) {
 	ip := a.getContainer(name).NetworkSettings.Networks[a.Network].IPAddress
 
 	var responseTimes [10]float64
