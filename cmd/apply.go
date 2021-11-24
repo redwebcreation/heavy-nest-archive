@@ -3,8 +3,9 @@ package cmd
 import (
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/ansi"
 	"github.com/wormable/nest/common"
-	"github.com/wormable/nest/ansi")
+)
 
 var skipHealthchecks bool
 
@@ -50,7 +51,7 @@ func ApplyCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use:   "apply [host]",
 		Args:  cobra.RangeArgs(0, 1),
-		Short: "Syncs the servers' state with your configuration",
+		Short: "deploy your applications",
 	}, runApplyCommand, func(c *cobra.Command) {
 		c.Flags().BoolVarP(&skipHealthchecks, "skip-healthchecks", "K", false, "Skip healthchecks")
 	})

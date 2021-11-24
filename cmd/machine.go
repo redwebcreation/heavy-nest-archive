@@ -45,6 +45,13 @@ func runMachine(_ *cobra.Command, _ []string) error {
 	return nil
 }
 
+func MachineCommand() *cobra.Command {
+	return Decorate(&cobra.Command{
+		Use:   "machine",
+		Short: "details about the current machine",
+	}, runMachine, nil)
+}
+
 func getMemoryLimit(data map[string]string, done func()) {
 	defer done()
 	// returns the memory limit in kilobytes
@@ -72,13 +79,6 @@ func getAvailableProcessors(data map[string]string, done func()) {
 	}
 
 	data["available processors"] = string(out)
-}
-
-func MachineCommand() *cobra.Command {
-	return Decorate(&cobra.Command{
-		Use:   "machine",
-		Short: "Get details about the current machine",
-	}, runMachine, nil)
 }
 
 func getPublicIP(data map[string]string, done func()) {

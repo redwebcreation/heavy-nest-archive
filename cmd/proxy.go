@@ -87,7 +87,8 @@ func runProxyCommand(_ *cobra.Command, _ []string) error {
 }
 func ProxyCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
-		Use: "proxy",
+		Use:   "proxy",
+		Short: "start a proxy forwarding to your applications",
 	}, runProxyCommand, nil)
 }
 

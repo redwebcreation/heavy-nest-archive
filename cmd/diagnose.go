@@ -4,8 +4,9 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/ansi"
 	"github.com/wormable/nest/common"
-	"github.com/wormable/nest/ansi")
+)
 
 func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
 	diagnosis := common.AnalyseConfig()
@@ -48,7 +49,7 @@ func runDiagnoseCommand(_ *cobra.Command, _ []string) error {
 func DiagnoseCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use:   "diagnose",
-		Short: "Display diagnostic information that helps you fix your config",
+		Short: "fix your config",
 	}, runDiagnoseCommand, nil)
 }
 

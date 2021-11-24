@@ -34,10 +34,10 @@ type Application struct {
 	Hooks     struct {
 		PreStart []string `json:"pre_start,omitempty"`
 	} `json:"hooks,omitempty"`
-	Quota struct {
-		CPU    string `json:"cpu,omitempty"`
-		Memory string `json:"memory,omitempty"`
-	} `json:"quota,omitempty"`
+	Quotas struct {
+		CPU    float64 `json:"cpu,omitempty"`
+		Memory string  `json:"memory,omitempty"`
+	} `json:"quotas,omitempty"`
 }
 
 type DeploymentOptions struct {
@@ -204,7 +204,6 @@ func (a Application) getContainer(name string) *types.Container {
 func (a Application) createContainer(name string) string {
 	net := a.getNetwork()
 
-	// TODO: Quotas
 	// TODO: Better volumes
 	ref, err := globals.Docker.ContainerCreate(context.Background(), &container.Config{
 		Env:   a.EnvironmentToDockerEnv(),
@@ -213,11 +212,8 @@ func (a Application) createContainer(name string) string {
 		RestartPolicy: container.RestartPolicy{
 			Name: "always",
 		},
-		Binds: a.Volumes,
-		// set cpu quotas
-		Resources: container.Resources{
-			Memory: MustParseMemoryQuota(a.Quota.Memory),
-		},
+		Binds:     a.Volumes,
+		Resources: a.GetContainerResources(),
 	}, nil, nil, name)
 	ansi.Check(err)
 
@@ -420,4 +416,16 @@ func (a Application) executeHook(command string, container string) ([]byte, erro
 	// execute command in container
 	cmd := exec.Command("docker", "exec", container, "/bin/sh", "-c", command)
 	return cmd.CombinedOutput()
+}
+
+func (a Application) GetContainerResources() container.Resources {
+	resources := container.Resources{}
+
+	resources.Memory = MustParseMemoryQuota(a.Quotas.Memory)
+
+	if a.Quotas.CPU != 0 {
+		resources.NanoCPUs = int64(a.Quotas.CPU)
+	}
+
+	return resources
 }

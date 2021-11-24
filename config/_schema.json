@@ -48,6 +48,26 @@
               },
               "additionalProperties": false
             },
+            "quotas": {
+              "type": "object",
+              "description": "Quotas that the application must respect",
+              "properties": {
+                "memory": {
+                  "pattern": "^[0-9]+[kmgt]?$",
+                  "description": "The maximum amount of memory the application can use before it is killed"
+                },
+                "soft_memory": {
+                  "pattern": "^[0-9]+[kmgt]?$",
+                  "description": "The maximum amount of memory the application before a warning is triggered"
+                },
+                "cpu": {
+                  "type": "number",
+                  "description": "The maximum amount of cpus the application can use",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false
+            },
             "env_files": {
               "type": "array",
               "description": "Environment files to add in the container environment",

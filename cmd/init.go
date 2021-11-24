@@ -9,6 +9,6 @@ func runInitCommand(_ *cobra.Command, _ []string) error {
 func InitCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use:   "init",
-		Short: "Initialize a new configuraiton file",
+		Short: "create a new configuration file",
 	}, runInitCommand, nil)
 }

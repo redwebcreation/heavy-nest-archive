@@ -6,8 +6,8 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/spf13/cobra"
-	"github.com/wormable/nest/globals"
 	"github.com/wormable/nest/ansi"
+	"github.com/wormable/nest/globals"
 	"io/ioutil"
 	"log/syslog"
 	"net"
@@ -185,6 +185,16 @@ func ValidateApplicationsConfigurations(d *Diagnosis) {
 			if err != nil {
 				d.NewError(*err)
 			}
+		}
+
+		// -1 is the default value
+		if application.Quotas.Memory != "-1" {
+			_, err := ParseMemoryQuota(application.Quotas.Memory)
+
+			d.NewError(Error{
+				Title: fmt.Sprintf("invalid memory quota [%s]", application.Quotas.Memory),
+				Error: err,
+			})
 		}
 	}
 }

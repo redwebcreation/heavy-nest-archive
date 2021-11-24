@@ -9,8 +9,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/ansi"
 	"github.com/wormable/nest/globals"
-	"github.com/wormable/nest/ansi")
+)
 
 var forceUpdate bool
 
@@ -137,7 +138,7 @@ func SelfUpdateCommand() *cobra.Command {
 	return Decorate(&cobra.Command{
 		Use:   "self-update [version]",
 		Args:  cobra.RangeArgs(0, 1),
-		Short: "Update nest to the latest version",
+		Short: "update nest to the latest version",
 	}, runSelfUpdateCommand, func(c *cobra.Command) {
 		c.Flags().BoolVarP(&forceUpdate, "force", "f", false, "Force the update")
 	})

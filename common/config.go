@@ -85,8 +85,12 @@ func parseJsonConfig(contents []byte) Configuration {
 			}
 		}
 
-		if a.Quota.Memory == "" {
-			a.Quota.Memory = config.DefaultMemoryLimit
+		if a.Quotas.Memory == "" {
+			a.Quotas.Memory = config.DefaultMemoryLimit
+		}
+
+		if a.Quotas.CPU != 0 {
+			a.Quotas.CPU = a.Quotas.CPU * 1000000000
 		}
 
 		applications[host] = a

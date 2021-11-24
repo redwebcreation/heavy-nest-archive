@@ -11,19 +11,23 @@ func main() {
 		Use:   "nest",
 		Short: "nest makes orchestrating containers easy.",
 		Long:  "nest is to tool to orchestrate containers and manage the environment around them.",
+		CompletionOptions: cobra.CompletionOptions{
+			DisableDefaultCmd:   true,
+			DisableNoDescFlag:   true,
+			DisableDescriptions: true,
+		},
 	}
 
 	cli.AddCommand(
 		cmd.ApplyCommand(),
 		cmd.DiagnoseCommand(),
-		cmd.StopCommand(),
 		cmd.SelfUpdateCommand(),
 		cmd.ProxyCommand(),
 		cmd.InitCommand(),
 		cmd.MachineCommand(),
 	)
 
-	cli.PersistentFlags().Bool("no-ansi", false, "Disable ANSI output")
+	cli.PersistentFlags().BoolP("no-ansi", "A", false, "Disable ANSI output")
 
 	err := cli.Execute()
 	ansi.Check(err)
