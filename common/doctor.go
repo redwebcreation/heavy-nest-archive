@@ -213,6 +213,7 @@ func ValidateLogPolicies(d *Diagnosis) {
 		}
 	}
 }
+
 func networkIsValid(name string) *Error {
 	networks, err := globals.Docker.NetworkList(context.Background(), types.NetworkListOptions{
 		Filters: filters.NewArgs(

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/ansi"
+	"github.com/wormable/nest/common"
 	"github.com/wormable/nest/globals"
 	"os"
 )
@@ -11,14 +12,14 @@ import (
 var force bool
 
 func runInitCommand(_ *cobra.Command, _ []string) error {
-	_, err := os.Stat("/etc/nest/config.json")
+	_, err := os.Stat(common.ConfigFile)
 
 	if !force && os.IsNotExist(err) == false {
 		return fmt.Errorf("config file already exists")
 	}
 
 	// create new file
-	err = os.WriteFile("/etc/nest/config.json", globals.DefaultConfig, 0644)
+	err = os.WriteFile(common.ConfigFile, globals.DefaultConfig, 0644)
 	if err != nil {
 		return err
 	}

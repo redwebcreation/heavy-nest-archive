@@ -2,12 +2,13 @@ package common
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/wormable/nest/ansi"
 	"log/syslog"
 	"os"
 	"strings"
 )
+
+var ConfigFile = "/etc/nest/config.json"
 
 type Configuration struct {
 	DefaultNetwork     string `json:"default_network,omitempty"`
@@ -22,32 +23,20 @@ type Configuration struct {
 		CertificateCache string `json:"certificate_cache,omitempty"`
 		SelfSigned       bool   `json:"self_signed,omitempty"`
 	} `json:"proxy,omitempty"`
+
+	ApiHost string `json:"api_host,omitempty"`
+
 	Registries  []RegistryConfiguration `json:"registries,omitempty"`
 	LogPolicies []LogPolicy             `json:"log_policies,omitempty"`
 }
 
 var Config Configuration
 
-func init() {
-	LoadConfig()
-}
-
 func LoadConfig() {
-	configFile := "/etc/nest/config.json"
-	_, err := os.Stat(configFile)
+	_, err := os.Stat(ConfigFile)
+	ansi.Check(err)
 
-	if err != nil {
-		if os.IsNotExist(err) {
-			ansi.Check(
-				fmt.Errorf("no config file found at %s", configFile),
-			)
-			return
-		}
-
-		ansi.Check(err)
-	}
-
-	contents, err := os.ReadFile(configFile)
+	contents, err := os.ReadFile(ConfigFile)
 	ansi.Check(err)
 
 	Config = parseJsonConfig(contents)

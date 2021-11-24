@@ -16,7 +16,7 @@ var StrikeThrough string
 
 func init() {
 	for _, arg := range os.Args {
-		if arg == "--no-ansi" || arg == "-A" {
+		if arg == "--no-ansi" {
 			PrintAnsi = false
 			break
 		}

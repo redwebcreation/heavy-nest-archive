@@ -15,7 +15,7 @@ func Decorate(command *cobra.Command, commandHandler CommandHandler, configurati
 	}
 
 	command.PreRunE = func(cmd *cobra.Command, args []string) error {
-		if cmd.Name() == "diagnose" {
+		if cmd.Name() == "diagnose" || cmd.Name() == "init" {
 			return nil
 		}
 
