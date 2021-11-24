@@ -51,7 +51,10 @@ func main() {
 
 	cli.PersistentFlags().Bool("no-ansi", false, "Disable ANSI output")
 
-
+	cli.SetHelpCommand(&cobra.Command{
+		Use:    "_help_",
+		Hidden: true,
+	})
 
 	err = cli.Execute()
 	ansi.Check(err)
