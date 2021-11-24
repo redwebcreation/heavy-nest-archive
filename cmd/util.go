@@ -2,9 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"os/exec"
-
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/common"
 )
@@ -39,10 +36,4 @@ func Decorate(command *cobra.Command, commandHandler CommandHandler, configurati
 	command.SilenceErrors = true
 	command.SilenceUsage = true
 	return command
-}
-
-func ElevateProcess() {
-	cmd := exec.Command("sudo", "-S", "sudo")
-	cmd.Stdin = os.Stdin
-	_ = cmd.Run()
 }

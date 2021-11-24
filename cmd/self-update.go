@@ -74,8 +74,6 @@ func (g githubRepository) String() string {
 }
 
 func runSelfUpdateCommand(_ *cobra.Command, args []string) error {
-	ElevateProcess()
-
 	executable, err := os.Executable()
 	ansi.Check(err)
 

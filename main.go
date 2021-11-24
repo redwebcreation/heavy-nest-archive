@@ -10,7 +10,7 @@ func main() {
 	cli := &cobra.Command{
 		Use:   "nest",
 		Short: "nest makes orchestrating containers easy.",
-		Long:  "nest is to tool to orchestrate containers and manage the environment around them.",
+		Long:  "nest is to tool to orchestrate containers.",
 		CompletionOptions: cobra.CompletionOptions{
 			DisableDefaultCmd:   true,
 			DisableNoDescFlag:   true,

@@ -1,0 +1,13 @@
+{
+  "applications": {},
+  "log_policies": [
+    {
+      "name": "default",
+      "rules": [
+        {
+          "level": "info"
+        }
+      ]
+    }
+  ]
+}
