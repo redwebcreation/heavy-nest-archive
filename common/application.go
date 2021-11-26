@@ -41,8 +41,8 @@ type Application struct {
 }
 
 type DeploymentOptions struct {
-	Pull         bool
-	Healthchecks bool
+	Pull         bool   `json:"pull,omitempty"`
+	Healthchecks bool   `json:"healthchecks,omitempty"`
 	Name         string
 }
 

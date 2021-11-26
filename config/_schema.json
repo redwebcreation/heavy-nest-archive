@@ -11,6 +11,9 @@
       "description": "The default docker network to use when creating a container",
       "default": "bridge"
     },
+    "default_memory_limit": {
+      "pattern": "^(-1|unlimited|[0-9]+[kmgt]?)$"
+    },
     "applications": {
       "type": "object",
       "description": "A list of applications that nest will deploy",
@@ -53,11 +56,11 @@
               "description": "Quotas that the application must respect",
               "properties": {
                 "memory": {
-                  "pattern": "^[0-9]+[kmgt]?$",
+                  "pattern": "^(-1|unlimited|[0-9]+[kmgt]?)$",
                   "description": "The maximum amount of memory the application can use before it is killed"
                 },
                 "soft_memory": {
-                  "pattern": "^[0-9]+[kmgt]?$",
+                  "pattern": "^(-1|unlimited|[0-9]+[kmgt]?)$",
                   "description": "The maximum amount of memory the application before a warning is triggered"
                 },
                 "cpu": {
@@ -135,12 +138,22 @@
           "default": "80",
           "description": "The port that the proxy will listen on when using http"
         },
+        "self_signed": {
+          "type": "boolean",
+          "description": "Whether to use self-signed certificates for the proxy",
+          "default": false
+        },
+        "certificate_store": {
+          "type": "string",
+          "description": "The certificate store to use for the proxy"
+        },
         "https_port": {
           "pattern": "^[0-9]+$",
           "default": "443",
           "description": "The port that the proxy will listen on when using https"
         }
-      }
+      },
+      "additionalProperties": false
     },
     "log_policies": {
       "type": "array",
@@ -188,7 +201,12 @@
               "additionalProperties": false
             }
           }
-        }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "rules"
+        ]
       }
     },
     "registries": {

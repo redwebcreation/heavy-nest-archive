@@ -5,6 +5,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/ansi"
 	"github.com/wormable/nest/cmd"
+	"github.com/wormable/nest/cmd/api/tokens"
 	"github.com/wormable/nest/common"
 	"os"
 )
@@ -40,6 +41,15 @@ func main() {
 		},
 	}
 
+	api := &cobra.Command{
+		Use:   "api",
+		Short: "manage the integrated deployment api",
+	}
+
+	api.AddCommand(
+		tokens.RootCommand(),
+	)
+
 	cli.AddCommand(
 		cmd.ApplyCommand(),
 		cmd.DiagnoseCommand(),
@@ -47,6 +57,7 @@ func main() {
 		cmd.ProxyCommand(),
 		cmd.InitCommand(),
 		cmd.MachineCommand(),
+		api,
 	)
 
 	cli.PersistentFlags().Bool("no-ansi", false, "Disable ANSI output")

@@ -2,17 +2,35 @@ package common
 
 import (
 	"encoding/json"
+	"github.com/docker/docker/pkg/homedir"
 	"github.com/wormable/nest/ansi"
 	"log/syslog"
 	"os"
 	"strings"
 )
 
-var ConfigFile = "/etc/nest/config.json"
+var ConfigFile string
+var DataDirectory string
+var CertificateDirectory string
+
+func init() {
+	configDirectory, err := homedir.GetConfigHome()
+	ansi.Check(err)
+
+	ConfigFile = configDirectory + "/nest/config.json"
+	DataDirectory = configDirectory + "/nest/data"
+	CertificateDirectory = configDirectory + "/nest/certs"
+
+	err = os.MkdirAll(configDirectory+"/nest/data", os.FileMode(0700))
+	ansi.Check(err)
+
+	err = os.MkdirAll(configDirectory+"/nest/certs", os.FileMode(0700))
+	ansi.Check(err)
+}
 
 type Configuration struct {
 	DefaultNetwork     string `json:"default_network,omitempty"`
-	DefaultMemoryLimit string `json:"default_memory,omitempty"`
+	DefaultMemoryLimit string `json:"default_memory_limit,omitempty"`
 
 	Applications map[string]Application `json:"applications,omitempty"`
 
@@ -20,7 +38,6 @@ type Configuration struct {
 		Logging          string `json:"logging,omitempty"`
 		HttpPort         string `json:"http_port,omitempty"`
 		HttpsPort        string `json:"https_port,omitempty"`
-		CertificateCache string `json:"certificate_cache,omitempty"`
 		SelfSigned       bool   `json:"self_signed,omitempty"`
 	} `json:"proxy,omitempty"`
 
