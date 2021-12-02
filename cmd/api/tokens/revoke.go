@@ -2,12 +2,27 @@ package tokens
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/cmd"
 )
 
-func runRevokeCommand(_ *cobra.Command, _ []string) error {
-	fmt.Println("here")
+func runRevokeCommand(_ *cobra.Command, args []string) error {
+	raw := args[0]
+	tokens := strings.Split(raw, "\n")
+
+	for _, rawToken := range tokens {
+		token := strings.TrimSpace(rawToken)
+
+		if token == "" {
+			continue
+		}
+
+		Revoke(token)
+		fmt.Printf("Revoked %s\n", token)
+	}
+
 	return nil
 }
 

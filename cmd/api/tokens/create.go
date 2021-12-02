@@ -2,12 +2,16 @@ package tokens
 
 import (
 	"fmt"
+
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/cmd"
 )
 
 func runCreateCommand(_ *cobra.Command, _ []string) error {
-	fmt.Println("here")
+	token := Create()
+
+	fmt.Print(*token)
+
 	return nil
 }
 
