@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/wormable/nest/cmd/api/tokens"
 	"github.com/wormable/nest/common"
 	"golang.org/x/crypto/acme/autocert"
 	"log/syslog"
@@ -118,6 +119,14 @@ func handleApiRequest(w http.ResponseWriter, r *http.Request) {
 	if r.Header.Get("Content-Type") != "application/json" {
 		w.WriteHeader(http.StatusUnsupportedMediaType)
 		w.Write([]byte("Unsupported media type"))
+		return
+	}
+
+	token := r.Header.Get("Authorization")
+
+	if !tokens.Token(token).Exists() {
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte("Unauthorized"))
 		return
 	}
 

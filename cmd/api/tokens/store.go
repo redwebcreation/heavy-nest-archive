@@ -44,9 +44,9 @@ func All() []Token {
 	return tokens
 }
 
-func (t *Token) Exists() bool {
+func (t Token) Exists() bool {
 	for _, token := range All() {
-		if string(token) == string(*t) {
+		if string(token) == string(t) {
 			return true
 		}
 	}

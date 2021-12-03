@@ -1,4 +1,5 @@
 {
+  "$schema": "https://raw.githubusercontent.com/redwebcreation/nest/main/globals/schema.json",
   "applications": {},
   "log_policies": [
     {

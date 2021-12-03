@@ -24,7 +24,7 @@ func runInitCommand(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fmt.Printf(ansi.Green.Fg()+"/etc/nest/config.json created (%d bytes written)\n"+ansi.Reset, len(globals.DefaultConfig))
+	fmt.Printf(ansi.Green.Fg()+"%s created (%d bytes written)\n"+ansi.Reset, common.ConfigFile, len(globals.DefaultConfig))
 
 	return nil
 }
