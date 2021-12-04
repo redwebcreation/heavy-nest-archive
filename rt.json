@@ -7,6 +7,8 @@
     "go build -ldflags=\"-w -s -X github.com/wormable/nest/globals.Version=$1\" -gcflags=all=\"-l\""
   ],
   "after_release": [],
-  "assets": [],
+  "assets": [
+    "./nest"
+  ],
   "tag_message": "Version :tag"
 }
