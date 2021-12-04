@@ -9,10 +9,7 @@ import (
 )
 
 func runRevokeCommand(_ *cobra.Command, args []string) error {
-	raw := args[0]
-	tokens := strings.Split(raw, "\n")
-
-	for _, rawToken := range tokens {
+	for _, rawToken := range args {
 		token := strings.TrimSpace(rawToken)
 
 		if token == "" {
@@ -20,7 +17,7 @@ func runRevokeCommand(_ *cobra.Command, args []string) error {
 		}
 
 		Revoke(token)
-		fmt.Printf("Revoked %s\n", token)
+		fmt.Printf("%s\n", token)
 	}
 
 	return nil
@@ -28,7 +25,8 @@ func runRevokeCommand(_ *cobra.Command, args []string) error {
 
 func RevokeTokenCommand() *cobra.Command {
 	return cmd.Decorate(&cobra.Command{
-		Use:   "revoke [name]",
+		Use:   "revoke [token] [...token]",
 		Short: "revoke a new token",
+		Args:  cobra.MinimumNArgs(1),
 	}, runRevokeCommand, nil)
 }

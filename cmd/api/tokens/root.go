@@ -12,6 +12,7 @@ func RootCommand() *cobra.Command {
 		CreateTokenCommand(),
 		ListTokensCommand(),
 		RevokeTokenCommand(),
+		RevokeAllTokenCommand(),
 	)
 
 	return cmd
