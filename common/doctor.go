@@ -3,17 +3,18 @@ package common
 import (
 	"context"
 	"fmt"
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/spf13/cobra"
-	"github.com/wormable/nest/ansi"
-	"github.com/wormable/nest/globals"
 	"io/ioutil"
 	"log/syslog"
 	"net"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/filters"
+	"github.com/spf13/cobra"
+	"github.com/wormable/nest/ansi"
+	"github.com/wormable/nest/globals"
 )
 
 type Warning struct {
@@ -67,8 +68,17 @@ func AnalyseConfig() *Diagnosis {
 
 func EnsureDnsRecordPointsToHost(diagnosis *Diagnosis) {
 	response, err := http.Get("http://checkip.amazonaws.com")
-	ansi.Check(err)
-	defer response.Body.Close()
+	if err == nil {
+		defer response.Body.Close()
+	} else if strings.Contains(err.Error(), "no such host") {
+		diagnosis.NewWarning(Warning{
+			Title:  "It looks like you're not connected to internet, or AWS is down.",
+			Advice: "If this is a production server, GL HF, you'll need it.",
+		})
+		return
+	} else {
+		ansi.Check(err)
+	}
 
 	rawPublicIp, err := ioutil.ReadAll(response.Body)
 	ansi.Check(err)
