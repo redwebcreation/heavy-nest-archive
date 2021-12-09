@@ -5,8 +5,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var force bool
+
 func runPutCommand(_ *cobra.Command, args []string) error {
-	_ = args[0]
+	vault := Vault{
+		Path: "/home/me/Code/server/dep/vault",
+	}
+
+	if vault.Has(args[0]) && !force {
+		return fmt.Errorf("secret already exists")
+	}
+
 	password, err := AskPrivately("Password: ")
 	if err != nil {
 		return err
@@ -15,10 +24,6 @@ func runPutCommand(_ *cobra.Command, args []string) error {
 	value, err := AskPrivately("Value: ")
 	if err != nil {
 		return err
-	}
-
-	vault := Vault{
-		Path: "/home/me/Code/server/dep/vault",
 	}
 
 	err = vault.Put(Secret{
@@ -35,10 +40,14 @@ func runPutCommand(_ *cobra.Command, args []string) error {
 }
 
 func PutCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:   "put [key]",
+	cmd := &cobra.Command{
+		Use:   "put [key] [--force]",
 		Args:  cobra.ExactArgs(1),
 		Short: "Put a secret into the vault",
 		RunE:  runPutCommand,
 	}
+
+	cmd.Flags().BoolVarP(&force, "force", "f", false, "Force overwrite")
+
+	return cmd
 }

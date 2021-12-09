@@ -64,9 +64,9 @@ func (f FsResolver) ReadFile(path string) ([]byte, error) {
 // + check if all the secrets required exist in the vault.
 // + check if all environments are valid / exist.
 
-// nest vault put [name]
-// stdin: [value]
+// nest vault put [name] [--force]
 // stdin: [password]
+// stdin: [value]
 
 // nest vault get [name]
 // stdin: [password]

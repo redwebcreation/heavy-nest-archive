@@ -10,7 +10,7 @@ func RootCommand() *cobra.Command {
 
 	root.AddCommand(
 		PutCommand(),
-		//GetCommand(),
+		GetCommand(),
 		//DeleteCommand(),
 		//ListCommand(),
 		//MetadataCommand(),
