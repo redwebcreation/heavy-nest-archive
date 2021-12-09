@@ -22,7 +22,7 @@ func AskPrivately(label string) ([]byte, error) {
 }
 
 type Vault struct {
-	Path string
+	Resolver Storage
 }
 
 type Secret struct {
@@ -31,8 +31,30 @@ type Secret struct {
 	Password []byte
 }
 
+type Storage interface {
+	Get(string) ([]byte, error)
+	Set(string, []byte) error
+	Delete(string) error
+}
+
+type FileStorage struct {
+	Path string
+}
+
+func (f FileStorage) Get(key string) ([]byte, error) {
+	return os.ReadFile(f.Path + "/" + key)
+}
+
+func (f FileStorage) Set(key string, value []byte) error {
+	return os.WriteFile(f.Path+"/"+key, value, 0600)
+}
+
+func (f FileStorage) Delete(key string) error {
+	return os.Remove(f.Path + "/" + key)
+}
+
 func (v Vault) Has(key string) bool {
-	_, err := os.Stat(v.Path + "/" + key)
+	_, err := v.Resolver.Get(key)
 	return err == nil
 }
 
@@ -66,32 +88,20 @@ func (v Vault) Put(secret Secret) error {
 		aesGCM.Seal(nonce, nonce, secret.Value, nil),
 	)
 
-	return os.WriteFile(v.Path+"/"+secret.Key, []byte(contents), 0600)
+	return v.Resolver.Set(secret.Key, []byte(contents))
 }
 
 func (v Vault) Get(s *Secret) ([]byte, error) {
-	bytes, err := os.ReadFile(v.Path + "/" + s.Key)
-	if err != nil {
-		return nil, err
-	}
-
+	bytes, err := v.Resolver.Get(s.Key)
 	parsed, err := ParseSecret(bytes)
 	if err != nil {
 		return nil, err
 	}
 
-	//Create a new Cipher Block from the key
-	block, err := aes.NewCipher(s.Password)
+	aesGCM, err := DerivePassword(s.Password)
 	if err != nil {
 		return nil, err
 	}
-
-	//Create a new GCM
-	aesGCM, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-
 	//Get the nonce size
 	nonceSize := aesGCM.NonceSize()
 
@@ -104,7 +114,6 @@ func (v Vault) Get(s *Secret) ([]byte, error) {
 		return nil, err
 	}
 
-	fmt.Printf("%s\n", plaintext)
 	return plaintext, nil
 }
 

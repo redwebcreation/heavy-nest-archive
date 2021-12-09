@@ -7,7 +7,9 @@ import (
 
 func runGetCommand(_ *cobra.Command, args []string) error {
 	vault := Vault{
-		Path: "/home/me/Code/server/dep/vault",
+		Resolver: FileStorage{
+			Path: "/home/me/Code/server/dep/vault",
+		},
 	}
 
 	password, err := AskPrivately("Password: ")
@@ -25,7 +27,7 @@ func runGetCommand(_ *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Println(decrypted)
+	fmt.Printf("%s\n", decrypted)
 
 	return nil
 }

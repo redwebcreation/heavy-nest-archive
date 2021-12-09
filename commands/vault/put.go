@@ -9,7 +9,9 @@ var force bool
 
 func runPutCommand(_ *cobra.Command, args []string) error {
 	vault := Vault{
-		Path: "/home/me/Code/server/dep/vault",
+		Resolver: FileStorage{
+			Path: "/home/me/Code/server/dep/vault",
+		},
 	}
 
 	if vault.Has(args[0]) && !force {
