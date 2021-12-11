@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/spf13/cobra"
 	"github.com/wormable/nest/commands/vault"
 	"github.com/wormable/nest/globals"
-	"os"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 
 	err := cli.Execute()
 	if err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, err.Error())
+		_, _ = fmt.Fprint(os.Stderr, err.Error())
 		os.Exit(1)
 	}
 }
