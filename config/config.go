@@ -72,8 +72,4 @@ func (f FsResolver) ReadFile(path string) ([]byte, error) {
 // stdin: [password]
 // stdout: [value]
 
-// nest vault metadata [name]
-
 // nest vault delete [name]
-
-// nest vault list [--outdated]

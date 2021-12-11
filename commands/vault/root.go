@@ -11,9 +11,7 @@ func RootCommand() *cobra.Command {
 	root.AddCommand(
 		PutCommand(),
 		GetCommand(),
-		//DeleteCommand(),
-		//ListCommand(),
-		//MetadataCommand(),
+		DeleteCommand(),
 	)
 
 	return root
