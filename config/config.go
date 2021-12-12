@@ -1,8 +1,9 @@
 package config
 
 import (
-	"github.com/wormable/nest/service"
 	"os"
+
+	"github.com/redwebcreation/nest/service"
 )
 
 type ServiceConfig struct {

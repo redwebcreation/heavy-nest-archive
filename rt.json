@@ -4,7 +4,7 @@
     "title": "Release :version"
   },
   "before_release": [
-    "go build -ldflags=\"-w -s -X github.com/wormable/nest/globals.Version=$1\" -gcflags=all=\"-l\""
+    "go build -ldflags=\"-w -s -X github.com/redwebcreation/nest/globals.Version=$1\" -gcflags=all=\"-l\""
   ],
   "after_release": [],
   "assets": [],
